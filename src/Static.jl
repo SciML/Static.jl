@@ -1,5 +1,6 @@
 module Static
 
-# Write your package code here.
+include("static.jl")
+include("ranges.jl")
 
 end
