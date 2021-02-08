@@ -14,6 +14,5 @@ else
 end
 
 include("static_implementation.jl")
-include("ranges.jl")
 
 end
