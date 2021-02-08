@@ -1,6 +1,6 @@
 module Static
 
-import IfElse
+import IfElse: ifelse
 using Base: @propagate_inbounds, Slice
 
 export static, StaticInt, StaticSymbol, True, False, StaticBool
