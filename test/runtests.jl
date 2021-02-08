@@ -1,8 +1,10 @@
-using Static
+using Static, Aqua
 using Test
 
 @testset "Static.jl" begin
 
+    Aqua.test_all(Static)
+    
     @testset "StaticInt" begin
         @test StaticInt(UInt(8)) === StaticInt{8}()
         @test iszero(StaticInt(0))

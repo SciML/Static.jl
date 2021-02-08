@@ -13,7 +13,7 @@ else
     end
 end
 
-include("static.jl")
+include("static_implementation.jl")
 include("ranges.jl")
 
 end
