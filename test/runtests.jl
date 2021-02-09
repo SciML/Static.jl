@@ -4,7 +4,7 @@ using Test
 @testset "Static.jl" begin
 
     Aqua.test_all(Static)
-    
+
     @testset "StaticInt" begin
         @test StaticInt(UInt(8)) === StaticInt{8}()
         @test iszero(StaticInt(0))
@@ -21,6 +21,7 @@ using Test
         @test @inferred(Bool(x)) isa Bool
         @test @inferred(BigInt(x)) isa BigInt
         @test @inferred(Integer(x)) === x
+        @test @inferred(%(x, Int)) === 1
         # test for ambiguities and correctness
         for i ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             for j ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
@@ -48,13 +49,32 @@ using Test
         @test UnitRange{Int16}(-7, StaticInt(19)) === Int16(-7):Int16(19)
         @test UnitRange(-11, StaticInt(15)) === -11:15
         @test UnitRange(StaticInt(-11), 15) === -11:15
+        @test UnitRange{Int}(StaticInt(-11), StaticInt(15)) === -11:15
         @test UnitRange(StaticInt(-11), StaticInt(15)) === -11:15
         @test float(StaticInt(8)) === 8.0
+
+        # test specific promote rules to ensure we don't cause ambiguities
+        SI = StaticInt{1}
+        IR = typeof(1//1)
+        PI = typeof(pi)
+        @test @inferred(convert(SI, SI())) === SI()
+        @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
+        @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
+        @test @inferred(promote_rule(SI, SI)) <: Int
+        @test @inferred(promote_rule(Missing, SI)) <: promote_type(Missing, Int)
+        @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
+        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
+        @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
+        @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
+        @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
+        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
+        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
+        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
     end
 
     @testset "StaticBool" begin
         t = static(static(true))
-        f = static(false)
+        f = StaticBool(static(false))
 
         @test @inferred(StaticInt(t)) === StaticInt(1)
         @test @inferred(StaticInt(f)) === StaticInt(0)
@@ -67,6 +87,13 @@ using Test
         @test @inferred(+f) === StaticInt(0)
         @test @inferred(-t) === StaticInt(-1)
         @test @inferred(-f) === StaticInt(0)
+        @test @inferred(sign(t)) === t
+        @test @inferred(abs(t)) === t
+        @test @inferred(abs2(t)) === t
+        @test @inferred(iszero(t)) === f
+        @test @inferred(isone(t)) === t
+        @test @inferred(iszero(f)) === t
+        @test @inferred(isone(f)) === f
 
         @test @inferred(xor(true, f))
         @test @inferred(xor(f, true))
@@ -150,9 +177,55 @@ using Test
 
         @test @inferred(Static.ifelse(t, x, y)) === x
         @test @inferred(Static.ifelse(f, x, y)) === y
+
+        @test @inferred(promote_rule(True, True)) <: StaticBool
+        @test @inferred(promote_rule(True, Bool)) <: Bool
+        @test @inferred(promote_rule(Bool, True)) <: Bool
     end
 
-    @test_throws ErrorException static("a")
+    @testset "static" begin
+        @test static(1) === StaticInt(1)
+        @test static(true) === True()
+        @test static(:a) === StaticSymbol{:a}()
+        @test Symbol(static(:a)) === :a
+        @test static((:a, 1, true)) === (static(:a), static(1), static(true))
+        @test @inferred(static(Val((:a, 1, true)))) === (static(:a), static(1), static(true))
+        @test_throws ErrorException static("a")
+    end
 
+    @testset "is_static" begin
+        @test @inferred(Static.is_static(typeof(static(true)))) === True()
+        @test @inferred(Static.is_static(typeof(static(1)))) === True()
+        @test @inferred(Static.is_static(typeof(static(:x)))) === True()
+        @test @inferred(Static.is_static(typeof(1))) === False()
+        @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
+        @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
+    end
+
+    @testset "tuple utilities" begin
+        x = (static(1), static(2), static(3))
+        y = (static(3), static(2), static(1))
+        z = (static(1), static(2), static(3), static(4))
+        T = Tuple{Int,Float64,String}
+        @test @inferred(Static.invariant_permutation(x, x)) === True()
+        @test @inferred(Static.invariant_permutation(x, y)) === False()
+        @test @inferred(Static.invariant_permutation(x, z)) === False()
+
+        @test @inferred(Static.permute(x, x)) === x
+        @test @inferred(Static.permute(x, y)) === y
+        @test @inferred(Static.eachop(getindex, x)) === x
+
+        @test @inferred(Static.eachop_tuple(Static._get_tuple, T, y)) === Tuple{String,Float64,Int}
+    end
 end
+
+# for some reason this can't be inferred when in the "Static.jl" test set
+known_length(x) = known_length(typeof(x))
+known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
+known_length(::Type{T}) where {T} = nothing
+maybe_static_length(x) = Static.maybe_static(known_length, length, x)
+x = ntuple(+, 10)
+y = 1:10
+@test @inferred(maybe_static_length(x)) === StaticInt(10)
+@test @inferred(maybe_static_length(y)) === 10
 
