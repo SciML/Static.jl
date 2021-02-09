@@ -57,6 +57,7 @@ using Test
         SI = StaticInt{1}
         IR = typeof(1//1)
         PI = typeof(pi)
+        @test @inferred(convert(SI, SI())) === SI()
         @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
         @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
         @test @inferred(promote_rule(SI, SI)) <: Int
@@ -66,7 +67,8 @@ using Test
         @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
         @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
         @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: promote_type(Union{Nothing,Missing,Int}, Int)
+        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
+        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
         @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
     end
 
@@ -185,6 +187,7 @@ using Test
         @test static(1) === StaticInt(1)
         @test static(true) === True()
         @test static(:a) === StaticSymbol{:a}()
+        @test Symbol(static(:a)) === :a
         @test static((:a, 1, true)) === (static(:a), static(1), static(true))
         @test @inferred(static(Val((:a, 1, true)))) === (static(:a), static(1), static(true))
         @test_throws ErrorException static("a")
@@ -196,7 +199,17 @@ using Test
         @test @inferred(Static.is_static(typeof(static(:x)))) === True()
         @test @inferred(Static.is_static(typeof(1))) === False()
         @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
+        @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
     end
-
 end
+
+# for some reason this can't be inferred when in the "Static.jl" test set
+known_length(x) = known_length(typeof(x))
+known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
+known_length(::Type{T}) where {T} = nothing
+maybe_static_length(x) = Static.maybe_static(known_length, length, x)
+x = ntuple(+, 10)
+y = 1:10
+@test @inferred(maybe_static_length(x)) === StaticInt(10)
+@test @inferred(maybe_static_length(y)) === 10
 
