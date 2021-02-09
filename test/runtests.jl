@@ -201,6 +201,22 @@ using Test
         @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
         @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
     end
+
+    @testset "tuple utilities" begin
+        x = (static(1), static(2), static(3))
+        y = (static(3), static(2), static(1))
+        z = (static(1), static(2), static(3), static(4))
+        T = Tuple{Int,Float64,String}
+        @test @inferred(Static.invariant_permutation(x, x)) === True()
+        @test @inferred(Static.invariant_permutation(x, y)) === False()
+        @test @inferred(Static.invariant_permutation(x, z)) === False()
+
+        @test @inferred(Static.permute(x, x)) === x
+        @test @inferred(Static.permute(x, y)) === y
+        @test @inferred(Static.eachop(getindex, x)) === x
+
+        @test @inferred(Static.eachop_tuple(Static._get_tuple, T, y)) === Tuple{String,Float64,Int}
+    end
 end
 
 # for some reason this can't be inferred when in the "Static.jl" test set
