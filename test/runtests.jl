@@ -183,6 +183,13 @@ using Test
         @test @inferred(promote_rule(Bool, True)) <: Bool
     end
 
+    @testset "StaticSymbol" begin
+        x = static(:x)
+        y = static(:y)
+        @test @inferred(StaticSymbol(x)) === x
+        @test @inferred(StaticSymbol(x, y)) === static(:xy)
+    end
+
     @testset "static" begin
         @test static(1) === StaticInt(1)
         @test static(true) === True()

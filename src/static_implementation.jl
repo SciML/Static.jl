@@ -382,6 +382,12 @@ struct StaticSymbol{s}
     StaticSymbol(s::Symbol) = new{s}()
 end
 
+StaticSymbol(x::StaticSymbol) = x
+StaticSymbol(x::StaticSymbol, args::Vararg{StaticSymbol}) = _cat_syms((x, args...))
+@generated function _cat_syms(::T) where {T<:Tuple{Vararg{StaticSymbol}}}
+    :(StaticSymbol{$(QuoteNode(Symbol([s_i.parameters[1] for s_i in T.parameters]...)))}())
+end
+
 Base.Symbol(::StaticSymbol{s}) where {s} = s::Symbol
 
 Base.show(io::IO, ::StaticSymbol{s}) where {s} = print(io, "static(:$s)")
