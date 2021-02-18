@@ -299,16 +299,18 @@ eachop(op, args...; iterator) = _eachop(op, args, iterator)
 end
 
 """
-    eachop_tuple(op, args...; iterator::Tuple{Vararg{StaticInt}}) -> Type{Tuple}
+    eachop_tuple(op, arg, args...; iterator::Tuple{Vararg{StaticInt}}) -> Type{Tuple}
 
-Produces a tuple type of `Tuple{op(args..., iterator[1]), op(args..., iterator[2]),...}`.
+Produces a tuple type of `Tuple{op(arg, args..., iterator[1]), op(arg, args..., iterator[2]),...}`.
+Note that if one of the arguments passed to `op` is a `Tuple` type then it should be the first argument
+instead of one of the trailing arguments, ensuring type inference of each element of the tuple.
 """
-eachop_tuple(op, args...; iterator) = _eachop_tuple(op, args, iterator)
-@generated function _eachop_tuple(op, args::A, ::I) where {A,I}
+eachop_tuple(op, arg, args...; iterator) = _eachop_tuple(op, arg, args, iterator)
+@generated function _eachop_tuple(op, arg, args::A, ::I) where {A,I}
     t = Expr(:curly, Tuple)
     narg = length(A.parameters)
     for p in I.parameters
-        call_expr = Expr(:call, :op)
+        call_expr = Expr(:call, :op, :arg)
         if narg > 0
             for i in 1:narg
                 push!(call_expr.args, :(getfield(args, $i)))
