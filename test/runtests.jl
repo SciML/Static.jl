@@ -21,7 +21,7 @@ using Test
         @test @inferred(Bool(x)) isa Bool
         @test @inferred(BigInt(x)) isa BigInt
         @test @inferred(Integer(x)) === x
-        @test @inferred(%(x, Int)) === 1
+        @test @inferred(%(x, Integer)) === 1
         # test for ambiguities and correctness
         for i ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             for j ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
@@ -70,6 +70,7 @@ using Test
         @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
         @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
         @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
+        @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
     end
 
     @testset "StaticBool" begin
@@ -190,7 +191,7 @@ using Test
         @test y === StaticSymbol(:y)
         @test z === StaticSymbol(Symbol(1))
         @test @inferred(StaticSymbol(x)) === x
-        @test @inferred(StaticSymbol(x, y)) === static(:xy)
+        @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
         @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
     end
 
@@ -222,12 +223,20 @@ using Test
         @test @inferred(Static.invariant_permutation(x, y)) === False()
         @test @inferred(Static.invariant_permutation(x, z)) === False()
 
+        @test @inferred(Static.permute(x, Val(x))) === x
+        @test @inferred(Static.permute(x, (static(1), static(2)))) === (static(1), static(2))
         @test @inferred(Static.permute(x, x)) === x
         @test @inferred(Static.permute(x, y)) === y
-        @test @inferred(Static.eachop(getindex, x)) === x
+        @test @inferred(Static.eachop(getindex;iterator=x)) === x
 
-        @test @inferred(Static.eachop_tuple(Static._get_tuple, T, y)) === Tuple{String,Float64,Int}
+        @test @inferred(Static.eachop_tuple(Static._get_tuple, T; iterator=y)) === Tuple{String,Float64,Int}
+        @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
+        # inferred is Union{Int,Nothing}
+        @test Static.find_first_eq(1, map(Int, y)) === 3
     end
+
+    @test repr(static(1)) == "static(1)"
+    @test repr(static(:x)) == "static(:x)"
 end
 
 # for some reason this can't be inferred when in the "Static.jl" test set
@@ -239,4 +248,5 @@ x = ntuple(+, 10)
 y = 1:10
 @test @inferred(maybe_static_length(x)) === StaticInt(10)
 @test @inferred(maybe_static_length(y)) === 10
+
 

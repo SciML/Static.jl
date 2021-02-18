@@ -267,35 +267,55 @@ function invariant_permutation(x::T, y::T) where {N,T<:Tuple{Vararg{StaticInt,N}
 end
 
 permute(x::Tuple, perm::Val) = permute(x, static(perm))
-permute(x::Tuple{Vararg{Any}}, perm::Tuple{Vararg{StaticInt}}) = eachop(getindex, x, perm)
+permute(x::Tuple{Vararg{Any}}, perm::Tuple{Vararg{StaticInt}}) = eachop(getindex, x; iterator=perm)
 function permute(x::Tuple{Vararg{Any,K}}, perm::Tuple{Vararg{StaticInt,K}}) where {K}
-    if invariant_permutation(perm, perm) isa False
-        return eachop(getindex, x, perm)
+    if invariant_permutation(perm, perm) === False()
+        return eachop(getindex, x; iterator=perm)
     else
         return x
     end
 end
 
-@inline eachop(op, x::Tuple{Vararg{Any,N}}) where {N} = eachop(op, x, nstatic(Val(N)))
-@generated function eachop(op, x, y, ::I) where {I}
+"""
+    eachop(op, args...; iterator::Tuple{Vararg{StaticInt}}) -> Tuple
+
+Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
+"""
+eachop(op, args...; iterator) = _eachop(op, args, iterator)
+@generated function _eachop(op, args::A, ::I) where {A,I}
     t = Expr(:tuple)
+    narg = length(A.parameters)
     for p in I.parameters
-        push!(t.args, :(op(x, y, StaticInt{$(p.parameters[1])}())))
-    end
-    Expr(:block, Expr(:meta, :inline), t)
-end
-@generated function eachop(op, x, ::I) where {I}
-    t = Expr(:tuple)
-    for p in I.parameters
-        push!(t.args, :(op(x, StaticInt{$(p.parameters[1])}())))
+        call_expr = Expr(:call, :op)
+        if narg > 0
+            for i in 1:narg
+                push!(call_expr.args, :(getfield(args, $i)))
+            end
+        end
+        push!(call_expr.args, :(StaticInt{$(p.parameters[1])}()))
+        push!(t.args, call_expr)
     end
     Expr(:block, Expr(:meta, :inline), t)
 end
 
-@generated function eachop_tuple(op, x, ::I) where {I}
-    t = Expr(:curly, :Tuple)
+"""
+    eachop_tuple(op, args...; iterator::Tuple{Vararg{StaticInt}}) -> Type{Tuple}
+
+Produces a tuple type of `Tuple{op(args..., iterator[1]), op(args..., iterator[2]),...}`.
+"""
+eachop_tuple(op, args...; iterator) = _eachop_tuple(op, args, iterator)
+@generated function _eachop_tuple(op, args::A, ::I) where {A,I}
+    t = Expr(:curly, Tuple)
+    narg = length(A.parameters)
     for p in I.parameters
-        push!(t.args, :(op(x, StaticInt{$(p.parameters[1])}())))
+        call_expr = Expr(:call, :op)
+        if narg > 0
+            for i in 1:narg
+                push!(call_expr.args, :(getfield(args, $i)))
+            end
+        end
+        push!(call_expr.args, :(StaticInt{$(p.parameters[1])}()))
+        push!(t.args, call_expr)
     end
     Expr(:block, Expr(:meta, :inline), t)
 end
@@ -402,7 +422,7 @@ is_static(::Type{T}) where {T} = False()
 
 _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    if all(eachop(_tuple_static, T, nstatic(Val(N))))
+    if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
         return True()
     else
         return False()
@@ -435,7 +455,7 @@ function static end
 @aggressive_constprop static(x::Symbol) = StaticSymbol(x)
 @aggressive_constprop static(x::Tuple{Vararg{Any}}) = map(static, x)
 function static(x)
-    if is_static(x) isa True
+    if is_static(x) === True()
         return x
     else
         _no_static_type(x)
@@ -454,12 +474,12 @@ If `x` and `collection` are static (`is_static`) and `x` is in `collection` then
 value is a `StaticInt`.
 =#
 @generated function find_first_eq(x::X, itr::I) where {X,N,I<:Tuple{Vararg{Any,N}}}
-    if (is_static(X) & is_static(I)) isa True
+    if (is_static(X) & is_static(I)) === True()
         return Expr(:block, Expr(:meta, :inline),
-            :(@nif $(N + 1) d->(x === getfield(itr, d)) d->(static(d)) d->(nothing)))
+            :(Base.Cartesian.@nif $(N + 1) d->(x === getfield(itr, d)) d->(static(d)) d->(nothing)))
     else
         return Expr(:block, Expr(:meta, :inline),
-            :(@nif $(N + 1) d->(x === getfield(itr, d)) d->(d) d->(nothing)))
+            :(Base.Cartesian.@nif $(N + 1) d->(x === getfield(itr, d)) d->(d) d->(nothing)))
     end
 end
 
