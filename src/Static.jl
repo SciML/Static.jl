@@ -21,8 +21,10 @@ include("static_implementation.jl")
 
 Returns the known value corresponding to a static type `T`. If `T` is not a static type then
 `nothing` is returned.
+
+See also: [`static`](@ref), [`is_static`](@ref)
 """
-@aggressive_constprop known(x) = known(typeof(x))
+known(x) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
 known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
@@ -40,6 +42,8 @@ end
 
 Returns a static form of `x`. If `x` is already in a static form then `x` is returned. If
 there is no static alternative for `x` then an error is thrown.
+
+See also: [`is_static`](@ref), [`known`](@ref)
 
 ```julia
 julia> using ArrayInterface: static
@@ -69,8 +73,10 @@ end
     is_static(::Type{T}) -> StaticBool
 
 Returns `True` if `T` is a static type.
+
+See also: [`static`](@ref), [`known`](@ref)
 """
-@aggressive_constprop is_static(x) = is_static(typeof(x))
+is_static(x) = is_static(typeof(x))
 is_static(::Type{T}) where {T<:StaticInt} = True()
 is_static(::Type{T}) where {T<:StaticBool} = True()
 is_static(::Type{T}) where {T<:StaticSymbol} = True()
