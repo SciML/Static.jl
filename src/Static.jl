@@ -91,4 +91,6 @@ function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     end
 end
 
+include("float.jl")
+
 end
