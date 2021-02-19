@@ -195,23 +195,31 @@ using Test
         @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
     end
 
-    @testset "static" begin
+    @testset "static interface" begin
+        v = Val((:a, 1, true))
+
         @test static(1) === StaticInt(1)
         @test static(true) === True()
         @test static(:a) === StaticSymbol{:a}()
         @test Symbol(static(:a)) === :a
         @test static((:a, 1, true)) === (static(:a), static(1), static(true))
-        @test @inferred(static(Val((:a, 1, true)))) === (static(:a), static(1), static(true))
+        @test @inferred(static(v)) === (static(:a), static(1), static(true))
         @test_throws ErrorException static("a")
-    end
 
-    @testset "is_static" begin
         @test @inferred(Static.is_static(typeof(static(true)))) === True()
         @test @inferred(Static.is_static(typeof(static(1)))) === True()
         @test @inferred(Static.is_static(typeof(static(:x)))) === True()
         @test @inferred(Static.is_static(typeof(1))) === False()
         @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
         @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
+
+        @test @inferred(Static.known(typeof(v))) === (:a, 1, true)
+        @test @inferred(Static.known(typeof(static(true))))
+        @test @inferred(Static.known(typeof(static(1)))) === 1
+        @test @inferred(Static.known(typeof(static(:x)))) === :x
+        @test @inferred(Static.known(typeof(1))) === nothing
+        @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
+        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
     end
 
     @testset "tuple utilities" begin

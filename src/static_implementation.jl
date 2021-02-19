@@ -416,58 +416,6 @@ Base.Symbol(::StaticSymbol{s}) where {s} = s::Symbol
 
 Base.show(io::IO, ::StaticSymbol{s}) where {s} = print(io, "static(:$s)")
 
-is_static(x) = is_static(typeof(x))
-is_static(::Type{T}) where {T<:StaticInt} = True()
-is_static(::Type{T}) where {T<:StaticBool} = True()
-is_static(::Type{T}) where {T<:StaticSymbol} = True()
-is_static(::Type{T}) where {T} = False()
-
-_tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
-function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
-        return True()
-    else
-        return False()
-    end
-end
-
-"""
-    static(x)
-
-Returns a static form of `x`. If `x` is already in a static form then `x` is returned. If
-there is no static alternative for `x` then an error is thrown.
-
-```julia
-julia> using ArrayInterface: static
-
-julia> static(1)
-static(1)
-
-julia> static(true)
-ArrayInterface.True()
-
-julia> static(:x)
-static(:x)
-
-```
-"""
-function static end
-@aggressive_constprop static(x::Int) = StaticInt(x)
-@aggressive_constprop static(x::Bool) = StaticBool(x)
-@aggressive_constprop static(x::Symbol) = StaticSymbol(x)
-@aggressive_constprop static(x::Tuple{Vararg{Any}}) = map(static, x)
-function static(x)
-    if is_static(x) === True()
-        return x
-    else
-        _no_static_type(x)
-    end
-end
-@generated static(::Val{V}) where {V} = static(V)
-function _no_static_type(@nospecialize(x))
-    error("There is no static alternative for type $(typeof(x)).")
-end
-
 #=
     find_first_eq(x, collection::Tuple)
 
