@@ -26,6 +26,10 @@ Base.show(io::IO, ::StaticFloat{N}) where {N} = print(io, "static($N)")
 Base.convert(::Type{T}, ::StaticFloat{N}) where {N,T<:AbstractFloat} = T(N)
 Base.promote_rule(::Type{StaticFloat{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
 
+@static if VERSION == v"1.2"
+    Base.promote_rule(::Type{StaticFloat{N}}, ::Type{Any}) where {N} = Any
+end
+
 Base.eltype(::Type{T}) where {T<:StaticFloat} = Float64
 Base.iszero(::FloatZero) = true
 Base.iszero(::StaticFloat) = false
