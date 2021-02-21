@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 using Base: @propagate_inbounds, Slice
 
-export is_static, known, static, StaticInt, StaticSymbol, True, False, StaticBool
+export is_static, known, static, StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool
 
 @static if VERSION >= v"1.7.0-DEV.421"
     using Base: @aggressive_constprop
