@@ -26,7 +26,6 @@ Base.Integer(x::StaticInt{N}) where {N} = x
 (::Type{T})(x::StaticInt{N}) where {T<:Integer,N} = T(N)
 (::Type{T})(x::Int) where {T<:StaticInt} = StaticInt(x)
 Base.convert(::Type{StaticInt{N}}, ::StaticInt{N}) where {N} = StaticInt{N}()
-Base.float(::StaticInt{N}) where {N} = Float64(N)
 
 Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:Number} = promote_type(Int, T)
 function Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:AbstractIrrational}

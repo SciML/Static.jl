@@ -51,7 +51,7 @@ using Test
         @test UnitRange(StaticInt(-11), 15) === -11:15
         @test UnitRange{Int}(StaticInt(-11), StaticInt(15)) === -11:15
         @test UnitRange(StaticInt(-11), StaticInt(15)) === -11:15
-        @test float(StaticInt(8)) === 8.0
+        @test float(StaticInt(8)) === static(8.0)
 
         # test specific promote rules to ensure we don't cause ambiguities
         SI = StaticInt{1}
@@ -258,5 +258,7 @@ x = ntuple(+, 10)
 y = 1:10
 @test @inferred(maybe_static_length(x)) === StaticInt(10)
 @test @inferred(maybe_static_length(y)) === 10
+
+include("float.jl")
 
 

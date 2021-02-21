@@ -15,6 +15,7 @@ end
 
 
 include("static_implementation.jl")
+include("float.jl")
 
 """
     known(::Type{T})
@@ -27,6 +28,7 @@ See also: [`static`](@ref), [`is_static`](@ref)
 @aggressive_constprop known(x) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
+known(::Type{StaticFloat{N}}) where {N} = N::Float
 known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
@@ -61,6 +63,7 @@ static(:x)
 """
 static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
 @aggressive_constprop static(x::Int) = StaticInt(x)
+@aggressive_constprop static(x::Float) = StaticFloat(x)
 @aggressive_constprop static(x::Bool) = StaticBool(x)
 @aggressive_constprop static(x::Symbol) = StaticSymbol(x)
 @aggressive_constprop static(x::Tuple{Vararg{Any}}) = map(static, x)
@@ -82,6 +85,7 @@ is_static(::Type{T}) where {T<:StaticBool} = True()
 is_static(::Type{T}) where {T<:StaticSymbol} = True()
 is_static(::Type{T}) where {T<:Val} = True()
 is_static(::Type{T}) where {T} = False()
+is_static(::Type{T}) where {T<:StaticFloat} = True()
 _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
@@ -90,7 +94,5 @@ function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
         return False()
     end
 end
-
-include("float.jl")
 
 end
