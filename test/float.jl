@@ -1,5 +1,4 @@
-
-@testset "Static Numbers" begin
+@testset "StaticFloat" begin
     for i ∈ -10:10
         for j ∈ -10:10
             @test i+j == @inferred(Static.StaticInt(i) + Static.StaticFloat(j)) == @inferred(i + Static.StaticFloat(j)) == @inferred(Static.StaticFloat(i) + j) == @inferred(Static.StaticFloat(i) + Static.StaticInt(j)) == @inferred(Static.StaticFloat(i) + Static.StaticFloat(j))
@@ -23,4 +22,21 @@
     @test @inferred(Static.roundtostaticint(Static.StaticFloat(prevfloat(2.0)))) === Static.StaticInt(2)
     @test @inferred(round(Static.StaticFloat(1.0))) === Static.StaticFloat(1)
     @test @inferred(round(Static.StaticFloat(prevfloat(2.0)))) === Static.StaticFloat(2)
+
+    fone = static(1.0)
+    fzero = static(0.0)
+    @test @inferred(isone(fone))
+    @test @inferred(isone(one(fzero)))
+    @test @inferred(isone(fzero)) === false
+
+    @test @inferred(iszero(fone)) === false
+    @test @inferred(iszero(fzero))
+    @test @inferred(iszero(zero(typeof(fzero))))
+
+    @test typeof(fone)(1) isa Static.StaticFloat
+    @test typeof(fone)(1.0) isa Static.StaticFloat
+
+    @test @inferred(eltype(Static.StaticFloat(static(1)))) <: Static.Float
+    @test @inferred(promote_type(typeof(fone), Int)) <: promote_type(Static.Float, Int)
 end
+

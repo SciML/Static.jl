@@ -1,6 +1,12 @@
 
 const Float = Int === Int64 ? Float64 : Float32
 
+"""
+    StaticFloat{N}
+
+A statically sized `$Float`.
+Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
+"""
 struct StaticFloat{N} <: AbstractFloat
     StaticFloat{N}() where {N} = new{N::Float}()
     StaticFloat(x::Float) = new{x}()

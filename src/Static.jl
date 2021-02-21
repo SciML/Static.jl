@@ -25,6 +25,7 @@ Returns the known value corresponding to a static type `T`. If `T` is not a stat
 
 See also: [`static`](@ref), [`is_static`](@ref)
 """
+known
 @aggressive_constprop known(x) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
@@ -61,7 +62,8 @@ static(:x)
 
 ```
 """
-static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
+static
+@aggressive_constprop static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
 @aggressive_constprop static(x::Int) = StaticInt(x)
 @aggressive_constprop static(x::Float) = StaticFloat(x)
 @aggressive_constprop static(x::Bool) = StaticBool(x)
@@ -79,6 +81,7 @@ Returns `True` if `T` is a static type.
 
 See also: [`static`](@ref), [`known`](@ref)
 """
+is_static
 @aggressive_constprop is_static(x) = is_static(typeof(x))
 is_static(::Type{T}) where {T<:StaticInt} = True()
 is_static(::Type{T}) where {T<:StaticBool} = True()
@@ -86,7 +89,7 @@ is_static(::Type{T}) where {T<:StaticSymbol} = True()
 is_static(::Type{T}) where {T<:Val} = True()
 is_static(::Type{T}) where {T} = False()
 is_static(::Type{T}) where {T<:StaticFloat} = True()
-_tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
+@aggressive_constprop _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
         return True()

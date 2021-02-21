@@ -212,9 +212,11 @@ using Test
         @test @inferred(Static.is_static(typeof(1))) === False()
         @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
         @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
+        @test @inferred(Static.is_static(typeof(static(1.0)))) === True()
 
         @test @inferred(Static.known(typeof(v))) === (:a, 1, true)
         @test @inferred(Static.known(typeof(static(true))))
+        @test @inferred(Static.known(typeof(static(1.0)))) === 1.0
         @test @inferred(Static.known(typeof(static(1)))) === 1
         @test @inferred(Static.known(typeof(static(:x)))) === :x
         @test @inferred(Static.known(typeof(1))) === nothing
