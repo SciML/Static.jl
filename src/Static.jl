@@ -29,7 +29,7 @@ known
 @aggressive_constprop known(x) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
-known(::Type{StaticFloat{N}}) where {N} = N::Float
+known(::Type{StaticFloat{N}}) where {N} = N::Float64
 known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
@@ -65,7 +65,7 @@ static(:x)
 static
 @aggressive_constprop static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
 @aggressive_constprop static(x::Int) = StaticInt(x)
-@aggressive_constprop static(x::Float) = StaticFloat(x)
+@aggressive_constprop static(x::Float64) = StaticFloat(x)
 @aggressive_constprop static(x::Bool) = StaticBool(x)
 @aggressive_constprop static(x::Symbol) = StaticSymbol(x)
 @aggressive_constprop static(x::Tuple{Vararg{Any}}) = map(static, x)

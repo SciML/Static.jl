@@ -1,3 +1,4 @@
+
 @testset "StaticFloat" begin
     for i ∈ -10:10
         for j ∈ -10:10
@@ -36,7 +37,10 @@
     @test typeof(fone)(1) isa Static.StaticFloat
     @test typeof(fone)(1.0) isa Static.StaticFloat
 
-    @test @inferred(eltype(Static.StaticFloat(static(1)))) <: Static.Float
-    @test @inferred(promote_type(typeof(fone), Int)) <: promote_type(Static.Float, Int)
+    @test @inferred(eltype(Static.StaticFloat(static(1)))) <: Float64
+    @test @inferred(promote_type(typeof(fone), Int)) <: promote_type(Float64, Int)
+
+    @test @inferred(inv(static(2.0))) === static(inv(2.0))
+
 end
 

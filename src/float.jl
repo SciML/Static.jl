@@ -1,34 +1,32 @@
 
-const Float = Int === Int64 ? Float64 : Float32
-
 """
     StaticFloat{N}
 
-A statically sized `$Float`.
+A statically sized `Float64`.
 Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
 struct StaticFloat{N} <: AbstractFloat
-    StaticFloat{N}() where {N} = new{N::Float}()
-    StaticFloat(x::Float) = new{x}()
-    StaticFloat(x::Int) = new{Base.sitofp(Float, x)::Float}()
+    StaticFloat{N}() where {N} = new{N::Float64}()
+    StaticFloat(x::Float64) = new{x}()
+    StaticFloat(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
 end
 
 (::Type{T})(x::Integer) where {T<:StaticFloat} = StaticFloat(x)
 (::Type{T})(x::AbstractFloat) where {T<:StaticFloat} = StaticFloat(x)
-@generated function Base.float(::StaticInt{N}) where {N}
-    Expr(:call, Expr(:curly, :StaticFloat, float(N)))
+@generated function Base.AbstractFloat(::StaticInt{N}) where {N}
+    Expr(:call, Expr(:curly, :StaticFloat, AbstractFloat(N)))
 end
 StaticFloat(x::StaticInt{N}) where {N} = float(x)
 
-const FloatOne = StaticFloat{one(Float)}
-const FloatZero = StaticFloat{zero(Float)}
+const FloatOne = StaticFloat{one(Float64)}
+const FloatZero = StaticFloat{zero(Float64)}
 
 Base.show(io::IO, ::StaticFloat{N}) where {N} = print(io, "static($N)")
 
 Base.convert(::Type{T}, ::StaticFloat{N}) where {N,T<:AbstractFloat} = T(N)
-Base.promote_rule(::Type{StaticFloat{N}}, ::Type{T}) where {N,T} = promote_type(T, Float)
+Base.promote_rule(::Type{StaticFloat{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
 
-Base.eltype(::Type{T}) where {T<:StaticFloat} = Float
+Base.eltype(::Type{T}) where {T<:StaticFloat} = Float64
 Base.iszero(::FloatZero) = true
 Base.iszero(::StaticFloat) = false
 Base.isone(::FloatOne) = true
@@ -37,19 +35,19 @@ Base.zero(::Type{T}) where {T<:StaticFloat} = FloatZero()
 Base.one(::Type{T}) where {T<:StaticFloat} = FloatOne()
 
 Base.@pure function fsub(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.sub_float(X, Y)::Float}()
+    return StaticFloat{Base.sub_float(X, Y)::Float64}()
 end
 
 Base.@pure function fadd(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.add_float(X, Y)::Float}()
+    return StaticFloat{Base.add_float(X, Y)::Float64}()
 end
 
 Base.@pure function fdiv(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.div_float(X, Y)::Float}()
+    return StaticFloat{Base.div_float(X, Y)::Float64}()
 end
 
 Base.@pure function fmul(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.mul_float(X, Y)::Float}()
+    return StaticFloat{Base.mul_float(X, Y)::Float64}()
 end
 
 Base.:+(x::StaticFloat{X}, y::StaticFloat{Y}) where {X,Y} = fadd(x, y)

@@ -247,6 +247,7 @@ using Test
         @test Static.find_first_eq(1, map(Int, y)) === 3
     end
 
+    @test repr(static(float(1))) == "static($(float(1)))"
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"
 end
