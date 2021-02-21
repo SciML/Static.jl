@@ -1,36 +1,38 @@
 
+const Float = Int === Int64 ? Float64 : Float32
+
 """
     StaticFloat{N}
 
-A statically sized `Float64`.
+A statically sized `Float`.
 Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
 struct StaticFloat{N} <: AbstractFloat
-    StaticFloat{N}() where {N} = new{N::Float64}()
-    StaticFloat(x::Float64) = new{x}()
-    StaticFloat(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
+    StaticFloat{N}() where {N} = new{N::Float}()
+    StaticFloat(x::Float) = new{x}()
+    StaticFloat(x::Int) = new{Base.sitofp(Float, x)::Float}()
 end
 
 (::Type{T})(x::Integer) where {T<:StaticFloat} = StaticFloat(x)
 (::Type{T})(x::AbstractFloat) where {T<:StaticFloat} = StaticFloat(x)
 @generated function Base.AbstractFloat(::StaticInt{N}) where {N}
-    Expr(:call, Expr(:curly, :StaticFloat, AbstractFloat(N)))
+    Expr(:call, Expr(:curly, :StaticFloat, Float(N)))
 end
 StaticFloat(x::StaticInt{N}) where {N} = float(x)
 
-const FloatOne = StaticFloat{one(Float64)}
-const FloatZero = StaticFloat{zero(Float64)}
+const FloatOne = StaticFloat{one(Float)}
+const FloatZero = StaticFloat{zero(Float)}
 
 Base.show(io::IO, ::StaticFloat{N}) where {N} = print(io, "static($N)")
 
 Base.convert(::Type{T}, ::StaticFloat{N}) where {N,T<:AbstractFloat} = T(N)
-Base.promote_rule(::Type{StaticFloat{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
+Base.promote_rule(::Type{StaticFloat{N}}, ::Type{T}) where {N,T} = promote_type(T, Float)
 
 @static if VERSION == v"1.2"
     Base.promote_rule(::Type{StaticFloat{N}}, ::Type{Any}) where {N} = Any
 end
 
-Base.eltype(::Type{T}) where {T<:StaticFloat} = Float64
+Base.eltype(::Type{T}) where {T<:StaticFloat} = Float
 Base.iszero(::FloatZero) = true
 Base.iszero(::StaticFloat) = false
 Base.isone(::FloatOne) = true
@@ -39,19 +41,19 @@ Base.zero(::Type{T}) where {T<:StaticFloat} = FloatZero()
 Base.one(::Type{T}) where {T<:StaticFloat} = FloatOne()
 
 Base.@pure function fsub(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.sub_float(X, Y)::Float64}()
+    return StaticFloat{Base.sub_float(X, Y)::Float}()
 end
 
 Base.@pure function fadd(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.add_float(X, Y)::Float64}()
+    return StaticFloat{Base.add_float(X, Y)::Float}()
 end
 
 Base.@pure function fdiv(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.div_float(X, Y)::Float64}()
+    return StaticFloat{Base.div_float(X, Y)::Float}()
 end
 
 Base.@pure function fmul(::StaticFloat{X}, ::StaticFloat{Y}) where {X,Y}
-    return StaticFloat{Base.mul_float(X, Y)::Float64}()
+    return StaticFloat{Base.mul_float(X, Y)::Float}()
 end
 
 Base.:+(x::StaticFloat{X}, y::StaticFloat{Y}) where {X,Y} = fadd(x, y)
@@ -102,6 +104,8 @@ Base.:/(x::StaticInt{X}, y::StaticFloat{Y}) where {X,Y} = /(float(x), y)
 roundtostaticint(x::AbstractFloat) = round(Int, x)
 @generated floortostaticint(::StaticFloat{M}) where {M} = Expr(:call, Expr(:curly, :StaticInt, floor(Int, M)))
 floortostaticint(x::AbstractFloat) = Base.fptosi(Int, x)
+
+Base.:(^)(::StaticFloat{x}, y::Float) where {x} = exp2(log2(x) * y)
 
 Base.inv(x::StaticFloat{N}) where {N} = fdiv(one(x), x)
 
