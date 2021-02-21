@@ -206,6 +206,8 @@ using Test
         @test @inferred(static(v)) === (static(:a), static(1), static(true))
         @test_throws ErrorException static("a")
 
+        @test @inferred(Static.is_static(v)) === True()
+        @test @inferred(Static.is_static(typeof(v))) === True()
         @test @inferred(Static.is_static(typeof(static(true)))) === True()
         @test @inferred(Static.is_static(typeof(static(1)))) === True()
         @test @inferred(Static.is_static(typeof(static(:x)))) === True()
@@ -214,8 +216,10 @@ using Test
         @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
         @test @inferred(Static.is_static(typeof(static(1.0)))) === True()
 
+        @test @inferred(Static.known(v)) === (:a, 1, true)
         @test @inferred(Static.known(typeof(v))) === (:a, 1, true)
         @test @inferred(Static.known(typeof(static(true))))
+        @test @inferred(Static.known(typeof(static(false)))) === false
         @test @inferred(Static.known(typeof(static(1.0)))) === 1.0
         @test @inferred(Static.known(typeof(static(1)))) === 1
         @test @inferred(Static.known(typeof(static(:x)))) === :x
