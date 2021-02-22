@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 using Base: @propagate_inbounds, Slice
 
-export is_static, known, static, StaticInt, StaticSymbol, True, False, StaticBool
+export is_static, known, static, StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool
 
 @static if VERSION >= v"1.7.0-DEV.421"
     using Base: @aggressive_constprop
@@ -15,6 +15,7 @@ end
 
 
 include("static_implementation.jl")
+include("float.jl")
 
 """
     known(::Type{T})
@@ -24,9 +25,11 @@ Returns the known value corresponding to a static type `T`. If `T` is not a stat
 
 See also: [`static`](@ref), [`is_static`](@ref)
 """
-known(x) = known(typeof(x))
+known
+@aggressive_constprop known(x) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
+known(::Type{StaticFloat64{N}}) where {N} = N::Float64
 known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
@@ -59,8 +62,10 @@ static(:x)
 
 ```
 """
-static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
+static
+@aggressive_constprop static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
 @aggressive_constprop static(x::Int) = StaticInt(x)
+@aggressive_constprop static(x::Float64) = StaticFloat64(x)
 @aggressive_constprop static(x::Bool) = StaticBool(x)
 @aggressive_constprop static(x::Symbol) = StaticSymbol(x)
 @aggressive_constprop static(x::Tuple{Vararg{Any}}) = map(static, x)
@@ -76,13 +81,15 @@ Returns `True` if `T` is a static type.
 
 See also: [`static`](@ref), [`known`](@ref)
 """
-is_static(x) = is_static(typeof(x))
+is_static
+@aggressive_constprop is_static(x) = is_static(typeof(x))
 is_static(::Type{T}) where {T<:StaticInt} = True()
 is_static(::Type{T}) where {T<:StaticBool} = True()
 is_static(::Type{T}) where {T<:StaticSymbol} = True()
 is_static(::Type{T}) where {T<:Val} = True()
 is_static(::Type{T}) where {T} = False()
-_tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
+is_static(::Type{T}) where {T<:StaticFloat64} = True()
+@aggressive_constprop _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
         return True()
