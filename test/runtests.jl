@@ -51,7 +51,7 @@ using Test
         @test UnitRange(StaticInt(-11), 15) === -11:15
         @test UnitRange{Int}(StaticInt(-11), StaticInt(15)) === -11:15
         @test UnitRange(StaticInt(-11), StaticInt(15)) === -11:15
-        @test float(StaticInt(8)) === 8.0
+        @test float(StaticInt(8)) === static(8.0)
 
         # test specific promote rules to ensure we don't cause ambiguities
         SI = StaticInt{1}
@@ -195,23 +195,37 @@ using Test
         @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
     end
 
-    @testset "static" begin
+    @testset "static interface" begin
+        v = Val((:a, 1, true))
+
         @test static(1) === StaticInt(1)
         @test static(true) === True()
         @test static(:a) === StaticSymbol{:a}()
         @test Symbol(static(:a)) === :a
         @test static((:a, 1, true)) === (static(:a), static(1), static(true))
-        @test @inferred(static(Val((:a, 1, true)))) === (static(:a), static(1), static(true))
+        @test @inferred(static(v)) === (static(:a), static(1), static(true))
         @test_throws ErrorException static("a")
-    end
 
-    @testset "is_static" begin
+        @test @inferred(Static.is_static(v)) === True()
+        @test @inferred(Static.is_static(typeof(v))) === True()
         @test @inferred(Static.is_static(typeof(static(true)))) === True()
         @test @inferred(Static.is_static(typeof(static(1)))) === True()
         @test @inferred(Static.is_static(typeof(static(:x)))) === True()
         @test @inferred(Static.is_static(typeof(1))) === False()
         @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
         @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
+        @test @inferred(Static.is_static(typeof(static(1.0)))) === True()
+
+        @test @inferred(Static.known(v)) === (:a, 1, true)
+        @test @inferred(Static.known(typeof(v))) === (:a, 1, true)
+        @test @inferred(Static.known(typeof(static(true))))
+        @test @inferred(Static.known(typeof(static(false)))) === false
+        @test @inferred(Static.known(typeof(static(1.0)))) === 1.0
+        @test @inferred(Static.known(typeof(static(1)))) === 1
+        @test @inferred(Static.known(typeof(static(:x)))) === :x
+        @test @inferred(Static.known(typeof(1))) === nothing
+        @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
+        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
     end
 
     @testset "tuple utilities" begin
@@ -237,6 +251,7 @@ using Test
         @test Static.find_first_eq(1, map(Int, y)) === 3
     end
 
+    @test repr(static(float(1))) == "static($(float(1)))"
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"
 end
@@ -250,5 +265,7 @@ x = ntuple(+, 10)
 y = 1:10
 @test @inferred(maybe_static_length(x)) === StaticInt(10)
 @test @inferred(maybe_static_length(y)) === 10
+
+include("float.jl")
 
 
