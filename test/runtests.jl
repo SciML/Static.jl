@@ -226,6 +226,8 @@ using Test
         @test @inferred(Static.known(typeof(1))) === nothing
         @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
         @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
+
+        @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
     end
 
     @testset "tuple utilities" begin

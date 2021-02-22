@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 using Base: @propagate_inbounds, Slice
 
-export is_static, known, static, StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool
+export dynamic, is_static, known, static, StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool
 
 @static if VERSION >= v"1.7.0-DEV.421"
     using Base: @aggressive_constprop
@@ -97,5 +97,15 @@ function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
         return False()
     end
 end
+
+"""
+    dynamic(x)
+
+Returns the "dynamic" ore non-static form of `x`.
+"""
+dynamic(x::X) where {X} = _dynamic(is_static(X), x)
+_dynamic(::True, x::X) where {X} = known(X)
+_dynamic(::False, x::X) where {X} = x
+@aggressive_constprop dynamic(x::Tuple) = map(dynamic, x)
 
 end
