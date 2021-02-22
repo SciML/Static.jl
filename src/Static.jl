@@ -39,7 +39,6 @@ function known(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     return eachop(_get_known, T; iterator=nstatic(Val(N)))
 end
 
-
 """
     static(x)
 
@@ -101,7 +100,7 @@ end
 """
     dynamic(x)
 
-Returns the "dynamic" ore non-static form of `x`.
+Returns the "dynamic" or non-static form of `x`.
 """
 dynamic(x::X) where {X} = _dynamic(is_static(X), x)
 _dynamic(::True, x::X) where {X} = known(X)
