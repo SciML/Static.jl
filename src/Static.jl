@@ -16,6 +16,7 @@ end
 
 include("static_implementation.jl")
 include("float.jl")
+include("tuples.jl")
 
 """
     known(::Type{T})
@@ -36,7 +37,7 @@ known(::Type{True}) = true
 known(::Type{False}) = false
 _get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(_get_tuple(T, dim))
 function known(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    return eachop(_get_known, T; iterator=nstatic(Val(N)))
+    return eachop(_get_known, nstatic(Val(N)), T)
 end
 
 """
@@ -90,7 +91,7 @@ is_static(::Type{T}) where {T} = False()
 is_static(::Type{T}) where {T<:StaticFloat64} = True()
 @aggressive_constprop _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    if all(eachop(_tuple_static, T; iterator=nstatic(Val(N))))
+    if all(eachop(_tuple_static, nstatic(Val(N)), T))
         return True()
     else
         return False()
@@ -106,5 +107,6 @@ dynamic(x::X) where {X} = _dynamic(is_static(X), x)
 _dynamic(::True, x::X) where {X} = known(X)
 _dynamic(::False, x::X) where {X} = x
 @aggressive_constprop dynamic(x::Tuple) = map(dynamic, x)
+
 
 end
