@@ -25,21 +25,11 @@ end
 
 Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
 """
-eachop(op, itr, args...) = _eachop(op, itr, args)
-@generated function _eachop(op, ::I, args::A) where {A,I}
-    t = Expr(:tuple)
-    narg = length(A.parameters)
-    for p in I.parameters
-        call_expr = Expr(:call, :op)
-        if narg > 0
-            for i in 1:narg
-                push!(call_expr.args, :(getfield(args, $i)))
-            end
-        end
-        push!(call_expr.args, :(StaticInt{$(p.parameters[1])}()))
-        push!(t.args, call_expr)
-    end
-    Expr(:block, Expr(:meta, :inline), t)
+@inline function eachop(op::F, itr::Tuple{I1,I2,Vararg}, args::Vararg{Any,K}) where {F,I1,I2,K}
+    return (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
+end
+@inline function eachop(op::F, itr::Tuple{I}, args::Vararg{Any,K}) where {F,I,K}
+    return (op(args..., first(itr)),)
 end
 
 """
