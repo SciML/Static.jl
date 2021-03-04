@@ -104,14 +104,18 @@ using Test
         @test @inferred(xor(t, t)) === f
 
         @test @inferred(|(true, f))
+        @test @inferred(|(true, t)) === t
         @test @inferred(|(f, true))
+        @test @inferred(|(t, true)) === t
         @test @inferred(|(f, f)) === f
         @test @inferred(|(f, t)) === t
         @test @inferred(|(t, f)) === t
         @test @inferred(|(t, t)) === t
 
-        @test !@inferred(Base.:(&)(true, f))
-        @test !@inferred(Base.:(&)(f, true))
+        @test @inferred(Base.:(&)(true, f)) === f
+        @test @inferred(Base.:(&)(true, t))
+        @test @inferred(Base.:(&)(f, true)) === f
+        @test @inferred(Base.:(&)(t, true))
         @test @inferred(Base.:(&)(f, f)) === f
         @test @inferred(Base.:(&)(f, t)) === f
         @test @inferred(Base.:(&)(t, f)) === f
