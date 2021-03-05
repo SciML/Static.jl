@@ -177,16 +177,20 @@ _or(::True, ::False) = True()
 _or(::False, ::True) = True()
 _or(::True, ::True) = True()
 _or(::False, ::False) = False()
-Base.:(|)(x::Bool, y::StaticBool) = x | Bool(y)
-Base.:(|)(x::StaticBool, y::Bool) = Bool(x) | y
+Base.:(|)(x::Bool, y::True) = y
+Base.:(|)(x::Bool, y::False) = x
+Base.:(|)(x::True, y::Bool) = x
+Base.:(|)(x::False, y::Bool) = y
 
 Base.:(&)(x::StaticBool, y::StaticBool) = _and(x, y)
 _and(::True, ::False) = False()
 _and(::False, ::True) = False()
 _and(::True, ::True) = True()
 _and(::False, ::False) = False()
-Base.:(&)(x::Bool, y::StaticBool) = x & Bool(y)
-Base.:(&)(x::StaticBool, y::Bool) = Bool(x) & y
+Base.:(&)(x::Bool, y::True) = x
+Base.:(&)(x::Bool, y::False) = y
+Base.:(&)(x::True, y::Bool) = y
+Base.:(&)(x::False, y::Bool) = x
 
 Base.xor(y::StaticBool, x::StaticBool) = _xor(x, y)
 _xor(::True, ::True) = False()
