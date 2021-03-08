@@ -162,22 +162,22 @@ using Test
         x = StaticInt(1)
         y = StaticInt(0)
         z = StaticInt(-1)
-        @test @inferred(Static.eq(x, y)) === f
+        @test @inferred(Static.eq(y)(x)) === f
         @test @inferred(Static.eq(x, x)) === t
 
-        @test @inferred(Static.ne(x, y)) === t
+        @test @inferred(Static.ne(y)(x)) === t
         @test @inferred(Static.ne(x, x)) === f
 
-        @test @inferred(Static.gt(x, y)) === t
+        @test @inferred(Static.gt(y)(x)) === t
         @test @inferred(Static.gt(y, x)) === f
 
-        @test @inferred(Static.ge(x, y)) === t
+        @test @inferred(Static.ge(y)(x)) === t
         @test @inferred(Static.ge(y, x)) === f
 
-        @test @inferred(Static.lt(y, x)) === t
+        @test @inferred(Static.lt(x)(y)) === t
         @test @inferred(Static.lt(x, y)) === f
 
-        @test @inferred(Static.le(y, x)) === t
+        @test @inferred(Static.le(x)(y)) === t
         @test @inferred(Static.le(x, y)) === f
 
         @test @inferred(Static.ifelse(t, x, y)) === x

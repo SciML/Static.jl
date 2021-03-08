@@ -108,5 +108,4 @@ _dynamic(::True, x::X) where {X} = known(X)
 _dynamic(::False, x::X) where {X} = x
 @aggressive_constprop dynamic(x::Tuple) = map(dynamic, x)
 
-
 end

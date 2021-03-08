@@ -123,7 +123,7 @@ end
     if L === nothing
         return g(x)
     else
-        return StaticInt(L)
+        return static(L)
     end
 end
 
@@ -137,9 +137,7 @@ end
 
 Base.UnitRange(start::StaticInt, stop) = UnitRange(Int(start), stop)
 Base.UnitRange(start, stop::StaticInt) = UnitRange(start, Int(stop))
-function Base.UnitRange(start::StaticInt, stop::StaticInt)
-    return UnitRange(Int(start), Int(stop))
-end
+Base.UnitRange(start::StaticInt, stop::StaticInt) = UnitRange(Int(start), Int(stop))
 
 """
     StaticBool(x::Bool) -> True/False
@@ -258,77 +256,57 @@ Base.any(::Tuple{Vararg{True}}) = true
 Base.any(::Tuple{Vararg{Union{True,False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
 
-"""
-    eq(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `==` or `isequal` but returns a `StaticBool`.
-"""
-eq(::StaticInt{X}, ::StaticInt{X}) where {X} = True()
-eq(::StaticInt{X}, ::StaticInt{Y}) where {X,Y} = False()
-
-"""
-    ne(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `!=` but returns a `StaticBool`.
-"""
-ne(::StaticInt{X}, ::StaticInt{X}) where {X} = False()
-ne(::StaticInt{X}, ::StaticInt{Y}) where {X,Y} = True()
-
-"""
-    gt(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `>` but returns a `StaticBool`.
-"""
-function gt(::StaticInt{X}, ::StaticInt{Y}) where {X,Y}
-    if X > Y
-        return True()
-    else
-        return False()
-    end
-end
-
-"""
-    ge(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `>=` but returns a `StaticBool`.
-"""
-function ge(::StaticInt{X}, ::StaticInt{Y}) where {X,Y}
-    if X >= Y
-        return True()
-    else
-        return False()
-    end
-end
-
-"""
-    le(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `<=` but returns a `StaticBool`.
-"""
-function le(::StaticInt{X}, ::StaticInt{Y}) where {X,Y}
-    if X <= Y
-        return True()
-    else
-        return False()
-    end
-end
-
-"""
-    lt(x::StaticInt, y::StaticInt) -> StaticBool
-
-Equivalent to `<` but returns a `StaticBool`.
-"""
-function lt(::StaticInt{X}, ::StaticInt{Y}) where {X,Y}
-    if X < Y
-        return True()
-    else
-        return False()
-    end
-end
-
 ifelse(::True, x, y) = x
 
 ifelse(::False, x, y) = y
+
+"""
+    eq(x, y)
+
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+"""
+eq(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
+eq(x::X) where {X} = Base.Fix2(eq, x)
+
+"""
+    ne(x, y)
+
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+"""
+ne(x::X, y::Y) where {X,Y} = !eq(x, y)
+ne(x::X) where {X} = Base.Fix2(ne, x)
+
+"""
+    gt(x, y)
+
+Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool.
+"""
+gt(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
+gt(x::X) where {X} = Base.Fix2(gt, x)
+
+"""
+    ge(x, y)
+
+Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool.
+"""
+ge(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
+ge(x::X) where {X} = Base.Fix2(ge, x)
+
+"""
+    le(x, y)
+
+Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool.
+"""
+le(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
+le(x::X) where {X} = Base.Fix2(le, x)
+
+"""
+    lt(x, y)
+
+Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
+"""
+lt(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
+lt(x::X) where {X} = Base.Fix2(lt, x)
 
 """
     StaticSymbol
