@@ -71,6 +71,15 @@ using Test
         @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
         @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
         @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
+
+        @test static(Int8(-18)) === static(-18)
+        @test static(0xef) === static(239)
+        @test static(Int16(-18)) === static(-18)
+        @test static(0xffef) === static(65519)
+        if sizeof(Int) == 8
+            @test static(Int32(-18)) === static(-18)
+            @test static(0xffffffef) === static(4294967279)
+        end
     end
 
     @testset "StaticBool" begin
