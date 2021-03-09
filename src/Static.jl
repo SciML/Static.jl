@@ -65,6 +65,10 @@ static(:x)
 static
 @aggressive_constprop static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
 @aggressive_constprop static(x::Int) = StaticInt(x)
+@aggressive_constprop static(x::Union{Int8,UInt8,Int16,UInt16}) = StaticInt(x % Int)
+if sizeof(Int) == 8
+    @aggressive_constprop static(x::Union{Int32,UInt32}) = StaticInt(x % Int)
+end
 @aggressive_constprop static(x::Float64) = StaticFloat64(x)
 @aggressive_constprop static(x::Bool) = StaticBool(x)
 @aggressive_constprop static(x::Symbol) = StaticSymbol(x)
