@@ -140,6 +140,11 @@ using Test
         @test @inferred(<=(t, f)) === f
         @test @inferred(<=(t, t)) === t
 
+        @test @inferred(==(f, f)) === t
+        @test @inferred(==(f, t)) === f
+        @test @inferred(==(t, f)) === f
+        @test @inferred(==(t, t)) === t
+
         @test @inferred(*(f, t)) === t & f
         @test @inferred(-(f, t)) === StaticInt(f) - StaticInt(t)
         @test @inferred(+(f, t)) === StaticInt(f) + StaticInt(t)
