@@ -87,7 +87,7 @@ using Test
         f = StaticBool(static(false))
 
         @test StaticBool{true}() === t
-        @test StaticBool{false}() === t
+        @test StaticBool{false}() === f
 
         @test @inferred(StaticInt(t)) === StaticInt(1)
         @test @inferred(StaticInt(f)) === StaticInt(0)
