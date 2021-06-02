@@ -14,8 +14,10 @@ else
 end
 
 
-include("static_implementation.jl")
+include("int.jl")
+include("bool.jl")
 include("float.jl")
+include("symbol.jl")
 include("tuples.jl")
 
 """
@@ -85,14 +87,14 @@ Returns `True` if `T` is a static type.
 
 See also: [`static`](@ref), [`known`](@ref)
 """
-is_static
-@aggressive_constprop is_static(x) = is_static(typeof(x))
-is_static(::Type{T}) where {T<:StaticInt} = True()
-is_static(::Type{T}) where {T<:StaticBool} = True()
-is_static(::Type{T}) where {T<:StaticSymbol} = True()
-is_static(::Type{T}) where {T<:Val} = True()
-is_static(::Type{T}) where {T} = False()
-is_static(::Type{T}) where {T<:StaticFloat64} = True()
+is_static(@nospecialize(x)) = is_static(typeof(x))
+is_static(@nospecialize(x::Type{<:StaticInt})) = True()
+is_static(@nospecialize(x::Type{<:StaticBool})) = True()
+is_static(@nospecialize(x::Type{<:StaticSymbol})) = True()
+is_static(@nospecialize(x::Type{<:Val})) = True()
+is_static(@nospecialize(x::Type{<:StaticFloat64})) = True()
+is_static(x::Type{T}) where {T} = False()
+
 @aggressive_constprop _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     if all(eachop(_tuple_static, nstatic(Val(N)), T))

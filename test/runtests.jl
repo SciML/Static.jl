@@ -86,6 +86,9 @@ using Test
         t = static(static(true))
         f = StaticBool(static(false))
 
+        @test StaticBool{true}() === t
+        @test StaticBool{false}() === f
+
         @test @inferred(StaticInt(t)) === StaticInt(1)
         @test @inferred(StaticInt(f)) === StaticInt(0)
 
@@ -274,6 +277,7 @@ using Test
     @test repr(static(float(1))) == "static($(float(1)))"
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"
+    @test repr(static(true)) == "static(true)"
 end
 
 # for some reason this can't be inferred when in the "Static.jl" test set
