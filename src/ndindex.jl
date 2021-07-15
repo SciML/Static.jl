@@ -85,8 +85,8 @@ Base.zero(::Type{NDIndex{N}}) where {N} = NDIndex(ntuple(_ -> static(0), Val(N))
 Base.oneunit(::NDIndex{N}) where {N} = oneunit(NDIndex{N})
 Base.oneunit(::Type{NDIndex{N}}) where {N} = NDIndex(ntuple(_ -> static(1), Val(N)))
 
-@inline function Base.split(i::NDIndex, V::Val)
-    i, j = split(Tuple(i), V)
+@inline function Base.IteratorsMD.split(i::NDIndex, V::Val)
+    i, j = Base.IteratorsMD.split(Tuple(i), V)
     return NDIndex(i), NDIndex(j)
 end
 
@@ -107,7 +107,7 @@ end
 @inline Base.:(*)(a::Integer, i::NDIndex{N}) where {N} = NDIndex(map(x->a*x, Tuple(i)))
 @inline Base.:(*)(i::NDIndex, a::Integer) = *(a, i)
 
-Base.CartesianIndex(x::NDIndex) = CartesianIndex(Tuple(x))
+Base.CartesianIndex(x::NDIndex) = dynamic(x)
 
 # comparison
 @inline function Base.isless(x::NDIndex{N}, y::NDIndex{N}) where {N}
@@ -156,11 +156,11 @@ end
 # In simple cases, we know that we don't need to use axes(A). Optimize those
 # until Julia gets smart enough to elide the call on its own:
 @inline function Base.to_indices(A, inds, I::Tuple{NDIndex, Vararg{Any}})
-    return Base.to_indices(A, inds, (Tuple(I[1])..., tail(I)...))
+    return to_indices(A, inds, (Tuple(I[1])..., Base.tail(I)...))
 end
 # But for arrays of CartesianIndex, we just skip the appropriate number of inds
 @inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{NDIndex{N}}, Vararg{Any}}) where N
-    _, indstail = IteratorsMD.split(inds, Val(N))
-    return (Base.to_index(A, I[1]), Base.to_indices(A, indstail, tail(I))...)
+    _, indstail = Base.IteratorsMD.split(inds, Val(N))
+    return (to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 

@@ -2,7 +2,6 @@ using Static, Aqua
 using Test
 
 @testset "Static.jl" begin
-
     Aqua.test_all(Static)
 
     @testset "StaticInt" begin
@@ -281,7 +280,7 @@ using Test
 
         @testset "constructors" begin
             @test static(CartesianIndex(3, 3, 3)) === z == Base.setindex(Base.setindex(x, 3, 1), 3, 2)
-            @test @inferred(Static.dynamic(z)) === CartesianIndex(3, 3, 3)
+            @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) === CartesianIndex(3, 3, 3)
             @test @inferred(Static.known(z)) === (3, 3, 3)
             @test Tuple(@inferred(NDIndex{0}())) === ()
             @test @inferred(NDIndex{3}(1, static(2), 3)) === y
@@ -290,6 +289,7 @@ using Test
             @test @inferred(NDIndex(x, y)) === NDIndex(1, 2, 3, 1, static(2), 3)
         end
 
+        @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3,))
         @test @inferred(length(x)) === 3
         @test @inferred(length(typeof(x))) === 3
         @test @inferred(y[2]) === 2
@@ -308,6 +308,10 @@ using Test
         @test !@inferred(isless(y, x))
         @test @inferred(isless(x, z))
         @test @inferred(Static.lt(oneunit(z), z)) === static(true)
+
+        A = rand(3,3,3);
+        @test @inferred(to_indices(A, (x,))) === (1, 2, 3)
+        @test @inferred(to_indices(A, ([y,y],))) == ([y, y],)
     end
 
     @test repr(static(float(1))) == "static($(float(1)))"
