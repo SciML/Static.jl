@@ -310,8 +310,8 @@ using Test
         @test @inferred(Static.lt(oneunit(z), z)) === static(true)
 
         A = rand(3,3,3);
-        @test @inferred(to_indices(A, (x,))) === (1, 2, 3)
-        @test @inferred(to_indices(A, ([y,y],))) == ([y, y],)
+        @test @inferred(to_indices(A, axes(A), (x,))) === (1, 2, 3)
+        @test @inferred(to_indices(A, axes(A), ([y,y],))) == ([y, y],)
     end
 
     @test repr(static(float(1))) == "static($(float(1)))"

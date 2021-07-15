@@ -34,7 +34,7 @@ struct NDIndex{N,I<:Tuple{Vararg{Union{StaticInt,Int},N}}} <: AbstractCartesianI
     NDIndex(i::Vararg{Union{StaticInt,Int},N}) where {N} = NDIndex(i)
 
     NDIndex(index::Tuple) = NDIndex(_flatten(index...))
-    NDIndex(index...) = NDIndex(_flatten(index...))
+    NDIndex(index...) = NDIndex(index)
 end
 
 _ndindex(n::StaticInt{N}, i::Tuple{Vararg{Union{Int,StaticInt},N}}) where {N} = NDIndex(i)
@@ -133,24 +133,10 @@ function icmp(cmp::Int, x::Tuple, y::Tuple)
     end
 end
 icmp(a, b) = _icmp(lt(a, b), a, b)
-_icmp(::True, a, b) = static(1)
-_icmp(::False, a, b) = __icmp(eq(a, b))
-function _icmp(x::Bool, a, b)
-    if x
-        return 1
-    else
-        return __icmp(a == b)
-    end
-end
-__icmp(::True) = static(0)
-__icmp(::False) = static(-1)
-function __icmp(x::Bool)
-    if x
-        return 0
-    else
-        return -1
-    end
-end
+_icmp(x::StaticBool, a, b) = ifelse(x, static(1), __icmp(eq(a, b)))
+_icmp(x::Bool, a, b) = ifelse(x, 1, __icmp(a == b))
+__icmp(x::StaticBool) = ifelse(x, static(0), static(-1))
+__icmp(x::Bool) = ifelse(x, 0, -1)
 
 #  Necessary for compatibility with Base
 # In simple cases, we know that we don't need to use axes(A). Optimize those
