@@ -1,9 +1,10 @@
 module Static
 
 import IfElse: ifelse
-using Base: @propagate_inbounds, Slice
+using Base: @propagate_inbounds, Slice, AbstractCartesianIndex
 
-export dynamic, is_static, known, static, StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool
+export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
+export dynamic, is_static, known, static 
 
 @static if VERSION >= v"1.7.0-DEV.421"
     using Base: @aggressive_constprop
@@ -13,11 +14,11 @@ else
     end
 end
 
-
 include("int.jl")
 include("bool.jl")
 include("float.jl")
 include("symbol.jl")
+include("ndindex.jl")
 include("tuples.jl")
 
 """
@@ -37,6 +38,7 @@ known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
 known(::Type{False}) = false
+known(::Type{NDIndex{N,I}}) where {N,I} = known(I)
 _get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(_get_tuple(T, dim))
 function known(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     return eachop(_get_known, nstatic(Val(N)), T)
@@ -51,13 +53,13 @@ there is no static alternative for `x` then an error is thrown.
 See also: [`is_static`](@ref), [`known`](@ref)
 
 ```julia
-julia> using ArrayInterface: static
+julia> using Static
 
 julia> static(1)
 static(1)
 
 julia> static(true)
-ArrayInterface.True()
+True()
 
 julia> static(:x)
 static(:x)
@@ -79,6 +81,8 @@ end
 function _no_static_type(@nospecialize(x))
     error("There is no static alternative for type $(typeof(x)).")
 end
+static(x::CartesianIndex) = NDIndex(static(Tuple(x)))
+
 
 """
     is_static(::Type{T}) -> StaticBool
@@ -113,5 +117,6 @@ dynamic(x::X) where {X} = _dynamic(is_static(X), x)
 _dynamic(::True, x::X) where {X} = known(X)
 _dynamic(::False, x::X) where {X} = x
 @aggressive_constprop dynamic(x::Tuple) = map(dynamic, x)
+dynamic(x::NDIndex) = CartesianIndex(dynamic(Tuple(x)))
 
 end
