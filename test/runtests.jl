@@ -5,7 +5,7 @@ using Test
     Aqua.test_all(Static)
 
     @testset "StaticInt" begin
-        @test StaticInt(UInt(8)) === StaticInt{8}()
+        @test static(UInt(8)) === StaticInt(UInt(8)) === StaticInt{8}()
         @test iszero(StaticInt(0))
         @test !iszero(StaticInt(1))
         @test !isone(StaticInt(0))
