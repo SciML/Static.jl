@@ -6,7 +6,7 @@ using Base: @propagate_inbounds, Slice, AbstractCartesianIndex
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static 
 
-@static if VERSION >= v"1.7.0-DEV.421"
+@static if isdefined(Base, Symbol("@constprop"))
     using Base: @constprop
 else
     macro constprop(_, ex)
