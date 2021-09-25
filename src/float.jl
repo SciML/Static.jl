@@ -24,7 +24,7 @@ const FloatZero = StaticFloat64{zero(Float64)}
 Base.show(io::IO, @nospecialize(x::StaticFloat64)) = print(io, "static($(dynamic(x)))")
 
 Base.convert(::Type{T}, @nospecialize(x::StaticFloat64)) where {T<:AbstractFloat} = T(dynamic(x))
-Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{T}) where {T} = promote_type(T, Float64)
+Base.promote_rule(x::Type{<:StaticFloat64}, ::Type{T}) where {T} = promote_type(T, Float64)
 Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float64})  = Float64
 Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float32}) = Float32
 Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float16}) = Float16
