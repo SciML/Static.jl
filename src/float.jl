@@ -25,9 +25,9 @@ Base.show(io::IO, @nospecialize(x::StaticFloat64)) = print(io, "static($(dynamic
 
 Base.convert(::Type{T}, @nospecialize(x::StaticFloat64)) where {T<:AbstractFloat} = T(dynamic(x))
 Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
-Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float64})  = Float64
-Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float32}) = Float32
-Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float16}) = Float16
+Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float64}) where {N} = Float64
+Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float32}) where {N} = Float32
+Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float16}) where {N} = Float16
 
 @static if VERSION == v"1.2"
     Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Any}) where {N} = Any
