@@ -12,23 +12,23 @@ end
 const Zero = StaticInt{0}
 const One = StaticInt{1}
 
-Base.show(io::IO, ::StaticInt{N}) where {N} = print(io, "static($N)")
+Base.show(io::IO, @nospecialize(x::StaticInt)) = print(io, "static($(dynamic(x)))")
 
 StaticInt(N::Int) = StaticInt{N}()
 StaticInt(N::Integer) = StaticInt(convert(Int, N))
 StaticInt(::StaticInt{N}) where {N} = StaticInt{N}()
 StaticInt(::Val{N}) where {N} = StaticInt{N}()
 # Base.Val(::StaticInt{N}) where {N} = Val{N}()
-Base.convert(::Type{T}, ::StaticInt{N}) where {T<:Number,N} = convert(T, N)
-Base.Bool(x::StaticInt{N}) where {N} = Bool(N)
-Base.BigInt(x::StaticInt{N}) where {N} = BigInt(N)
+Base.convert(::Type{T}, @nospecialize(x::StaticInt)) where {T<:Number} = convert(T, dynamic(x))
+Base.Bool(@nospecialize(x::StaticInt)) = Bool(dynamic(x))
+Base.BigInt(@nospecialize(x::StaticInt)) = BigInt(dynamic(x))
 Base.Integer(x::StaticInt{N}) where {N} = x
-(::Type{T})(x::StaticInt{N}) where {T<:Integer,N} = T(N)
+(::Type{T})(@nospecialize(x::StaticInt)) where {T<:Integer} = T(dynamic(x))
 (::Type{T})(x::Int) where {T<:StaticInt} = StaticInt(x)
 Base.convert(::Type{StaticInt{N}}, ::StaticInt{N}) where {N} = StaticInt{N}()
 
-Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:Number} = promote_type(Int, T)
-function Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:AbstractIrrational}
+Base.promote_rule(@nospecialize(x::Type{<:StaticInt}), ::Type{T}) where {T<:Number} = promote_type(Int, T)
+function Base.promote_rule(@nospecialize(x::Type{<:StaticInt}), ::Type{T}) where {T<:AbstractIrrational}
     return promote_type(Int, T)
 end
 # Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T <: AbstractIrrational} = promote_rule(T, Int)
@@ -43,44 +43,44 @@ end
 function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missing,Nothing}}
     return promote_type(T, Int)
 end
-Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
-Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Missing} = promote_type(T, Int)
+Base.promote_rule(::Type{T}, @nospecialize(x::Type{<:StaticInt})) where {T>:Nothing} = promote_type(T, Int)
+Base.promote_rule(::Type{T}, @nospecialize(x::Type{<:StaticInt})) where {T>:Missing} = promote_type(T, Int)
 for T in [:Bool, :Missing, :BigFloat, :BigInt, :Nothing, :Any]
     # let S = :Any
     @eval begin
-        function Base.promote_rule(::Type{S}, ::Type{$T}) where {S<:StaticInt}
+        function Base.promote_rule(@nospecialize(x::Type{<:StaticInt}), ::Type{$T})
             return promote_type(Int, $T)
         end
-        function Base.promote_rule(::Type{$T}, ::Type{S}) where {S<:StaticInt}
+        function Base.promote_rule(::Type{$T}, @nospecialize(x::Type{<:StaticInt}))
             return promote_type($T, Int)
         end
     end
 end
-Base.promote_rule(::Type{<:StaticInt}, ::Type{<:StaticInt}) = Int
-Base.:(%)(::StaticInt{N}, ::Type{Integer}) where {N} = N
+Base.promote_rule(@nospecialize(x::Type{<:StaticInt}), @nospecialize(y::Type{<:StaticInt})) = Int
+Base.:(%)(@nospecialize(x::StaticInt), ::Type{Integer}) = dynamic(x)
 
-Base.eltype(::Type{T}) where {T<:StaticInt} = Int
+Base.eltype(@nospecialize(x::Type{<:StaticInt})) = Int
 Base.iszero(::Zero) = true
-Base.iszero(::StaticInt) = false
+Base.iszero(@nospecialize(x::StaticInt)) = false
 Base.isone(::One) = true
-Base.isone(::StaticInt) = false
-Base.zero(::Type{T}) where {T<:StaticInt} = Zero()
-Base.one(::Type{T}) where {T<:StaticInt} = One()
+Base.isone(@nospecialize(x::StaticInt)) = false
+Base.zero(@nospecialize(x::Type{<:StaticInt})) = Zero()
+Base.one(@nospecialize(x::Type{<:StaticInt})) = One()
 
 for T in [:Real, :Rational, :Integer]
     @eval begin
         @inline Base.:(+)(i::$T, ::Zero) = i
-        @inline Base.:(+)(i::$T, ::StaticInt{M}) where {M} = i + M
+        @inline Base.:(+)(i::$T, @nospecialize(m::StaticInt)) = i + dynamic(m)
         @inline Base.:(+)(::Zero, i::$T) = i
-        @inline Base.:(+)(::StaticInt{M}, i::$T) where {M} = M + i
+        @inline Base.:(+)(@nospecialize(m::StaticInt), i::$T) = dynamic(m) + i
         @inline Base.:(-)(i::$T, ::Zero) = i
-        @inline Base.:(-)(i::$T, ::StaticInt{M}) where {M} = i - M
+        @inline Base.:(-)(i::$T, @nospecialize(m::StaticInt)) = i - dynamic(m)
         @inline Base.:(*)(i::$T, ::Zero) = Zero()
         @inline Base.:(*)(i::$T, ::One) = i
-        @inline Base.:(*)(i::$T, ::StaticInt{M}) where {M} = i * M
+        @inline Base.:(*)(i::$T, @nospecialize(m::StaticInt)) = i * dynamic(m)
         @inline Base.:(*)(::Zero, i::$T) = Zero()
         @inline Base.:(*)(::One, i::$T) = i
-        @inline Base.:(*)(::StaticInt{M}, i::$T) where {M} = M * i
+        @inline Base.:(*)(@nospecialize(m::StaticInt), i::$T) = dynamic(m) * i
     end
 end
 @inline Base.:(+)(::Zero, ::Zero) = Zero()
@@ -112,8 +112,8 @@ end
 for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥)]
     @eval begin
         @inline Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = $f(M, N)
-        @inline Base.$f(::StaticInt{M}, x::Int) where {M} = $f(M, x)
-        @inline Base.$f(x::Int, ::StaticInt{M}) where {M} = $f(x, M)
+        @inline Base.$f(@nospecialize(m::StaticInt), x::Int) = $f(dynamic(m), x)
+        @inline Base.$f(x::Int, @nospecialize(m::StaticInt))  = $f(x, dynamic(m))
     end
 end
 
@@ -126,17 +126,17 @@ end
     end
 end
 
-@inline Base.widen(::StaticInt{N}) where {N} = widen(N)
+@inline Base.widen(@nospecialize(x::StaticInt)) = widen(dynamic(x))
 
-Base.UnitRange{T}(start::StaticInt, stop) where {T<:Real} = UnitRange{T}(T(start), T(stop))
-Base.UnitRange{T}(start, stop::StaticInt) where {T<:Real} = UnitRange{T}(T(start), T(stop))
-function Base.UnitRange{T}(start::StaticInt, stop::StaticInt) where {T<:Real}
+Base.UnitRange{T}(@nospecialize(start::StaticInt), stop) where {T<:Real} = UnitRange{T}(T(start), T(stop))
+Base.UnitRange{T}(start, @nospecialize(stop::StaticInt)) where {T<:Real} = UnitRange{T}(T(start), T(stop))
+function Base.UnitRange{T}(@nospecialize(start::StaticInt), @nospecialize(stop::StaticInt)) where {T<:Real}
     return UnitRange{T}(T(start), T(stop))
 end
 
-Base.UnitRange(start::StaticInt, stop) = UnitRange(Int(start), stop)
-Base.UnitRange(start, stop::StaticInt) = UnitRange(start, Int(stop))
-Base.UnitRange(start::StaticInt, stop::StaticInt) = UnitRange(Int(start), Int(stop))
+Base.UnitRange(@nospecialize(start::StaticInt), stop) = UnitRange(Int(start), stop)
+Base.UnitRange(start, @nospecialize(stop::StaticInt)) = UnitRange(start, Int(stop))
+Base.UnitRange(@nospecialize(start::StaticInt), @nospecialize(stop::StaticInt)) = UnitRange(Int(start), Int(stop))
 
 """
     eq(x, y)

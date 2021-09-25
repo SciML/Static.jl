@@ -21,25 +21,25 @@ StaticFloat64(x::StaticInt{N}) where {N} = float(x)
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
-Base.show(io::IO, ::StaticFloat64{N}) where {N} = print(io, "static($N)")
+Base.show(io::IO, @nospecialize(x::StaticFloat64)) = print(io, "static($(dynamic(x)))")
 
-Base.convert(::Type{T}, ::StaticFloat64{N}) where {N,T<:AbstractFloat} = T(N)
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float64}) where {N} = Float64
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float32}) where {N} = Float32
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float16}) where {N} = Float16
+Base.convert(::Type{T}, @nospecialize(x::StaticFloat64)) where {T<:AbstractFloat} = T(dynamic(x))
+Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{T}) where {T} = promote_type(T, Float64)
+Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float64})  = Float64
+Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float32}) = Float32
+Base.promote_rule(@nospecialize(x::Type{<:StaticFloat64}), ::Type{Float16}) = Float16
 
 @static if VERSION == v"1.2"
     Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Any}) where {N} = Any
 end
 
-Base.eltype(::Type{T}) where {T<:StaticFloat64} = Float64
+Base.eltype(@nospecialize(x::Type{<:StaticFloat64})) = Float64
 Base.iszero(::FloatZero) = true
-Base.iszero(::StaticFloat64) = false
+Base.iszero(@nospecialize(x::StaticFloat64)) = false
 Base.isone(::FloatOne) = true
-Base.isone(::StaticFloat64) = false
-Base.zero(::Type{T}) where {T<:StaticFloat64} = FloatZero()
-Base.one(::Type{T}) where {T<:StaticFloat64} = FloatOne()
+Base.isone(@nospecialize(x::StaticFloat64)) = false
+Base.zero(@nospecialize(x::Type{<:StaticFloat64})) = FloatZero()
+Base.one(@nospecialize(x::Type{<:StaticFloat64})) = FloatOne()
 
 Base.@pure function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.sub_float(X, Y)::Float64}()

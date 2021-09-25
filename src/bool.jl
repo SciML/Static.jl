@@ -126,5 +126,5 @@ ifelse(::True, x, y) = x
 
 ifelse(::False, x, y) = y
 
-Base.show(io::IO, ::StaticBool{bool}) where {bool} = print(io, "static($bool)")
+Base.show(io::IO, @nospecialize(x::StaticBool)) = print(io, "static($(dynamic(x)))")
 

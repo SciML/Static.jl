@@ -30,11 +30,12 @@ Returns the known value corresponding to a static type `T`. If `T` is not a stat
 See also: [`static`](@ref), [`is_static`](@ref)
 """
 known
-@constprop :aggressive known(x) = known(typeof(x))
+#@constprop :aggressive known(x) = known(typeof(x))
+known(@nospecialize(x)) = known(typeof(x))
 known(::Type{T}) where {T} = nothing
-known(::Type{StaticInt{N}}) where {N} = N::Int
-known(::Type{StaticFloat64{N}}) where {N} = N::Float64
-known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
+known(@nospecialize(x::Type{<:StaticInt}))::Int = @inbounds(getfield(x, :parameters)[1])
+known(@nospecialize(x::Type{<:StaticSymbol}))::Symbol = @inbounds(getfield(x, :parameters)[1])
+known(@nospecialize(x::Type{<:StaticFloat64}))::Float64 = @inbounds(getfield(x, :parameters)[1])
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
 known(::Type{False}) = false
@@ -116,9 +117,9 @@ end
 
 Returns the "dynamic" or non-static form of `x`.
 """
-dynamic(x::X) where {X} = _dynamic(is_static(X), x)
-_dynamic(::True, x::X) where {X} = known(X)
-_dynamic(::False, x::X) where {X} = x
+dynamic(@nospecialize(x)) = _dynamic(is_static(x), x)
+_dynamic(::True, @nospecialize(x)) = known(typeof(x))
+_dynamic(::False, x) = x
 @constprop :aggressive dynamic(x::Tuple) = map(dynamic, x)
 dynamic(x::NDIndex) = CartesianIndex(dynamic(Tuple(x)))
 
