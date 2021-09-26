@@ -40,59 +40,59 @@ Base.isone(::StaticFloat64) = false
 Base.zero(::Type{T}) where {T<:StaticFloat64} = FloatZero()
 Base.one(::Type{T}) where {T<:StaticFloat64} = FloatOne()
 
-Base.@pure function fneg(::StaticFloat64{X}) where {X}
+function fneg(::StaticFloat64{X}) where {X}
     return StaticFloat64{Base.neg_float(X)::Float64}()
 end
 
-Base.@pure function fabs(::StaticFloat64{X}) where {X}
+function fabs(::StaticFloat64{X}) where {X}
     return StaticFloat64{Base.abs_float(X)::Float64}()
 end
 
-Base.@pure function fcopysign(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fcopysign(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.copysign_float(X, Y)::Float64}()
 end
 
-Base.@pure function feq(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function feq(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.eq_float(X, Y)::Float64}()
 end
 
-Base.@pure function fne(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fne(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.ne_float(X, Y)::Float64}()
 end
 
-Base.@pure function fle(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fle(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.le_float(X, Y)::Float64}()
 end
 
-Base.@pure function flt(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function flt(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.lt_float(X, Y)::Float64}()
 end
 
-Base.@pure function fadd(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fadd(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.add_float(X, Y)::Float64}()
 end
 
-Base.@pure function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.sub_float(X, Y)::Float64}()
 end
 
-Base.@pure function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.mul_float(X, Y)::Float64}()
 end
 
-Base.@pure function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.div_float(X, Y)::Float64}()
 end
 
-Base.@pure function frem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function frem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.rem_float(X, Y)::Float64}()
 end
 
-Base.@pure function fmuladd(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
+function fmuladd(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
     return StaticFloat64{Base.muladd_float(X,Y,Z)::Float64}()
 end
 
-Base.@pure function ffma(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
+function ffma(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
     return StaticFloat64{Base.fma_float(X,Y,Z)::Float64}()
 end
 
