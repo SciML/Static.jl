@@ -1,7 +1,6 @@
 
 """
-    StaticFloat64{N}
-
+StaticFloat64{N}
 A statically sized `Float64`.
 Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
@@ -41,20 +40,60 @@ Base.isone(::StaticFloat64) = false
 Base.zero(::Type{T}) where {T<:StaticFloat64} = FloatZero()
 Base.one(::Type{T}) where {T<:StaticFloat64} = FloatOne()
 
-Base.@pure function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
-    return StaticFloat64{Base.sub_float(X, Y)::Float64}()
+Base.@pure function fneg(::StaticFloat64{X}) where {X}
+    return StaticFloat64{Base.neg_float(X)::Float64}()
+end
+
+Base.@pure function fabs(::StaticFloat64{X}) where {X}
+    return StaticFloat64{Base.abs_float(X)::Float64}()
+end
+
+Base.@pure function fcopysign(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.copysign_float(X, Y)::Float64}()
+end
+
+Base.@pure function feq(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.eq_float(X, Y)::Float64}()
+end
+
+Base.@pure function fne(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.ne_float(X, Y)::Float64}()
+end
+
+Base.@pure function fle(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.le_float(X, Y)::Float64}()
+end
+
+Base.@pure function flt(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.lt_float(X, Y)::Float64}()
 end
 
 Base.@pure function fadd(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.add_float(X, Y)::Float64}()
 end
 
-Base.@pure function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
-    return StaticFloat64{Base.div_float(X, Y)::Float64}()
+Base.@pure function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.sub_float(X, Y)::Float64}()
 end
 
 Base.@pure function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.mul_float(X, Y)::Float64}()
+end
+
+Base.@pure function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.div_float(X, Y)::Float64}()
+end
+
+Base.@pure function frem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+    return StaticFloat64{Base.rem_float(X, Y)::Float64}()
+end
+
+Base.@pure function fmuladd(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
+    return StaticFloat64{Base.muladd_float(X,Y,Z)::Float64}()
+end
+
+Base.@pure function ffma(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where {X,Y,Z}
+    return StaticFloat64{Base.fma_float(X,Y,Z)::Float64}()
 end
 
 Base.:+(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fadd(x, y)
@@ -92,7 +131,6 @@ Base.:*(x::StaticFloat64{X}, ::FloatOne) where {X} = x
 Base.:*(::FloatOne, y::StaticFloat64{Y}) where {Y} = y
 Base.:*(::FloatOne, y::FloatZero) = y
 
-
 Base.:/(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
 Base.:/(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
 Base.:/(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = /(float(x), y)
@@ -109,4 +147,3 @@ floortostaticint(x::AbstractFloat) = Base.fptosi(Int, x)
 Base.:(^)(::StaticFloat64{x}, y::Float64) where {x} = exp2(log2(x) * y)
 
 Base.inv(x::StaticFloat64{N}) where {N} = fdiv(one(x), x)
-
