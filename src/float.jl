@@ -96,6 +96,44 @@ function ffma(::StaticFloat64{X}, ::StaticFloat64{Y}, ::StaticFloat64{Z}) where 
     return StaticFloat64{Base.fma_float(X,Y,Z)::Float64}()
 end
 
+Base.:(-)(x::FloatZero) = x
+Base.:(-)(x::StaticFloat64{X}) where {X} = fneg(x)
+
+Base.abs(x::FloatZero) = x
+Base.abs(x::StaticFloat64{X}) where {X} = fabs(x)
+
+Base.copysign(x::FloatZero, ::FloatZero) = x
+Base.copysign(x::StaticFloat64{X}, ::FloatZero) where {X} = x
+Base.copysign(::FloatZero, y::StaticFloat64{Y}) where {Y} = FloatZero
+Base.copysign(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fcopysign(x,y )
+Base.copysign(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = copysign(x, float(y))
+Base.copysign(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = copysign(float(x), y)
+
+Base.:(==)(x::FloatZero, ::FloatZero) = true
+Base.:(==)(x::StaticFloat64{X}, ::FloatZero) where {X} = false
+Base.:(==)(::FloatZero, y::StaticFloat64{Y}) where {Y} = false
+Base.:(==)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = feq(x,y)
+Base.:(==)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = ==(x, float(y))
+Base.:(==)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = ==(float(x), y)
+
+Base.:(!=)(x::FloatZero, ::FloatZero) = false
+Base.:(!=)(x::StaticFloat64{X}, ::FloatZero) where {X} = true
+Base.:(!=)(::FloatZero, y::StaticFloat64{Y}) where {Y} = true
+Base.:(!=)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fne(x,y)
+Base.:(!=)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = !=(x, float(y))
+Base.:(!=)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = !=(float(x), y)
+
+Base.:(<=)(x::FloatZero, ::FloatZero) = true
+Base.:(<=)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fle(x,y)
+Base.:(<=)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = <=(x, float(y))
+Base.:(<=)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = <=(float(x), y)
+
+Base.:(<)(x::FloatZero, ::FloatZero) = false
+Base.:(<)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = flt(x,y)
+Base.:(<)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = <(x, float(y))
+Base.:(<)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = <(float(x), y)
+
+
 Base.:+(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fadd(x, y)
 Base.:+(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = +(x, float(y))
 Base.:+(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = +(float(x), y)
@@ -131,9 +169,31 @@ Base.:*(x::StaticFloat64{X}, ::FloatOne) where {X} = x
 Base.:*(::FloatOne, y::StaticFloat64{Y}) where {Y} = y
 Base.:*(::FloatOne, y::FloatZero) = y
 
-Base.:/(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
-Base.:/(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
-Base.:/(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = /(float(x), y)
+Base.:(/)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
+Base.:(/)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
+Base.:(/)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = /(float(x), y)
+
+Base.:(%)(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = frem(x, y)
+Base.:(%)(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = %(x, float(y))
+Base.:(%)(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = %(float(x), y)
+
+Base.:fma(x::StaticFloat64{X}, y::StaticFloat64{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = ffma(x, y, z)
+Base.:fma(x::StaticFloat64{X}, y::StaticFloat64{Y}, z::StaticInt{Z}) where {X,Y,Z} = fma(x, y, float(z))
+Base.:fma(x::StaticFloat64{X}, y::StaticInt{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = fma(x, float(y), z)
+Base.:fma(x::StaticInt{X}, y::StaticFloat64{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = fma(float(x), y, z)
+Base.:fma(x::StaticFloat64{X}, y::StaticInt{Y}, z::StaticInt{Z}) where {X,Y,Z} = fma(x, float(y), float(z))
+Base.:fma(x::StaticInt{X}, y::StaticInt{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = fma(float(x), float(y), z)
+Base.:fma(x::StaticInt{X}, y::StaticFloat64{Y}, z::StaticInt{Z}) where {X,Y,Z} = fma(float(x), y, float(z))
+Base.:fma(x::StaticInt{X}, y::StaticInt{Y}, z::StaticInt{Z}) where {X,Y,Z} = fma(float(x), float(y), float(z))
+
+Base.:muladd(x::StaticFloat64{X}, y::StaticFloat64{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = fmuladd(x, y, z)
+Base.:muladd(x::StaticFloat64{X}, y::StaticFloat64{Y}, z::StaticInt{Z}) where {X,Y,Z} = muladd(x, y, float(z))
+Base.:muladd(x::StaticFloat64{X}, y::StaticInt{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = muladd(x, float(y), z)
+Base.:muladd(x::StaticInt{X}, y::StaticFloat64{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = muladd(float(x), y, z)
+Base.:muladd(x::StaticFloat64{X}, y::StaticInt{Y}, z::StaticInt{Z}) where {X,Y,Z} = muladd(x, float(y), float(z))
+Base.:muladd(x::StaticInt{X}, y::StaticInt{Y}, z::StaticFloat64{Z}) where {X,Y,Z} = muladd(float(x), float(y), z)
+Base.:muladd(x::StaticInt{X}, y::StaticFloat64{Y}, z::StaticInt{Z}) where {X,Y,Z} = muladd(float(x), y, float(z))
+Base.:muladd(x::StaticInt{X}, y::StaticInt{Y}, z::StaticInt{Z}) where {X,Y,Z} = muladd(float(x), float(y), float(z))
 
 @generated Base.sqrt(::StaticInt{M}) where {M} = Expr(:call, Expr(:curly, :StaticFloat64, sqrt(M)))
 @generated Base.sqrt(::StaticFloat64{M}) where {M} = Expr(:call, Expr(:curly, :StaticFloat64, sqrt(M)))
