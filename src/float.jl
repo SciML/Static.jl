@@ -41,19 +41,19 @@ Base.isone(::StaticFloat64) = false
 Base.zero(::Type{T}) where {T<:StaticFloat64} = FloatZero()
 Base.one(::Type{T}) where {T<:StaticFloat64} = FloatOne()
 
-Base.@pure function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.sub_float(X, Y)::Float64}()
 end
 
-Base.@pure function fadd(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fadd(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.add_float(X, Y)::Float64}()
 end
 
-Base.@pure function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fdiv(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.div_float(X, Y)::Float64}()
 end
 
-Base.@pure function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
+function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.mul_float(X, Y)::Float64}()
 end
 
@@ -91,7 +91,6 @@ Base.:*(x::FloatOne, ::FloatOne) = x
 Base.:*(x::StaticFloat64{X}, ::FloatOne) where {X} = x
 Base.:*(::FloatOne, y::StaticFloat64{Y}) where {Y} = y
 Base.:*(::FloatOne, y::FloatZero) = y
-
 
 Base.:/(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
 Base.:/(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
