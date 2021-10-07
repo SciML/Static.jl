@@ -219,7 +219,7 @@ using Static, Aqua
         @test @inferred(<=(f, t)) === true
         @test @inferred(<=(t, f)) === false
         @test @inferred(<=(t, t)) === true
- 
+
         @test @inferred(Static.eq(t)(t)) === t
         @test @inferred(Static.eq(f, t)) === f
 
