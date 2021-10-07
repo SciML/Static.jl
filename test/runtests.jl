@@ -1,4 +1,4 @@
-using Static, Aqua
+sing Static, Aqua
 using Test
 
 @testset "Static.jl" begin
@@ -10,8 +10,8 @@ using Test
         x = StaticInt(0)
         y = StaticInt(1)
  
-        @test static(1) === x
-        @test static(2) === y
+        @test static(0) === x
+        @test static(1) === y
 
         @test static(UInt(8)) === StaticInt(UInt(8)) === StaticInt{8}()
         @test iszero(StaticInt(0))
@@ -89,8 +89,8 @@ using Test
                    
         @test @inferred(==(x, x)) === true
         @test @inferred(==(x, y)) === false
-        @test @inferred(!=(x, x)) === true
-        @test @inferred(!=(x, y)) === false
+        @test @inferred(!=(x, x)) === false
+        @test @inferred(!=(x, y)) === true
 
         @test @inferred(<(x, x)) === false
         @test @inferred(<(x, y)) === true
@@ -104,8 +104,8 @@ using Test
 
         @test @inferred(Static.eq(x, x)) === t
         @test @inferred(Static.eq(x, y)) === f
-        @test @inferred(Static.ne(x, x)) === t
-        @test @inferred(Static.ne(x, y)) === f
+        @test @inferred(Static.ne(x, x)) === f
+        @test @inferred(Static.ne(x, y)) === t
 
         @test @inferred(Static.lt(x, x)) === f
         @test @inferred(Static.lt(x, y)) === t
@@ -169,26 +169,6 @@ using Test
         @test @inferred(Base.:(&)(t, f)) === f
         @test @inferred(Base.:(&)(t, t)) === t
 
-        @test @inferred(==(f, f)) === true
-        @test @inferred(==(f, t)) === false
-        @test @inferred(==(t, f)) === false
-        @test @inferred(==(t, t)) === true
-
-        @test @inferred(!=(f, f)) === false
-        @test @inferred(!=(f, t)) === true
-        @test @inferred(!=(t, f)) === true
-        @test @inferred(!=(t, t)) === false
-
-        @test @inferred(<(f, f)) === false
-        @test @inferred(<(f, t)) === true
-        @test @inferred(<(t, f)) === false
-        @test @inferred(<(t, t)) === false
-
-        @test @inferred(<=(f, f)) === true
-        @test @inferred(<=(f, t)) === true
-        @test @inferred(<=(t, f)) === false
-        @test @inferred(<=(t, t)) === true
-
         @test @inferred(*(f, t)) === t & f
         @test @inferred(-(f, t)) === StaticInt(f) - StaticInt(t)
         @test @inferred(+(f, t)) === StaticInt(f) + StaticInt(t)
@@ -217,27 +197,43 @@ using Test
         @test @inferred(any((t, f, t)))
         @test !@inferred(any((f, f, f)))
 
-        x = StaticInt(1)
-        y = StaticInt(0)
-        z = StaticInt(-1)
-            
-        @test @inferred(Static.eq(y)(x)) === f
-        @test @inferred(Static.eq(x, x)) === t
+        @test @inferred(==(f, f)) === true
+        @test @inferred(==(f, t)) === false
+        @test @inferred(==(t, f)) === false
+        @test @inferred(==(t, t)) === true
 
-        @test @inferred(Static.ne(y)(x)) === t
-        @test @inferred(Static.ne(x, x)) === f
+        @test @inferred(!=(f, f)) === false
+        @test @inferred(!=(f, t)) === true
+        @test @inferred(!=(t, f)) === true
+        @test @inferred(!=(t, t)) === false
 
-        @test @inferred(Static.gt(y)(x)) === t
-        @test @inferred(Static.gt(y, x)) === f
+        @test @inferred(<(f, f)) === false
+        @test @inferred(<(f, t)) === true
+        @test @inferred(<(t, f)) === false
+        @test @inferred(<(t, t)) === false
 
-        @test @inferred(Static.ge(y)(x)) === t
-        @test @inferred(Static.ge(y, x)) === f
+        @test @inferred(<=(f, f)) === true
+        @test @inferred(<=(f, t)) === true
+        @test @inferred(<=(t, f)) === false
+        @test @inferred(<=(t, t)) === true
+ 
+        @test @inferred(Static.eq(t)(t)) === t
+        @test @inferred(Static.eq(f, t)) === f
 
-        @test @inferred(Static.lt(x)(y)) === t
-        @test @inferred(Static.lt(x, y)) === f
+        @test @inferred(Static.ne(t)(t)) === f
+        @test @inferred(Static.ne(f, t)) === t
 
-        @test @inferred(Static.le(x)(y)) === t
-        @test @inferred(Static.le(x, y)) === f
+        @test @inferred(Static.gt(f)(f)) === f
+        @test @inferred(Static.gt(f, t)) === f
+
+        @test @inferred(Static.ge(t)(t)) === t
+        @test @inferred(Static.ge(f, t)) === f
+
+        @test @inferred(Static.lt(t)(t)) === f
+        @test @inferred(Static.lt(f, t)) === t
+
+        @test @inferred(Static.le(t)(t)) === t
+        @test @inferred(Static.le(f, t)) === t
 
         @test @inferred(Static.ifelse(t, x, y)) === x
         @test @inferred(Static.ifelse(f, x, y)) === y
