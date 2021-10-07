@@ -9,12 +9,18 @@
     |   <     |   lt   |
     |   >=    |   ge   |
     |   >     |   gt   |
-
-    for most signatures alt_fn aliases the Base op
-        alt_fn(x, y) = op(x, y)
-    iff each of x, y are <: Union{<static_types>}
-       alt_fn(x, y} = StaticBool(op(dynamic(x), dynamic(y)))
 =#
+
+"""
+     eq, ne, le, lt, ge, gt
+
+work like `==`, `!=`, `<`, `<=`, `>=`, `>` respectively
+
+When both args have the same Static typename
+(`static(true), static(false))`, `(static(5), static(8))`)
+the result is a StaticBool. Otherwise, the result is a Bool.
+""" eq, ne, le, lt, ge, gt
+
 for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
                   (:(lt), :(<)),  (:(ge), :(>=)), (:(gt), :(<))]
     for (S,T) in [(:StaticBool, :Bool), (:StaticSymbol, :Symbol),
