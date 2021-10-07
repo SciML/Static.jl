@@ -19,6 +19,8 @@ work like `==`, `!=`, `<`, `<=`, `>=`, `>` respectively
 When both args have the same Static typename
 (`static(true), static(false))`, `(static(5), static(8))`)
 the result is a StaticBool. Otherwise, the result is a Bool.
+
+- these functions are not exported, you must bring them in
 """ eq, ne, le, lt, ge, gt
 
 for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
