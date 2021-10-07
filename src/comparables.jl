@@ -17,8 +17,8 @@
 =#
 for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
                   (:(lt), :(<)),  (:(ge), :(>=)), (:(gt), :(<))]
-    for (S,T) in ((:StaticBool, :Bool), (:StaticInt, :Int), (:StaticFloat64, :Float64),
-                  (:StaticSymbol, :Symbol))
+    for (S,T) in [(:StaticBool, :Bool), (:StaticSymbol, :Symbol),
+                  (:StaticInt, :Int), (:StaticFloat64, :Float64)]
         @eval begin
             @inline Base.$op(x::$S{X}, y::$S{Y}) where {X,Y} = Base.$op(X,Y)
             @inline Base.$op(x::$S{X}, y::$T) where {X} = Base.$op(X,y)
