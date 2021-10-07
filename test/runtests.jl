@@ -362,14 +362,16 @@ using Static, Aqua
 end
 
 # for some reason this can't be inferred when in the "Static.jl" test set
-known_length(x) = known_length(typeof(x))
-known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
-known_length(::Type{T}) where {T} = nothing
-maybe_static_length(x) = Static.maybe_static(known_length, length, x)
 x = ntuple(+, 10)
 y = 1:10
 @test @inferred(maybe_static_length(x)) === StaticInt(10)
 @test @inferred(maybe_static_length(y)) === 10
+
+known_length(x) = known_length(typeof(x))
+known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
+known_length(::Type{T}) where {T} = nothing
+maybe_static_length(x) = Static.maybe_static(known_length, length, x)
+
 
 include("float.jl")
 
