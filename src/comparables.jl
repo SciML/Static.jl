@@ -23,3 +23,13 @@ for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
             ifelse(is_static(X) & is_static(Y), static, identity)(Base.$op(x,y))
      end
 end
+
+#=
+for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥)]
+    @eval begin
+        @inline Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = $f(M, N)
+        @inline Base.$f(::StaticInt{M}, x::Int) where {M} = $f(M, x)
+        @inline Base.$f(x::Int, ::StaticInt{M}) where {M} = $f(x, M)
+    end
+end
+=#
