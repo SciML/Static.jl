@@ -18,6 +18,7 @@ include("int.jl")
 include("bool.jl")
 include("float.jl")
 include("symbol.jl")
+include("comparables.jl")
 include("ndindex.jl")
 include("tuples.jl")
 
