@@ -24,7 +24,7 @@ the result is a StaticBool. Otherwise, the result is a Bool.
 """ eq, ne, le, lt, ge, gt
 
 for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
-                  (:(lt), :(<)),  (:(ge), :(>=)), (:(gt), :(<))]
+                  (:(lt), :(<)),  (:(ge), :(>=)), (:(gt), :(>))]
     for (S,T) in [(:StaticBool, :Bool), (:StaticSymbol, :Symbol),
                   (:StaticInt, :Int), (:StaticFloat64, :Float64)]
         @eval begin
@@ -37,10 +37,10 @@ for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
             @inline $alt(x::$T, y::$S{Y}) where {Y} = Base.$op(x,Y)
             @inline $alt(x::$T, y::$T) = Base.$op(x,y)
         end
-    end    
+    end
 end
 
 for alt in [:eq, :ne, :le, :lt, :ge, :gt]
     @eval $alt(x::T) where T = Base.Fix2($alt, x)
 end
-    
+

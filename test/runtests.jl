@@ -9,7 +9,7 @@ using Test
         t = StaticBool(true)
         x = StaticInt(0)
         y = StaticInt(1)
- 
+
         @test static(0) === x
         @test static(1) === y
 
@@ -27,7 +27,7 @@ using Test
         @test @inferred(Bool(x)) isa Bool
         @test @inferred(BigInt(x)) isa BigInt
         @test @inferred(Integer(x)) === x
-        @test @inferred(%(x, Integer)) === 1
+        @test @inferred(%(x, Integer)) === 0
         # test for ambiguities and correctness
         for i ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             for j ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
@@ -86,7 +86,7 @@ using Test
             @test static(Int32(-18)) === static(-18)
             @test static(0xffffffef) === static(4294967279)
         end
-                   
+
         @test @inferred(==(x, x)) === true
         @test @inferred(==(x, y)) === false
         @test @inferred(!=(x, x)) === false

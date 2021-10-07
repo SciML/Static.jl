@@ -4,6 +4,8 @@ authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
 version = "0.4.0"
 
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
 
 [compat]
