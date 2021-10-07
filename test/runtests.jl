@@ -1,4 +1,4 @@
-sing Static, Aqua
+using Static, Aqua
 using Test
 
 @testset "Static.jl" begin
