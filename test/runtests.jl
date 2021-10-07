@@ -1,5 +1,6 @@
-using Static, Aqua
 using Test
+using Static, Aqua
+
 
 @testset "Static.jl" begin
     Aqua.test_all(Static)
