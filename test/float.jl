@@ -52,11 +52,11 @@
 
     @test x === static(0.0) === StaticFloat64(0)
     @test y === static(1.0) === StaticFloat64(1)
-    
+                   
     @test @inferred(==(x, x)) === true
     @test @inferred(==(x, y)) === false
-    @test @inferred(!=(x, x)) === true
-    @test @inferred(!=(x, y)) === false
+    @test @inferred(!=(x, x)) === false
+    @test @inferred(!=(x, y)) === true
 
     @test @inferred(<(x, x)) === false
     @test @inferred(<(x, y)) === true
@@ -70,8 +70,8 @@
 
     @test @inferred(Static.eq(x, x)) === t
     @test @inferred(Static.eq(x, y)) === f
-    @test @inferred(Static.ne(x, x)) === t
-    @test @inferred(Static.ne(x, y)) === f
+    @test @inferred(Static.ne(x, x)) === f
+    @test @inferred(Static.ne(x, y)) === t
 
     @test @inferred(Static.lt(x, x)) === f
     @test @inferred(Static.lt(x, y)) === t
