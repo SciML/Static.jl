@@ -67,18 +67,6 @@ Base.iszero(::False) = True()
 Base.isone(::True) = True()
 Base.isone(::False) = False()
 
-Base.:(<)(x::StaticBool, y::StaticBool) = _lt(x, y)
-_lt(::False, ::True) = True()
-_lt(::True, ::True) = False()
-_lt(::False, ::False) = False()
-_lt(::True, ::False) = False()
-
-Base.:(<=)(x::StaticBool, y::StaticBool) = _lteq(x, y)
-_lteq(::False, ::True) = True()
-_lteq(::True, ::True) = True()
-_lteq(::False, ::False) = True()
-_lteq(::True, ::False) = False()
-
 Base.:(+)(x::True) = One()
 Base.:(+)(x::False) = Zero()
 Base.:(-)(x::True) = -One()
