@@ -122,6 +122,8 @@ using Static, Aqua
     @testset "StaticBool" begin
         f = StaticBool(false)
         t = StaticBool(true)
+        x = StaticInt(0)
+        y = StaticInt(1)
 
         @test StaticBool{false}() === f === static(false)
         @test StaticBool{true}()  === t === static(true)
