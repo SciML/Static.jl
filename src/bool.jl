@@ -31,11 +31,6 @@ Base.:(~)(::False) = True()
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
-Base.:(==)(::True, ::True) = True()
-Base.:(==)(::True, ::False) = False()
-Base.:(==)(::False, ::True) = False()
-Base.:(==)(::False, ::False) = True()
-
 Base.:(|)(x::StaticBool, y::StaticBool) = _or(x, y)
 _or(::True, ::False) = True()
 _or(::False, ::True) = True()
