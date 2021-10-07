@@ -22,7 +22,8 @@ for (alt, op) in [(:(eq), :(==)), (:(ne), :(!=)), (:(le), :(<=)),
             $alt(x::$S{X}, y::$S{Y}) where {X,Y} = static(Base.$op(X,Y))
             $alt(x::$S{X}, y::$T) where {X} = Base.$op(X,y)
             $alt(x::$T, y::$S{Y}) where {Y} = Base.$op(x,Y)
-      end
+        end
+    end    
 end
 
 for alt in [:eq, :ne, :le, :lt, :ge, :gt]
