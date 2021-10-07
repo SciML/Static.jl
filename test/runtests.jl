@@ -5,6 +5,14 @@ using Test
     Aqua.test_all(Static)
 
     @testset "StaticInt" begin
+        f = StaticBool(false)
+        t = StaticBool(true)
+        x = StaticInt(0)
+        y = StaticInt(1)
+ 
+        @test static(1) === x
+        @test static(2) === y
+
         @test static(UInt(8)) === StaticInt(UInt(8)) === StaticInt{8}()
         @test iszero(StaticInt(0))
         @test !iszero(StaticInt(1))
@@ -16,7 +24,6 @@ using Test
         @test @inferred(zero(StaticInt)) === StaticInt(0) === StaticInt(StaticInt(Val(0)))
         @test eltype(one(StaticInt)) <: Int
 
-        x = StaticInt(1)
         @test @inferred(Bool(x)) isa Bool
         @test @inferred(BigInt(x)) isa BigInt
         @test @inferred(Integer(x)) === x
@@ -79,14 +86,44 @@ using Test
             @test static(Int32(-18)) === static(-18)
             @test static(0xffffffef) === static(4294967279)
         end
+                   
+        @test @inferred(==(x, x)) === true
+        @test @inferred(==(x, y)) === false
+        @test @inferred(!=(x, x)) === true
+        @test @inferred(!=(x, y)) === false
+
+        @test @inferred(<(x, x)) === false
+        @test @inferred(<(x, y)) === true
+        @test @inferred(<=(x, x)) === true
+        @test @inferred(<=(x, y)) === true
+
+        @test @inferred(>(x, x)) === false
+        @test @inferred(>(x, y)) === false
+        @test @inferred(>=(x, x)) === true
+        @test @inferred(>=(x, y)) === false
+
+        @test @inferred(Static.eq(x, x)) === t
+        @test @inferred(Static.eq(x, y)) === f
+        @test @inferred(Static.ne(x, x)) === t
+        @test @inferred(Static.ne(x, y)) === f
+
+        @test @inferred(Static.lt(x, x)) === f
+        @test @inferred(Static.lt(x, y)) === t
+        @test @inferred(Static.le(x, x)) === t
+        @test @inferred(Static.le(x, y)) === t
+
+        @test @inferred(Static.gt(x, x)) === f
+        @test @inferred(Static.gt(x, y)) === f
+        @test @inferred(Static.ge(x, x)) === t
+        @test @inferred(Static.ge(x, y)) === f
     end
 
     @testset "StaticBool" begin
-        t = static(static(true))
-        f = StaticBool(static(false))
+        f = StaticBool(false)
+        t = StaticBool(true)
 
-        @test StaticBool{true}() === t
-        @test StaticBool{false}() === f
+        @test StaticBool{false}() === f === static(false)
+        @test StaticBool{true}()  === t === static(true)
 
         @test @inferred(StaticInt(t)) === StaticInt(1)
         @test @inferred(StaticInt(f)) === StaticInt(0)
@@ -132,20 +169,25 @@ using Test
         @test @inferred(Base.:(&)(t, f)) === f
         @test @inferred(Base.:(&)(t, t)) === t
 
-        @test @inferred(<(f, f)) === f
-        @test @inferred(<(f, t)) === t
-        @test @inferred(<(t, f)) === f
-        @test @inferred(<(t, t)) === f
+        @test @inferred(==(f, f)) === true
+        @test @inferred(==(f, t)) === false
+        @test @inferred(==(t, f)) === false
+        @test @inferred(==(t, t)) === true
 
-        @test @inferred(<=(f, f)) === t
-        @test @inferred(<=(f, t)) === t
-        @test @inferred(<=(t, f)) === f
-        @test @inferred(<=(t, t)) === t
+        @test @inferred(!=(f, f)) === false
+        @test @inferred(!=(f, t)) === true
+        @test @inferred(!=(t, f)) === true
+        @test @inferred(!=(t, t)) === false
 
-        @test @inferred(==(f, f)) === t
-        @test @inferred(==(f, t)) === f
-        @test @inferred(==(t, f)) === f
-        @test @inferred(==(t, t)) === t
+        @test @inferred(<(f, f)) === false
+        @test @inferred(<(f, t)) === true
+        @test @inferred(<(t, f)) === false
+        @test @inferred(<(t, t)) === false
+
+        @test @inferred(<=(f, f)) === true
+        @test @inferred(<=(f, t)) === true
+        @test @inferred(<=(t, f)) === false
+        @test @inferred(<=(t, t)) === true
 
         @test @inferred(*(f, t)) === t & f
         @test @inferred(-(f, t)) === StaticInt(f) - StaticInt(t)
@@ -178,6 +220,7 @@ using Test
         x = StaticInt(1)
         y = StaticInt(0)
         z = StaticInt(-1)
+            
         @test @inferred(Static.eq(y)(x)) === f
         @test @inferred(Static.eq(x, x)) === t
 
