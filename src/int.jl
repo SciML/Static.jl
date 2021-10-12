@@ -186,3 +186,9 @@ Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
 lt(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
 lt(x::X) where {X} = Base.Fix2(lt, x)
 
+Base.:^(x::Integer, ::StaticInt{N}) where {N} = Base.literal_pow(^, x, Val(N))
+Base.:^(x::BigInt, ::StaticInt{N}) where {N} = Base.literal_pow(^, x, Val(N))
+Base.:^(x::Float32, ::StaticInt{N}) where {N} = Base.literal_pow(^, x, Val(N))
+Base.:^(x::Float64, ::StaticInt{N}) where {N} = Base.literal_pow(^, x, Val(N))
+
+

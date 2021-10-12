@@ -92,7 +92,6 @@ Base.:*(x::StaticFloat64{X}, ::FloatOne) where {X} = x
 Base.:*(::FloatOne, y::StaticFloat64{Y}) where {Y} = y
 Base.:*(::FloatOne, y::FloatZero) = y
 
-
 Base.:/(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
 Base.:/(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
 Base.:/(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = /(float(x), y)
