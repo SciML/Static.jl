@@ -132,20 +132,20 @@ using Test
         @test @inferred(Base.:(&)(t, f)) === f
         @test @inferred(Base.:(&)(t, t)) === t
 
-        @test @inferred(<(f, f)) === f
-        @test @inferred(<(f, t)) === t
-        @test @inferred(<(t, f)) === f
-        @test @inferred(<(t, t)) === f
+        @test @inferred(<(f, f)) === false
+        @test @inferred(<(f, t)) === true
+        @test @inferred(<(t, f)) === false
+        @test @inferred(<(t, t)) === false
 
-        @test @inferred(<=(f, f)) === t
-        @test @inferred(<=(f, t)) === t
-        @test @inferred(<=(t, f)) === f
-        @test @inferred(<=(t, t)) === t
+        @test @inferred(<=(f, f)) === true
+        @test @inferred(<=(f, t)) === true
+        @test @inferred(<=(t, f)) === false
+        @test @inferred(<=(t, t)) === true
 
-        @test @inferred(==(f, f)) === t
-        @test @inferred(==(f, t)) === f
-        @test @inferred(==(t, f)) === f
-        @test @inferred(==(t, t)) === t
+        @test @inferred(==(f, f)) === true
+        @test @inferred(==(f, t)) === false
+        @test @inferred(==(t, f)) === false
+        @test @inferred(==(t, t)) === true
 
         @test @inferred(*(f, t)) === t & f
         @test @inferred(-(f, t)) === StaticInt(f) - StaticInt(t)
