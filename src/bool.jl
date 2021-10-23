@@ -31,10 +31,10 @@ Base.:(~)(::False) = True()
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
-Base.:(==)(::True, ::True) = True()
-Base.:(==)(::True, ::False) = False()
-Base.:(==)(::False, ::True) = False()
-Base.:(==)(::False, ::False) = True()
+Base.:(==)(::True, ::True) = true
+Base.:(==)(::True, ::False) = false
+Base.:(==)(::False, ::True) = false
+Base.:(==)(::False, ::False) = true
 
 Base.:(|)(x::StaticBool, y::StaticBool) = _or(x, y)
 _or(::True, ::False) = True()
@@ -73,16 +73,16 @@ Base.isone(::True) = True()
 Base.isone(::False) = False()
 
 Base.:(<)(x::StaticBool, y::StaticBool) = _lt(x, y)
-_lt(::False, ::True) = True()
-_lt(::True, ::True) = False()
-_lt(::False, ::False) = False()
-_lt(::True, ::False) = False()
+_lt(::False, ::True) = true
+_lt(::True, ::True) = false
+_lt(::False, ::False) = false
+_lt(::True, ::False) = false
 
 Base.:(<=)(x::StaticBool, y::StaticBool) = _lteq(x, y)
-_lteq(::False, ::True) = True()
-_lteq(::True, ::True) = True()
-_lteq(::False, ::False) = True()
-_lteq(::True, ::False) = False()
+_lteq(::False, ::True) = true
+_lteq(::True, ::True) = true
+_lteq(::False, ::False) = true
+_lteq(::True, ::False) = false
 
 Base.:(+)(x::True) = One()
 Base.:(+)(x::False) = Zero()
