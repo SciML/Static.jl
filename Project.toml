@@ -1,10 +1,12 @@
 name = "Static"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
-version = "0.4.0"
+version = "0.5.0"
 
 [deps]
 IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 IfElse = "0.1"

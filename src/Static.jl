@@ -1,6 +1,7 @@
 module Static
 
 import IfElse: ifelse
+import LinearAlgebra, SparseArrays
 using Base: @propagate_inbounds, Slice, AbstractCartesianIndex
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex

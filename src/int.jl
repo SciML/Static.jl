@@ -5,7 +5,7 @@
 A statically sized `Int`.
 Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
-struct StaticInt{N} <: Integer
+struct StaticInt{N}
     StaticInt{N}() where {N} = new{N::Int}()
 end
 
@@ -19,44 +19,16 @@ StaticInt(N::Integer) = StaticInt(convert(Int, N))
 StaticInt(::StaticInt{N}) where {N} = StaticInt{N}()
 StaticInt(::Val{N}) where {N} = StaticInt{N}()
 # Base.Val(::StaticInt{N}) where {N} = Val{N}()
-Base.convert(::Type{T}, ::StaticInt{N}) where {T<:Number,N} = convert(T, N)
+# Base.convert(::Type{T}, ::StaticInt{N}) where {T<:Number,N} = convert(T, N)
 Base.Bool(x::StaticInt{N}) where {N} = Bool(N)
 Base.BigInt(x::StaticInt{N}) where {N} = BigInt(N)
 Base.Integer(x::StaticInt{N}) where {N} = x
+
 (::Type{T})(x::StaticInt{N}) where {T<:Integer,N} = T(N)
 (::Type{T})(x::Int) where {T<:StaticInt} = StaticInt(x)
 Base.convert(::Type{StaticInt{N}}, ::StaticInt{N}) where {N} = StaticInt{N}()
+Base.convert(::Type{T}, ::StaticInt{N}) where {T<:Number, N} = T(N)
 
-Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:Number} = promote_type(Int, T)
-function Base.promote_rule(::Type{<:StaticInt}, ::Type{T}) where {T<:AbstractIrrational}
-    return promote_type(Int, T)
-end
-# Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T <: AbstractIrrational} = promote_rule(T, Int)
-for (S, T) in [(:Complex, :Real), (:Rational, :Integer), (:(Base.TwicePrecision), :Any)]
-    @eval function Base.promote_rule(::Type{$S{T}}, ::Type{<:StaticInt}) where {T<:$T}
-        return promote_type($S{T}, Int)
-    end
-end
-function Base.promote_rule(::Type{Union{Nothing,Missing}}, ::Type{<:StaticInt})
-    return Union{Nothing,Missing,Int}
-end
-function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missing,Nothing}}
-    return promote_type(T, Int)
-end
-Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
-Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Missing} = promote_type(T, Int)
-for T in [:Bool, :Missing, :BigFloat, :BigInt, :Nothing, :Any]
-    # let S = :Any
-    @eval begin
-        function Base.promote_rule(::Type{S}, ::Type{$T}) where {S<:StaticInt}
-            return promote_type(Int, $T)
-        end
-        function Base.promote_rule(::Type{$T}, ::Type{S}) where {S<:StaticInt}
-            return promote_type($T, Int)
-        end
-    end
-end
-Base.promote_rule(::Type{<:StaticInt}, ::Type{<:StaticInt}) = Int
 Base.:(%)(::StaticInt{N}, ::Type{Integer}) where {N} = N
 
 Base.eltype(::Type{T}) where {T<:StaticInt} = Int
@@ -99,8 +71,12 @@ end
 @inline Base.:(*)(::StaticInt{M}, ::One) where {M} = StaticInt{M}()
 @inline Base.:(*)(::One, ::StaticInt{M}) where {M} = StaticInt{M}()
 for f in [:(+), :(-), :(*), :(/), :(÷), :(%), :(<<), :(>>), :(>>>), :(&), :(|), :(⊻)]
-    @eval @generated function Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N}
-        return Expr(:call, Expr(:curly, :StaticInt, $f(M, N)))
+    @eval begin
+        @generated function Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N}
+              return Expr(:call, Expr(:curly, :StaticInt, $f(M, N)))
+        end
+        @inline Base.$f(::StaticInt{N}, x::Number) where {N} = $f(N, x)
+        @inline Base.$f(x::Number, ::StaticInt{N}) where {N} = $f(x, N)
     end
 end
 for f in [:(<<), :(>>), :(>>>)]
@@ -109,13 +85,17 @@ for f in [:(<<), :(>>), :(>>>)]
         @inline Base.$f(x::Integer, ::StaticInt{M}) where {M} = $f(x, M)
     end
 end
-for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥)]
+for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥), :isless, :min, :max]
     @eval begin
         @inline Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = $f(M, N)
-        @inline Base.$f(::StaticInt{M}, x::Int) where {M} = $f(M, x)
-        @inline Base.$f(x::Int, ::StaticInt{M}) where {M} = $f(x, M)
+        @inline Base.$f(::StaticInt{N}, x::Number) where {N} = $f(N, x)
+        @inline Base.$f(x::Number, ::StaticInt{N}) where {N} = $f(x, N)
     end
 end
+
+@inline Base.:(^)(::StaticInt{M}, ::StaticInt{N}) where {M,N} = M^N
+@inline Base.:(^)(::StaticInt{N}, x::Number) where {N} = N^x
+@inline Base.:(^)(x::Number, ::StaticInt{N}) where {N} = Base.literal_pow(^, x, Val{N}())
 
 @inline function maybe_static(f::F, g::G, x) where {F,G}
     L = f(x)
@@ -125,6 +105,24 @@ end
         return static(L)
     end
 end
+
+Base.zero(::StaticInt) = Zero()
+Base.one(::StaticInt) = One()
+Base.getindex(::StaticInt{N}, args...) where {N} = StaticInt{N}()
+Base.@propagate_inbounds Base.getindex(t::Tuple, ::StaticInt{N}) where {N} = t[N]
+for T ∈ [AbstractArray, LinearAlgebra.AbstractQ]
+  @eval begin
+    Base.@propagate_inbounds Base.getindex(A::$T, ::StaticInt{N}, args::Vararg{Any,K}) where {N,K} = A[N, args...]
+    Base.@propagate_inbounds Base.getindex(A::$T, i::Union{Colon,AbstractArray,Integer}, ::StaticInt{N}, args::Vararg{Any,K}) where {N,K} = A[i, N, args...]
+    Base.@propagate_inbounds Base.getindex(A::$T, i::Union{Colon,AbstractArray,Integer}, j::Union{Colon,AbstractArray,Integer}, ::StaticInt{N}, args::Vararg{Any,K}) where {N,K} = A[i, j, N, args...]
+    Base.@propagate_inbounds Base.getindex(A::$T, i::Union{Colon,AbstractArray,Integer}, j::Union{Colon,AbstractArray,Integer}, k::Union{Colon,AbstractArray,Integer}, ::StaticInt{N}, args::Vararg{Any,K}) where {N,K} = A[i, j, k, N, args...]
+    Base.@propagate_inbounds Base.getindex(A::$T, i::Union{Colon,AbstractArray,Integer}, j::Union{Colon,AbstractArray,Integer}, k::Union{Colon,AbstractArray,Integer}, l::Union{Colon,AbstractArray,Integer}, ::StaticInt{N}, args::Vararg{Any,K}) where {N,K} = A[i, j, k, l, N, args...]
+  end
+end
+
+
+Base.@propagate_inbounds Base.getindex(A::SparseArrays.AbstractSparseMatrixCSC, ::StaticInt{N}, ::Colon) where {N} = A[N, :]
+Base.@propagate_inbounds Base.getindex(A::SparseArrays.AbstractSparseMatrixCSC, ::Colon, ::StaticInt{N}) where {N} = A[:, N]
 
 @inline Base.widen(::StaticInt{N}) where {N} = widen(N)
 

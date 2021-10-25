@@ -4,7 +4,7 @@
 
 A statically typed `Bool`.
 """
-abstract type StaticBool{bool} <: Integer end
+abstract type StaticBool{bool} end
 
 struct True <: StaticBool{true} end
 
@@ -108,10 +108,6 @@ Base.rem(x::StaticBool, y::False) = throw(DivideError())
 Base.rem(x::StaticBool, y::True) = False()
 Base.mod(x::StaticBool, y::StaticBool) = rem(x, y)
 
-Base.promote_rule(::Type{<:StaticBool}, ::Type{<:StaticBool}) = StaticBool
-Base.promote_rule(::Type{<:StaticBool}, ::Type{Bool}) = Bool
-Base.promote_rule(::Type{Bool}, ::Type{<:StaticBool}) = Bool
-
 @generated _get_tuple(::Type{T}, ::StaticInt{i}) where {T<:Tuple, i} = T.parameters[i]
 
 Base.all(::Tuple{Vararg{True}}) = true
@@ -127,4 +123,11 @@ ifelse(::True, x, y) = x
 ifelse(::False, x, y) = y
 
 Base.show(io::IO, ::StaticBool{bool}) where {bool} = print(io, "static($bool)")
+
+for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥), :isless, :min, :max]
+  @eval begin
+    Base.$f(::StaticBool{T}, x::Number) where {T} = $f(T, x)
+    Base.$f(x::Number, ::StaticBool{T}) where {T} = $f(x, T)
+  end
+end
 

@@ -52,24 +52,11 @@ using Test
         @test UnitRange(StaticInt(-11), StaticInt(15)) === -11:15
         @test float(StaticInt(8)) === static(8.0)
 
-        # test specific promote rules to ensure we don't cause ambiguities
+        # test specific promotions to ensure we don't cause ambiguities
         SI = StaticInt{1}
         IR = typeof(1//1)
         PI = typeof(pi)
         @test @inferred(convert(SI, SI())) === SI()
-        @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
-        @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
-        @test @inferred(promote_rule(SI, SI)) <: Int
-        @test @inferred(promote_rule(Missing, SI)) <: promote_type(Missing, Int)
-        @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-        @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
-        @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
-        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-        @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
 
         @test static(Int8(-18)) === static(-18)
         @test static(0xef) === static(239)
@@ -199,9 +186,6 @@ using Test
         @test @inferred(Static.ifelse(t, x, y)) === x
         @test @inferred(Static.ifelse(f, x, y)) === y
 
-        @test @inferred(promote_rule(True, True)) <: StaticBool
-        @test @inferred(promote_rule(True, Bool)) <: Bool
-        @test @inferred(promote_rule(Bool, True)) <: Bool
     end
 
     @testset "StaticSymbol" begin
