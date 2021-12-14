@@ -47,5 +47,15 @@
 
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
+    for f in (sin, cos, tan, asin, atan, acos,
+        sinh, cosh, tanh, asinh, atanh,
+        exp, exp2, exp10, expm1, log, log2, log10, log1p,
+        exponent, sqrt, cbrt)
+        @info "Testing $f(0.5)"
+        @inferred f(static(.5))
+    end
+
+    @info "Testing acosh(1.5)"
+    @inferred acosh(static(1.5))
 end
 
