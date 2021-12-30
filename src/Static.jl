@@ -25,13 +25,13 @@ include("tuples.jl")
     known(::Type{T})
 
 Returns the known value corresponding to a static type `T`. If `T` is not a static type then
-`missing` is returned.
+`nothing` is returned.
 
 See also: [`static`](@ref), [`is_static`](@ref)
 """
 known
 @constprop :aggressive known(x) = known(typeof(x))
-known(::Type{T}) where {T} = missing
+known(::Type{T}) where {T} = nothing
 known(::Type{StaticInt{N}}) where {N} = N::Int
 known(::Type{StaticFloat64{N}}) where {N} = N::Float64
 known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
