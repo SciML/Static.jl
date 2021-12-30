@@ -243,9 +243,9 @@ using Test
         @test @inferred(Static.known(typeof(static(1.0)))) === 1.0
         @test @inferred(Static.known(typeof(static(1)))) === 1
         @test @inferred(Static.known(typeof(static(:x)))) === :x
-        @test @inferred(Static.known(typeof(1))) === nothing
+        @test @inferred(Static.known(typeof(1))) === missing
         @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
-        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
+        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, missing)
 
         @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
     end
@@ -324,7 +324,7 @@ end
 # for some reason this can't be inferred when in the "Static.jl" test set
 known_length(x) = known_length(typeof(x))
 known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
-known_length(::Type{T}) where {T} = nothing
+known_length(::Type{T}) where {T} = missing
 maybe_static_length(x) = Static.maybe_static(known_length, length, x)
 x = ntuple(+, 10)
 y = 1:10
