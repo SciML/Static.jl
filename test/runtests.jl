@@ -301,6 +301,13 @@ using Test
         @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
         # inferred is Union{Int,Nothing}
         @test Static.find_first_eq(1, map(Int, y)) === 3
+
+        @testset "reduce_tup" begin
+            for n ∈ 2:16
+                x = ntuple(_ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)), n)
+                @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
+            end
+        end
     end
 
     @testset "NDIndex" begin
