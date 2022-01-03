@@ -174,7 +174,24 @@ using Test
         @test @inferred(any((t, t, t)))
         @test @inferred(any((t, f, t)))
         @test !@inferred(any((f, f, f)))
+    end
 
+    @testset "StaticSymbol" begin
+        x = StaticSymbol(:x)
+        y = StaticSymbol("y")
+        z = StaticSymbol(1)
+        @test y === StaticSymbol(:y)
+        @test z === StaticSymbol(Symbol(1))
+        @test z == StaticSymbol(Symbol(1))
+        @test :x == x
+        @test x == :x
+        @test @inferred(StaticSymbol(x)) === x
+        @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
+        @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
+    end
+    @testset "operators" begin
+        f = static(false)
+        t = static(true)
         x = StaticInt(1)
         y = StaticInt(0)
         z = StaticInt(-1)
@@ -202,18 +219,31 @@ using Test
         @test @inferred(promote_rule(True, True)) <: StaticBool
         @test @inferred(promote_rule(True, Bool)) <: Bool
         @test @inferred(promote_rule(Bool, True)) <: Bool
-    end
 
-    @testset "StaticSymbol" begin
-        x = StaticSymbol(:x)
-        y = StaticSymbol("y")
-        z = StaticSymbol(1)
-        @test y === StaticSymbol(:y)
-        @test z === StaticSymbol(Symbol(1))
-        @test @inferred(StaticSymbol(x)) === x
-        @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
-        @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
-    end
+        sa1 = Static.add(x)
+        sa0 = Static.add(y)
+        saz = Static.add(z)
+        da = Static.add(dynamic(x))
+ 
+        sm1 = Static.mul(x)
+        sm0 = Static.mul(y)
+        smz = Static.mul(z)
+        dm = Static.mul(dynamic(x))
+
+        @test (sm1 ∘ sa0) === sm1
+        @test (sm0 ∘ sa0) === sm0
+        @test (smz ∘ sa0) === smz
+        @test (dm ∘ sa0) === dm
+        @test (sm1 ∘ saz) === saz
+        @test (sm0 ∘ saz) === sm0
+        @test (sm1 ∘ da) === da
+        @test (sm0 ∘ da) === sm0
+        @test (sm1 ∘ smz) === smz  # 1 * -1
+        @test (sm0 ∘ dm) === sm0
+        @test (dm ∘ sm0) === sm0
+        @test (sm1 ∘ dm) === dm
+        @test (dm ∘ sm1) === dm
+   end
 
     @testset "static interface" begin
         v = Val((:a, 1, true))
@@ -333,7 +363,6 @@ y = 1:10
 
 include("float.jl")
 
-
 #=
 A = rand(3,4);
 
@@ -343,3 +372,4 @@ offset1(x::AbstractUnitRange) = first(x)
 offsets(x) = Static._eachop(offset1, (axes(x),), Static.nstatic(Val(ndims(x))))
 
 =#
+

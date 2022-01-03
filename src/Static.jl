@@ -1,7 +1,7 @@
 module Static
 
 import IfElse: ifelse
-using Base: @propagate_inbounds, Slice, AbstractCartesianIndex
+using Base: @propagate_inbounds, Slice, AbstractCartesianIndex, Fix2
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static 
@@ -18,6 +18,7 @@ include("int.jl")
 include("bool.jl")
 include("float.jl")
 include("symbol.jl")
+include("operators.jl")
 include("ndindex.jl")
 include("tuples.jl")
 
