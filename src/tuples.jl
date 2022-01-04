@@ -1,4 +1,13 @@
 
+"""
+    field_type(::Type{T}, f)
+
+Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
+"""
+@inline field_type(::Type{T}, f::Union{Int,Symbol}) where {T} = fieldtype(T, f)
+@generated field_type(::Type{T}, ::StaticInt{N}) where {T,N} = fieldtype(T, N)
+@generated field_type(::Type{T}, ::StaticSymbol{S}) where {T,S} = fieldtype(T, S)
+
 @inline nstatic(::Val{N}) where {N} = ntuple(StaticInt, Val(N))
 
 invariant_permutation(::Any, ::Any) = False()

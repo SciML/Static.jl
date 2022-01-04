@@ -230,6 +230,7 @@ using Test
         smz = Static.mul(z)
         dm = Static.mul(dynamic(x))
 
+        @test (sa1 ∘ sa1) === Static.add(static(2))
         @test (sm1 ∘ sa0) === sm1
         @test (sm0 ∘ sa0) === sm0
         @test (smz ∘ sa0) === smz
@@ -295,8 +296,8 @@ using Test
         @test @inferred(Static.permute(x, y)) === y
         @test @inferred(Static.eachop(getindex, x)) === x
 
-        get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T,X} = Tuple{Static._get_tuple(T, dim),X}
-        @test @inferred(Static.eachop_tuple(Static._get_tuple, y, T)) === Tuple{String,Float64,Int}
+        get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T,X} = Tuple{Static.field_type(T, dim),X}
+        @test @inferred(Static.eachop_tuple(Static.field_type, y, T)) === Tuple{String,Float64,Int}
         @test @inferred(Static.eachop_tuple(get_tuple_add, y, T, String)) === Tuple{Tuple{String,String},Tuple{Float64,String},Tuple{Int,String}}
         @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
         # inferred is Union{Int,Nothing}

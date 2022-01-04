@@ -67,6 +67,7 @@ const Add{X} = Fix2{typeof(+),X}
 
 import Base: ∘
 const compose = ∘
+compose(::Add{StaticInt{X}}, ::Add{StaticInt{Y}}) where {X,Y} = Fix2(+, static(X + Y))
 compose(x::Mul{Int}, ::Add{StaticInt{0}}) = x
 compose(x::Mul{StaticInt{X}}, ::Add{StaticInt{0}}) where {X} = x
 compose(x::Mul{StaticInt{0}}, ::Add{StaticInt{0}}) = x
