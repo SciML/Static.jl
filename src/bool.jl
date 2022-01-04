@@ -112,8 +112,6 @@ Base.promote_rule(::Type{<:StaticBool}, ::Type{<:StaticBool}) = StaticBool
 Base.promote_rule(::Type{<:StaticBool}, ::Type{Bool}) = Bool
 Base.promote_rule(::Type{Bool}, ::Type{<:StaticBool}) = Bool
 
-@generated _get_tuple(::Type{T}, ::StaticInt{i}) where {T<:Tuple, i} = T.parameters[i]
-
 Base.all(::Tuple{Vararg{True}}) = true
 Base.all(::Tuple{Vararg{Union{True,False}}}) = false
 Base.all(::Tuple{Vararg{False}}) = false

@@ -1,7 +1,7 @@
 module Static
 
 import IfElse: ifelse
-using Base: @propagate_inbounds, Slice, AbstractCartesianIndex
+using Base: @propagate_inbounds, Slice, AbstractCartesianIndex, Fix2
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static 
@@ -18,6 +18,7 @@ include("int.jl")
 include("bool.jl")
 include("float.jl")
 include("symbol.jl")
+include("operators.jl")
 include("ndindex.jl")
 include("tuples.jl")
 
@@ -39,7 +40,7 @@ known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
 known(::Type{False}) = false
 known(::Type{NDIndex{N,I}}) where {N,I} = known(I)
-_get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(_get_tuple(T, dim))
+_get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(field_type(T, dim))
 function known(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     return eachop(_get_known, nstatic(Val(N)), T)
 end
@@ -102,7 +103,7 @@ is_static(@nospecialize(x::Type{<:Val})) = True()
 is_static(@nospecialize(x::Type{<:StaticFloat64})) = True()
 is_static(x::Type{T}) where {T} = False()
 
-@constprop :aggressive _tuple_static(::Type{T}, i) where {T} = is_static(_get_tuple(T, i))
+@constprop :aggressive _tuple_static(::Type{T}, i) where {T} = is_static(field_type(T, i))
 function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
     if all(eachop(_tuple_static, nstatic(Val(N)), T))
         return True()

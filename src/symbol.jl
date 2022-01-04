@@ -19,5 +19,9 @@ StaticSymbol(x, y, z...) = StaticSymbol(StaticSymbol(x, y), z...)
 
 Base.Symbol(::StaticSymbol{s}) where {s} = s::Symbol
 
+Base.:(==)(::StaticSymbol{X}, ::StaticSymbol{Y}) where {X,Y} = X === Y
+Base.:(==)(@nospecialize(x::StaticSymbol), y::Symbol) = dynamic(x) === y
+Base.:(==)(x::Symbol, @nospecialize(y::StaticSymbol)) = x === dynamic(x)
+
 Base.show(io::IO, ::StaticSymbol{s}) where {s} = print(io, "static(:$s)")
 
