@@ -117,10 +117,17 @@ Base.inv(x::StaticFloat64{N}) where {N} = fdiv(one(x), x)
     static(exponent(M))
 end
 
-for f in (:sin, :cos, :tan, :asin, :atan, :acos,
-    :sinh, :cosh, :tanh, :asinh, :acosh, :atanh,
-    :exp, :exp2, :exp10, :expm1, :log, :log2, :log10, :log1p,
-    :cbrt)
+for f in (:rad2deg, :deg2rad, :cbrt, 
+          :mod2pi, :rem2pi, :sinpi, :cospi,
+          :exp, :exp2, :exp10, :expm1, 
+          :log, :log2, :log10, :log1p,
+          :sin, :cos, :tan, :sec, :csc, :cot,
+          :asin, :acos, :atan, :asec, :acsc, :acot,
+          :sind, :cosd, :tand, :secd, :cscd, :cotd,
+          :asind, :acosd, :atand, :asecd, :acscd, :acotd,
+          :sinh, :cosh, :tanh, :sech, :csch, :coth,
+          :asinh, :acosh, :atanh, :asech, :acsch, :acoth,
+         )
 
     @eval @generated function (Base.$f)(::StaticFloat64{M}) where {M}
         Expr(:call, Expr(:curly, :StaticFloat64, $f(M)))
