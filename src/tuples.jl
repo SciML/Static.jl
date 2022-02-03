@@ -73,6 +73,8 @@ If `x` and `collection` are static (`is_static`) and `x` is in `collection` then
 value is a `StaticInt`.
 =#
 @generated function find_first_eq(x::X, itr::I) where {X,N,I<:Tuple{Vararg{Any,N}}}
+    # we avoid incidental code gen when evaluated a tuple of known values by iterating
+    #  through `I.parameters` instead of `known(I)`.
     index = ifelse(known(X) === missing, nothing, findfirst(==(X), I.parameters))
     if index === nothing
         :(Base.Cartesian.@nif $(N + 1) d->(x == getfield(itr, d)) d->(d) d->(nothing))
