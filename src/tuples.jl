@@ -65,7 +65,6 @@ eachop_tuple(op, itr, arg, args...) = _eachop_tuple(op, itr, arg, args)
     Expr(:block, Expr(:meta, :inline), t)
 end
 
-
 #=
     find_first_eq(x, collection::Tuple)
 
@@ -74,12 +73,11 @@ If `x` and `collection` are static (`is_static`) and `x` is in `collection` then
 value is a `StaticInt`.
 =#
 @generated function find_first_eq(x::X, itr::I) where {X,N,I<:Tuple{Vararg{Any,N}}}
-    if (is_static(X) & is_static(I)) === True()
-        return Expr(:block, Expr(:meta, :inline),
-            :(Base.Cartesian.@nif $(N + 1) d->(x === getfield(itr, d)) d->(static(d)) d->(nothing)))
+    index = ifelse(known(X) === missing, nothing, findfirst(==(X), I.parameters))
+    if index === nothing
+        :(Base.Cartesian.@nif $(N + 1) d->(x == getfield(itr, d)) d->(d) d->(nothing))
     else
-        return Expr(:block, Expr(:meta, :inline),
-            :(Base.Cartesian.@nif $(N + 1) d->(x === getfield(itr, d)) d->(d) d->(nothing)))
+        :($(static(index)))
     end
 end
 
