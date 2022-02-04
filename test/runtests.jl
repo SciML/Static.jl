@@ -296,13 +296,14 @@ using Test
         @test @inferred(Static.permute(x, y)) === y
         @test @inferred(Static.eachop(getindex, x)) === x
 
-        
         @test Static.field_type(typeof((x = 1, y = 2)), :x) <: Int
         @test Static.field_type(typeof((x = 1, y = 2)), static(:x)) <: Int
         get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T,X} = Tuple{Static.field_type(T, dim),X}
         @test @inferred(Static.eachop_tuple(Static.field_type, y, T)) === Tuple{String,Float64,Int}
         @test @inferred(Static.eachop_tuple(get_tuple_add, y, T, String)) === Tuple{Tuple{String,String},Tuple{Float64,String},Tuple{Int,String}}
         @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
+        @test @inferred(Static.find_first_eq(static(2), (1, static(2)))) === static(2)
+        @test @inferred(Static.find_first_eq(static(2), (1, static(2), 3))) === static(2)
         # inferred is Union{Int,Nothing}
         @test Static.find_first_eq(1, map(Int, y)) === 3
 
