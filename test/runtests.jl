@@ -79,6 +79,8 @@ using Test
             @test static(Int32(-18)) === static(-18)
             @test static(0xffffffef) === static(4294967279)
         end
+
+        @test collect(Base.OneTo(static(3))) == collect(Base.OneTo(3))
     end
 
     @testset "StaticBool" begin
