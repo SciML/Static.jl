@@ -145,7 +145,7 @@ __icmp(x::Bool) = ifelse(x, 0, -1)
     return to_indices(A, inds, (Tuple(I[1])..., Base.tail(I)...))
 end
 # But for arrays of CartesianIndex, we just skip the appropriate number of inds
-@inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{NDIndex{N}}, Vararg{Any}}) where N
+@inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{<:NDIndex{N}}, Vararg{Any}}) where N
     _, indstail = Base.IteratorsMD.split(inds, Val(N))
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
