@@ -147,6 +147,6 @@ end
 # But for arrays of CartesianIndex, we just skip the appropriate number of inds
 @inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{NDIndex{N}}, Vararg{Any}}) where N
     _, indstail = Base.IteratorsMD.split(inds, Val(N))
-    return (to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
+    return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 
