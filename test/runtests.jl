@@ -375,13 +375,3 @@ y = 1:10
 
 include("float.jl")
 
-#=
-A = rand(3,4);
-
-offset1(x::Base.OneTo) = static(1)
-offset1(x::AbstractUnitRange) = first(x)
-
-offsets(x) = Static._eachop(offset1, (axes(x),), Static.nstatic(Val(ndims(x))))
-
-=#
-
