@@ -354,6 +354,9 @@ using Test
         A = rand(3,3,3);
         @test @inferred(to_indices(A, axes(A), (x,))) === (1, 2, 3)
         @test @inferred(to_indices(A, axes(A), ([y,y],))) == ([y, y],)
+
+        # issue #44
+        @test deleteat!(Union{}[], Union{}[]) == Union{}[]
     end
 
     @test repr(static(float(1))) == "static($(float(1)))"
