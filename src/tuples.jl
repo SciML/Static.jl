@@ -34,12 +34,10 @@ end
 
 Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
 """
-@inline function eachop(op::F, itr::Tuple{I1,I2,Vararg}, args::Vararg{Any,K}) where {F,I1,I2,K}
+@inline function eachop(op::F, itr::Tuple{T,Vararg{Any}}, args::Vararg{Any}) where {F,T}
     return (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
 end
-@inline function eachop(op::F, itr::Tuple{I}, args::Vararg{Any,K}) where {F,I,K}
-    return (op(args..., first(itr)),)
-end
+eachop(::F, ::Tuple{}, args::Vararg{Any}) where {F} = ()
 
 """
     eachop_tuple(op, arg, args...; iterator::Tuple{Vararg{StaticInt}}) -> Type{Tuple}
