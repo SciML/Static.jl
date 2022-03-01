@@ -37,8 +37,8 @@ for (S, T) in [(:Complex, :Real), (:Rational, :Integer), (:(Base.TwicePrecision)
         return promote_type($S{T}, Int)
     end
 end
-function Base.promote_rule(::Type{Union{Missing,Nothing}}, ::Type{<:StaticInt})
-    return Union{Nothing,Nothing,Int}
+function Base.promote_rule(::Type{Union{Nothing,Missing}}, ::Type{<:StaticInt})
+    return Union{Nothing,Missing,Int}
 end
 function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missing,Nothing}}
     return promote_type(T, Int)
