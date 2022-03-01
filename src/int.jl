@@ -44,7 +44,7 @@ function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missi
     return promote_type(T, Int)
 end
 Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
-for T in [:Bool, :Nothing, :BigFloat, :BigInt, :Nothing, :Any]
+for T in [:Bool, :Missing, :BigFloat, :BigInt, :Nothing, :Any]
     # let S = :Any
     @eval begin
         function Base.promote_rule(::Type{S}, ::Type{$T}) where {S<:StaticInt}
