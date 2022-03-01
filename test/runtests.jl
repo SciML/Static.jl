@@ -40,7 +40,7 @@ using Test
                 y = f(convert(Int, i), 2 // 7)
                 z = f(2 // 7, convert(Int, i))
                 @test convert(typeof(y), @inferred(f(i, 2 // 7))) === y
-                @test convert(typeof(z), @inferred(f(2 // 7, i))) === z 
+                @test convert(typeof(z), @inferred(f(2 // 7, i))) === z
             end
         end
 
@@ -66,8 +66,8 @@ using Test
         @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
         @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
         @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Nothing,Int}, SI)) <: Union{Nothing,Nothing,Int}
-        @test @inferred(promote_rule(Union{Nothing,Nothing}, SI)) <: promote_type(Union{Nothing,Nothing}, Int)
+        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
+        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
         @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
         @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
 
@@ -224,7 +224,7 @@ using Test
         sa0 = Static.add(y)
         saz = Static.add(z)
         da = Static.add(dynamic(x))
- 
+
         sm1 = Static.mul(x)
         sm0 = Static.mul(y)
         smz = Static.mul(z)
@@ -377,4 +377,3 @@ y = 1:10
 @test @inferred(maybe_static_length(y)) === 10
 
 include("float.jl")
-
