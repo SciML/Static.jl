@@ -40,7 +40,7 @@ end
 function Base.promote_rule(::Type{Union{Nothing,Nothing}}, ::Type{<:StaticInt})
     return Union{Nothing,Nothing,Int}
 end
-function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Nothing,Nothing}}
+function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missing,Nothing}}
     return promote_type(T, Int)
 end
 Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
@@ -137,4 +137,3 @@ end
 Base.UnitRange(start::StaticInt, stop) = UnitRange(Int(start), stop)
 Base.UnitRange(start, stop::StaticInt) = UnitRange(start, Int(stop))
 Base.UnitRange(start::StaticInt, stop::StaticInt) = UnitRange(Int(start), Int(stop))
-
