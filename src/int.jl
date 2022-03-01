@@ -119,7 +119,7 @@ end
 
 @inline function maybe_static(f::F, g::G, x) where {F,G}
     L = f(x)
-    if L === missing
+    if L === missing || L === nothing
         return g(x)
     else
         return static(L)
