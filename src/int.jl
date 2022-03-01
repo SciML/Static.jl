@@ -37,15 +37,15 @@ for (S, T) in [(:Complex, :Real), (:Rational, :Integer), (:(Base.TwicePrecision)
         return promote_type($S{T}, Int)
     end
 end
-function Base.promote_rule(::Type{Union{Nothing,Missing}}, ::Type{<:StaticInt})
-    return Union{Nothing,Missing,Int}
+function Base.promote_rule(::Type{Union{Nothing,Nothing}}, ::Type{<:StaticInt})
+    return Union{Nothing,Nothing,Int}
 end
-function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Missing,Nothing}}
+function Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Union{Nothing,Nothing}}
     return promote_type(T, Int)
 end
 Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
-Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Missing} = promote_type(T, Int)
-for T in [:Bool, :Missing, :BigFloat, :BigInt, :Nothing, :Any]
+Base.promote_rule(::Type{T}, ::Type{<:StaticInt}) where {T>:Nothing} = promote_type(T, Int)
+for T in [:Bool, :Nothing, :BigFloat, :BigInt, :Nothing, :Any]
     # let S = :Any
     @eval begin
         function Base.promote_rule(::Type{S}, ::Type{$T}) where {S<:StaticInt}
@@ -119,7 +119,7 @@ end
 
 @inline function maybe_static(f::F, g::G, x) where {F,G}
     L = f(x)
-    if L === missing
+    if L === nothing
         return g(x)
     else
         return static(L)

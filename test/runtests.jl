@@ -60,15 +60,15 @@ using Test
         @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
         @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
         @test @inferred(promote_rule(SI, SI)) <: Int
-        @test @inferred(promote_rule(Missing, SI)) <: promote_type(Missing, Int)
         @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
+        @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
         @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
-        @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
+        @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
         @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
-        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
+        @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
+        @test @inferred(promote_rule(Union{Nothing,Nothing,Int}, SI)) <: Union{Nothing,Nothing,Int}
+        @test @inferred(promote_rule(Union{Nothing,Nothing}, SI)) <: promote_type(Union{Nothing,Nothing}, Int)
+        @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
         @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
 
         @test static(Int8(-18)) === static(-18)
@@ -274,9 +274,9 @@ using Test
         @test @inferred(Static.known(typeof(static(1.0)))) === 1.0
         @test @inferred(Static.known(typeof(static(1)))) === 1
         @test @inferred(Static.known(typeof(static(:x)))) === :x
-        @test @inferred(Static.known(typeof(1))) === missing
+        @test @inferred(Static.known(typeof(1))) === nothing
         @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
-        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, missing)
+        @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
 
         @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
     end
@@ -369,7 +369,7 @@ end
 # for some reason this can't be inferred when in the "Static.jl" test set
 known_length(x) = known_length(typeof(x))
 known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
-known_length(::Type{T}) where {T} = missing
+known_length(::Type{T}) where {T} = nothing
 maybe_static_length(x) = Static.maybe_static(known_length, length, x)
 x = ntuple(+, 10)
 y = 1:10
