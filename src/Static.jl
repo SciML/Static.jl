@@ -123,4 +123,15 @@ _dynamic(::False, x::X) where {X} = x
 @constprop :aggressive dynamic(x::Tuple) = map(dynamic, x)
 dynamic(x::NDIndex) = CartesianIndex(dynamic(Tuple(x)))
 
+
+# Base.string usually shouldn't be given unique methods but primitive types are processed in
+# unique ways and we can avoid some needless specialization by defining these
+for T in [StaticInt, StaticFloat64, StaticBool, StaticSymbol]
+    @eval begin
+        function Base.string(@nospecialize(x::$(T)); kwargs...)
+            string("static(" * string(dynamic(x)) * ")"; kwargs...)
+        end
+    end
+end
+
 end
