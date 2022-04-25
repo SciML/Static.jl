@@ -364,6 +364,7 @@ using Test
     @test repr(static(:x)) == "static(:x)"
     @test repr(static(true)) == "static(true)"
     @test repr(static(CartesianIndex(1,1))) == "NDIndex(static(1), static(1))"
+    @test string(static(true)) == "static(true)" == "$(static(true))"
 end
 
 # for some reason this can't be inferred when in the "Static.jl" test set
