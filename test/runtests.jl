@@ -359,6 +359,8 @@ using Test
         @test deleteat!(Union{}[], Union{}[]) == Union{}[]
     end
 
+    f = static(float(2))
+    repr(f)
     @test repr(static(float(1))) == "static($(float(1)))"
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"

@@ -10,19 +10,17 @@ Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
 
 @inline nstatic(::Val{N}) where {N} = ntuple(StaticInt, Val(N))
 
-invariant_permutation(::Any, ::Any) = False()
-function invariant_permutation(x::T, y::T) where {N,T<:Tuple{Vararg{StaticInt,N}}}
-    if x === nstatic(Val(N))
+@inline function invariant_permutation(@nospecialize(x::Tuple), @nospecialize(y::Tuple))
+    if y === x === nstatic(Val(nfields(x)))
         return True()
     else
         return False()
     end
 end
 
-permute(x::Tuple, perm::Val) = permute(x, static(perm))
-permute(x::Tuple{Vararg{Any}}, perm::Tuple{Vararg{StaticInt}}) = eachop(getindex, perm, x)
-function permute(x::Tuple{Vararg{Any,K}}, perm::Tuple{Vararg{StaticInt,K}}) where {K}
-    if invariant_permutation(perm, perm) === False()
+permute(@nospecialize(x::Tuple), @nospecialize(perm::Val)) = permute(x, static(perm))
+@inline function permute(@nospecialize(x::Tuple), @nospecialize(perm::Tuple))
+    if invariant_permutation(nstatic(Val(nfields(x))), perm) === False()
         return eachop(getindex, perm, x)
     else
         return x
@@ -35,7 +33,7 @@ end
 Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
 """
 @inline function eachop(op::F, itr::Tuple{T,Vararg{Any}}, args::Vararg{Any}) where {F,T}
-    return (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
+    (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
 end
 eachop(::F, ::Tuple{}, args::Vararg{Any}) where {F} = ()
 

@@ -13,27 +13,25 @@ end
 
 (::Type{T})(x::Integer) where {T<:StaticFloat64} = StaticFloat64(x)
 (::Type{T})(x::AbstractFloat) where {T<:StaticFloat64} = StaticFloat64(x)
-@generated function Base.AbstractFloat(::StaticInt{N}) where {N}
-    Expr(:call, Expr(:curly, :StaticFloat64, Float64(N)))
-end
-StaticFloat64(x::StaticInt{N}) where {N} = float(x)
+Base.AbstractFloat(::StaticInt{N}) where {N} = StaticFloat64{Float64(N)}()
+StaticFloat64(@nospecialize(x::StaticInt)) = float(x)
 
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
-Base.convert(::Type{T}, ::StaticFloat64{N}) where {N,T<:AbstractFloat} = T(N)
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float64}) where {N} = Float64
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float32}) where {N} = Float32
-Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float16}) where {N} = Float16
+Base.convert(::Type{T}, @nospecialize(x::StaticFloat64)) where {T<:AbstractFloat} = T(known(x))
+Base.promote_rule(@nospecialize(T1::Type{<:StaticFloat64}), ::Type{T2}) where {T2} = promote_type(T2, Float64)
+Base.promote_rule(@nospecialize(T1::Type{<:StaticFloat64}), ::Type{Float64}) = Float64
+Base.promote_rule(@nospecialize(T1::Type{<:StaticFloat64}), ::Type{Float32}) = Float32
+Base.promote_rule(@nospecialize(T1::Type{<:StaticFloat64}), ::Type{Float16}) = Float16
 
-Base.eltype(::Type{T}) where {T<:StaticFloat64} = Float64
+Base.eltype(@nospecialize(T::Type{<:StaticFloat64})) = Float64
 Base.iszero(::FloatZero) = true
-Base.iszero(::StaticFloat64) = false
+Base.iszero(@nospecialize(x::StaticFloat64)) = false
 Base.isone(::FloatOne) = true
-Base.isone(::StaticFloat64) = false
-Base.zero(::Type{T}) where {T<:StaticFloat64} = FloatZero()
-Base.one(::Type{T}) where {T<:StaticFloat64} = FloatOne()
+Base.isone(@nospecialize(x::StaticFloat64)) = false
+Base.zero(@nospecialize(x::Type{<:StaticFloat64})) = FloatZero
+Base.one(@nospecialize(x::Type{<:StaticFloat64})) = FloatOne()
 
 function fsub(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.sub_float(X, Y)::Float64}()
@@ -51,46 +49,24 @@ function fmul(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y}
     return StaticFloat64{Base.mul_float(X, Y)::Float64}()
 end
 
-Base.:+(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fadd(x, y)
-Base.:+(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = +(x, float(y))
-Base.:+(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = +(float(x), y)
-Base.:+(x::FloatZero, ::FloatZero) = x
-Base.:+(x::StaticFloat64{X}, ::FloatZero) where {X} = x
-Base.:+(::FloatZero, y::StaticFloat64{Y}) where {Y} = y
-Base.:+(x::StaticFloat64{X}, ::Zero) where {X} = x
-Base.:+(::Zero, y::StaticFloat64{Y}) where {Y} = y
+Base.:+(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fadd(x, y)
+@inline Base.:+(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = +(x, float(y))
+@inline Base.:+(@nospecialize(x::StaticInt), @nospecialize(y::StaticFloat64)) = +(float(x), y)
 
 Base.:-(::StaticFloat64{X}) where {X} = StaticFloat64{-X}()
-Base.:-(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fsub(x, y)
-Base.:-(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = -(x, float(y))
-Base.:-(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = -(float(x), y)
-Base.:-(x::FloatZero, ::FloatZero) = x
-Base.:-(x::StaticFloat64{X}, ::FloatZero) where {X} = x
-Base.:-(x::StaticFloat64{X}, ::Zero) where {X} = x
-Base.:-(::FloatZero, y::StaticFloat64{Y}) where {Y} = -y
-Base.:-(::Zero, y::StaticFloat64{Y}) where {Y} = -y
+Base.:-(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fsub(x, y)
+@inline Base.:-(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = -(x, float(y))
+@inline Base.:-(@nospecialize(x::StaticInt), @nospecialize(y::StaticFloat64)) = -(float(x), y)
 
-Base.:*(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fmul(x, y)
-Base.:*(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = *(x, float(y))
-Base.:*(::StaticFloat64{X}, ::Zero) where {X} = FloatZero()
-Base.:*(::Zero, ::StaticFloat64{Y}, ) where {Y} = FloatZero()
-Base.:*(x::StaticFloat64{X}, ::One) where {X} = x
-Base.:*(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = *(float(x), y)
-Base.:*(::One, y::StaticFloat64{Y}) where {Y} = y
-Base.:*(x::FloatZero, ::FloatZero) = x
-Base.:*(::StaticFloat64{X}, y::FloatZero) where {X} = y
-Base.:*(x::FloatZero, ::StaticFloat64{Y}) where {Y} = x
-Base.:*(x::FloatZero, ::FloatOne) = x
-Base.:*(x::FloatOne, ::FloatOne) = x
-Base.:*(x::StaticFloat64{X}, ::FloatOne) where {X} = x
-Base.:*(::FloatOne, y::StaticFloat64{Y}) where {Y} = y
-Base.:*(::FloatOne, y::FloatZero) = y
+Base.:*(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fmul(x, y)
+@inline Base.:*(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = *(x, float(y))
+@inline Base.:*(@nospecialize(x::StaticInt), @nospecialize(y::StaticFloat64)) = *(float(x), y)
 
-Base.:/(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = fdiv(x, y)
-Base.:/(x::StaticFloat64{X}, y::StaticInt{Y}) where {X,Y} = /(x, float(y))
-Base.:/(x::StaticInt{X}, y::StaticFloat64{Y}) where {X,Y} = /(float(x), y)
+Base.:/(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fdiv(x, y)
+Base.:/(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = /(x, float(y))
+Base.:/(@nospecialize(x::StaticInt), @nospecialize(y::StaticFloat64)) = /(float(x), y)
 
-@generated Base.sqrt(::StaticInt{M}) where {M} = Expr(:call, Expr(:curly, :StaticFloat64, sqrt(M)))
+Base.sqrt(@nospecialize(x::StaticInt)) = sqrt(float(x))
 @generated Base.sqrt(::StaticFloat64{M}) where {M} = Expr(:call, Expr(:curly, :StaticFloat64, sqrt(M)))
 
 @generated Base.round(::StaticFloat64{M}) where {M} = Expr(:call, Expr(:curly, :StaticFloat64, round(M)))
@@ -103,13 +79,7 @@ Base.:(^)(::StaticFloat64{x}, y::Float64) where {x} = exp2(log2(x) * y)
 
 Base.inv(x::StaticFloat64{N}) where {N} = fdiv(one(x), x)
 
-# @generated function Base.exponent(::StaticFloat64{M}) where {M}
-#     Expr(:call, Expr(:curly, :StaticInt, exponent(M)))
-# end
-
-@inline function Base.exponent(::StaticFloat64{M}) where {M}
-    static(exponent(M))
-end
+@inline Base.exponent(::StaticFloat64{M}) where {M} = static(exponent(M))
 
 for f in (:rad2deg, :deg2rad, :cbrt, 
           :mod2pi, :rem2pi, :sinpi, :cospi,
@@ -122,7 +92,6 @@ for f in (:rad2deg, :deg2rad, :cbrt,
           :sinh, :cosh, :tanh, :sech, :csch, :coth,
           :asinh, :acosh, :atanh, :asech, :acsch, :acoth,
          )
-
     @eval @generated function (Base.$f)(::StaticFloat64{M}) where {M}
         Expr(:call, Expr(:curly, :StaticFloat64, $f(M)))
     end
