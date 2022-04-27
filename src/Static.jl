@@ -129,8 +129,10 @@ dynamic(x::NDIndex) = CartesianIndex(dynamic(Tuple(x)))
 for T in [StaticInt, StaticFloat64, StaticBool, StaticSymbol]
     @eval begin
         function Base.string(@nospecialize(x::$(T)); kwargs...)
-            string("static(" * string(dynamic(x)) * ")"; kwargs...)
+            string("static(" * repr(known(typeof(x))) * ")"; kwargs...)
         end
+        Base.show(io::IO, @nospecialize(x::$(T))) = show(io, MIME"text/plain"(), x)
+        Base.show(io::IO, ::MIME"text/plain", @nospecialize(x::$(T))) = print(io, string(x))
     end
 end
 

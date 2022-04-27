@@ -21,17 +21,11 @@ StaticFloat64(x::StaticInt{N}) where {N} = float(x)
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
-Base.show(io::IO, ::StaticFloat64{N}) where {N} = print(io, "static($N)")
-
 Base.convert(::Type{T}, ::StaticFloat64{N}) where {N,T<:AbstractFloat} = T(N)
 Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{T}) where {N,T} = promote_type(T, Float64)
 Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float64}) where {N} = Float64
 Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float32}) where {N} = Float32
 Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Float16}) where {N} = Float16
-
-@static if VERSION == v"1.2"
-    Base.promote_rule(::Type{StaticFloat64{N}}, ::Type{Any}) where {N} = Any
-end
 
 Base.eltype(::Type{T}) where {T<:StaticFloat64} = Float64
 Base.iszero(::FloatZero) = true

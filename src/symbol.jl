@@ -23,5 +23,3 @@ Base.:(==)(::StaticSymbol{X}, ::StaticSymbol{Y}) where {X,Y} = X === Y
 Base.:(==)(@nospecialize(x::StaticSymbol), y::Symbol) = dynamic(x) === y
 Base.:(==)(x::Symbol, @nospecialize(y::StaticSymbol)) = x === dynamic(y)
 
-Base.show(io::IO, ::StaticSymbol{s}) where {s} = print(io, "static(:$s)")
-

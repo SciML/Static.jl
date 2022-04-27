@@ -12,8 +12,6 @@ end
 const Zero = StaticInt{0}
 const One = StaticInt{1}
 
-Base.show(io::IO, ::StaticInt{N}) where {N} = print(io, "static($N)")
-
 StaticInt(N::Int) = StaticInt{N}()
 StaticInt(N::Integer) = StaticInt(convert(Int, N))
 StaticInt(::StaticInt{N}) where {N} = StaticInt{N}()

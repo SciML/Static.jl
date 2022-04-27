@@ -124,5 +124,3 @@ ifelse(::True, x, y) = x
 
 ifelse(::False, x, y) = y
 
-Base.show(io::IO, ::StaticBool{bool}) where {bool} = print(io, "static($bool)")
-
