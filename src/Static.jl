@@ -128,9 +128,4 @@ Base.show(io::IO, ::MIME"text/plain", @nospecialize(x::Union{StaticInt,StaticSym
     end
 end
 
-#=
-include("precompile.jl")
-_precompile_()
-=#
-
 end
