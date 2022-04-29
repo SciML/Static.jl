@@ -106,9 +106,9 @@ is_static(T::DataType) = False()
 
 Returns the "dynamic" or non-static form of `x`.
 """
-dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
-@constprop :aggressive dynamic(@nospecialize(x::Tuple)) = map(dynamic, x)
 @inline dynamic(@nospecialize(x)) = ifelse(is_static(typeof(x)), known, identity)(x)
+dynamic(@nospecialize(x::Tuple)) = map(dynamic, x)
+dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
 
 function Base.string(@nospecialize(x::Union{StaticInt,StaticSymbol,StaticFloat64,True,False}); kwargs...)
     string("static(" * repr(known(typeof(x))) * ")"; kwargs...)
