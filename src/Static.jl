@@ -30,20 +30,17 @@ Returns the known value corresponding to a static type `T`. If `T` is not a stat
 
 See also: [`static`](@ref), [`is_static`](@ref)
 """
-known
-@constprop :aggressive known(x) = known(typeof(x))
-known(::Type{T}) where {T} = nothing
-known(::Type{StaticInt{N}}) where {N} = N::Int
-known(::Type{StaticFloat64{N}}) where {N} = N::Float64
-known(::Type{StaticSymbol{S}}) where {S} = S::Symbol
+known(@nospecialize(T::Type{<:StaticInt}))::Int = T.parameters[1]
+known(@nospecialize(T::Type{<:StaticFloat64}))::Float64 = T.parameters[1]
+known(@nospecialize(T::Type{<:StaticSymbol}))::Symbol = T.parameters[1]
 known(::Type{Val{V}}) where {V} = V
 known(::Type{True}) = true
 known(::Type{False}) = false
-known(::Type{NDIndex{N,I}}) where {N,I} = known(I)
+known(@nospecialize(T::Type{<:NDIndex})) = known(T.parameters[2])
 _get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(field_type(T, dim))
-function known(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    return eachop(_get_known, nstatic(Val(N)), T)
-end
+known(@nospecialize(T::Type{<:Tuple})) = eachop(_get_known, nstatic(Val(fieldcount(T))), T)
+known(T::DataType) = nothing
+known(@nospecialize(x)) = known(typeof(x))
 
 """
     static(x)
@@ -67,8 +64,7 @@ static(:x)
 
 ```
 """
-static
-@constprop :aggressive static(x::X) where {X} = ifelse(is_static(X), identity, _no_static_type)(x)
+static(@nospecialize(x::Union{StaticInt,StaticSymbol,StaticFloat64,True,False})) = x
 @constprop :aggressive static(x::Int) = StaticInt(x)
 @constprop :aggressive static(x::Union{Int8,UInt8,Int16,UInt16}) = StaticInt(x % Int)
 @static if sizeof(Int) == 8
@@ -81,12 +77,9 @@ end
 @constprop :aggressive static(x::Bool) = StaticBool(x)
 @constprop :aggressive static(x::Symbol) = StaticSymbol(x)
 @constprop :aggressive static(x::Tuple{Vararg{Any}}) = map(static, x)
-@generated static(::Val{V}) where {V} = static(V)
-function _no_static_type(@nospecialize(x))
-    error("There is no static alternative for type $(typeof(x)).")
-end
-static(x::CartesianIndex) = NDIndex(static(Tuple(x)))
-
+static(::Val{V}) where {V} = static(V)
+static(@nospecialize(x::CartesianIndex)) = NDIndex(static(Tuple(x)))
+static(x) = error("There is no static alternative for type $(typeof(x)).")
 
 """
     is_static(::Type{T}) -> StaticBool
@@ -96,43 +89,42 @@ Returns `True` if `T` is a static type.
 See also: [`static`](@ref), [`known`](@ref)
 """
 is_static(@nospecialize(x)) = is_static(typeof(x))
-is_static(@nospecialize(x::Type{<:StaticInt})) = True()
-is_static(@nospecialize(x::Type{<:StaticBool})) = True()
-is_static(@nospecialize(x::Type{<:StaticSymbol})) = True()
+is_static(@nospecialize(x::Type{<:Union{StaticInt,StaticSymbol,StaticFloat64,True,False}})) = True()
 is_static(@nospecialize(x::Type{<:Val})) = True()
-is_static(@nospecialize(x::Type{<:StaticFloat64})) = True()
-is_static(x::Type{T}) where {T} = False()
-
 @constprop :aggressive _tuple_static(::Type{T}, i) where {T} = is_static(field_type(T, i))
-function is_static(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}}
-    if all(eachop(_tuple_static, nstatic(Val(N)), T))
+@inline function is_static(@nospecialize(T::Type{<:Tuple}))
+    if all(eachop(_tuple_static, nstatic(Val(fieldcount(T))), T))
         return True()
     else
         return False()
     end
 end
+is_static(T::DataType) = False()
 
 """
     dynamic(x)
 
 Returns the "dynamic" or non-static form of `x`.
 """
-dynamic(x::X) where {X} = _dynamic(is_static(X), x)
-_dynamic(::True, x::X) where {X} = known(X)
-_dynamic(::False, x::X) where {X} = x
-@constprop :aggressive dynamic(x::Tuple) = map(dynamic, x)
-dynamic(x::NDIndex) = CartesianIndex(dynamic(Tuple(x)))
+@inline dynamic(@nospecialize(x)) = ifelse(is_static(typeof(x)), known, identity)(x)
+dynamic(@nospecialize(x::Tuple)) = map(dynamic, x)
+dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
 
+function Base.string(@nospecialize(x::Union{StaticInt,StaticSymbol,StaticFloat64,True,False}); kwargs...)
+    string("static(" * repr(known(typeof(x))) * ")"; kwargs...)
+end
+Base.show(io::IO, @nospecialize(x::Union{StaticInt,StaticSymbol,StaticFloat64,True,False})) = show(io, MIME"text/plain"(), x)
+Base.show(io::IO, ::MIME"text/plain", @nospecialize(x::Union{StaticInt,StaticSymbol,StaticFloat64,True,False})) = print(io, string(x))
 
-# Base.string usually shouldn't be given unique methods but primitive types are processed in
-# unique ways and we can avoid some needless specialization by defining these
-for T in [StaticInt, StaticFloat64, StaticBool, StaticSymbol]
-    @eval begin
-        function Base.string(@nospecialize(x::$(T)); kwargs...)
-            string("static(" * repr(known(typeof(x))) * ")"; kwargs...)
-        end
-        Base.show(io::IO, @nospecialize(x::$(T))) = show(io, MIME"text/plain"(), x)
-        Base.show(io::IO, ::MIME"text/plain", @nospecialize(x::$(T))) = print(io, string(x))
+# This method assumes that `f` uetrieves compile time information and `g` is the fall back
+# for the corresponding dynamic method. If the `f(x)` doesn't return `nothing` that means
+# the value is known and compile time and returns `static(f(x))`.
+@inline function maybe_static(f::F, g::G, x) where {F,G}
+    L = f(x)
+    if L === nothing
+        return g(x)
+    else
+        return static(L)
     end
 end
 

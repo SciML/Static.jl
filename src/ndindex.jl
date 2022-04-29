@@ -55,13 +55,17 @@ _flatten(i::Base.AbstractCartesianIndex) = _flatten(Tuple(i)...)
 @inline function _flatten(i::Base.AbstractCartesianIndex, I...)
     return (_flatten(Tuple(i)...)..., _flatten(I...)...)
  end
-Base.Tuple(index::NDIndex) = index.index
+Base.Tuple(@nospecialize(x::NDIndex)) = getfield(x, :index)
 
-Base.show(io::IO, i::NDIndex) = (print(io, "NDIndex"); show(io, Tuple(i)))
+Base.show(io::IO, @nospecialize(x::NDIndex)) = show(io, MIME"text/plain"(), x)
+function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
+    print(io, "NDIndex")
+    show(io, m, Tuple(x))
+end
 
 # length
-Base.length(::NDIndex{N}) where {N} = N
-Base.length(::Type{NDIndex{N,I}}) where {N,I} = N
+Base.length(@nospecialize(x::NDIndex))::Int = length(Tuple(x))
+Base.length(@nospecialize(T::Type{<:NDIndex}))::Int = @inbounds(T.parameters[1])
 
 # indexing
 @propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::Int)::Int where {N,T}
@@ -77,13 +81,13 @@ end
 Base.setindex(x::NDIndex, i, j) = NDIndex(Base.setindex(Tuple(x), i, j))
 
 # equality
-Base.:(==)(x::NDIndex{N}, y::NDIndex{N}) where N = Tuple(x) == Tuple(y)
+Base.:(==)(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex)) = ==(Tuple(x), Tuple(y))
 
 # zeros and ones
-Base.zero(::NDIndex{N}) where {N} = zero(NDIndex{N})
-Base.zero(::Type{NDIndex{N}}) where {N} = NDIndex(ntuple(_ -> static(0), Val(N)))
-Base.oneunit(::NDIndex{N}) where {N} = oneunit(NDIndex{N})
-Base.oneunit(::Type{NDIndex{N}}) where {N} = NDIndex(ntuple(_ -> static(1), Val(N)))
+Base.zero(@nospecialize(x::NDIndex)) = zero(typeof(x))
+Base.zero(@nospecialize(T::Type{<:NDIndex})) = NDIndex(ntuple(_ -> static(0), Val(length(T))))
+Base.oneunit(@nospecialize(x::NDIndex)) = oneunit(typeof(x))
+Base.oneunit(@nospecialize(T::Type{<:NDIndex})) = NDIndex(ntuple(_ -> static(1), Val(length(T))))
 
 @inline function Base.IteratorsMD.split(i::NDIndex, V::Val)
     i, j = Base.IteratorsMD.split(Tuple(i), V)
@@ -91,37 +95,37 @@ Base.oneunit(::Type{NDIndex{N}}) where {N} = NDIndex(ntuple(_ -> static(1), Val(
 end
 
 # arithmetic, min/max
-@inline Base.:(-)(i::NDIndex{N}) where {N} = NDIndex{N}(map(-, Tuple(i)))
-@inline function Base.:(+)(i1::NDIndex{N}, i2::NDIndex{N}) where {N}
-    return NDIndex(map(+, Tuple(i1), Tuple(i2)))
+@inline Base.:(-)(@nospecialize(i::NDIndex)) = NDIndex(map(-, Tuple(i)))
+@inline function Base.:(+)(@nospecialize(i1::NDIndex), @nospecialize(i2::NDIndex))
+    NDIndex(map(+, Tuple(i1), Tuple(i2)))
 end
-@inline function Base.:(-)(i1::NDIndex{N}, i2::NDIndex{N}) where {N}
-    return NDIndex(map(-, Tuple(i1), Tuple(i2)))
+@inline function Base.:(-)(@nospecialize(i1::NDIndex), @nospecialize(i2::NDIndex))
+    NDIndex(map(-, Tuple(i1), Tuple(i2)))
 end
-@inline function Base.min(i1::NDIndex{N}, i2::NDIndex{N}) where {N}
-    return NDIndex(map(min, Tuple(i1), Tuple(i2)))
+@inline function Base.min(@nospecialize(i1::NDIndex), @nospecialize(i2::NDIndex))
+    NDIndex(map(min, Tuple(i1), Tuple(i2)))
 end
-@inline function Base.max(i1::NDIndex{N}, i2::NDIndex{N}) where {N}
-    return NDIndex(map(max, Tuple(i1), Tuple(i2)))
+@inline function Base.max(@nospecialize(i1::NDIndex), @nospecialize(i2::NDIndex))
+    NDIndex(map(max, Tuple(i1), Tuple(i2)))
 end
-@inline Base.:(*)(a::Integer, i::NDIndex{N}) where {N} = NDIndex(map(x->a*x, Tuple(i)))
-@inline Base.:(*)(i::NDIndex, a::Integer) = *(a, i)
+@inline Base.:(*)(a::Integer, @nospecialize(i::NDIndex)) = NDIndex(map(x->a*x, Tuple(i)))
+@inline Base.:(*)(@nospecialize(i::NDIndex), a::Integer) = *(a, i)
 
-Base.CartesianIndex(x::NDIndex) = dynamic(x)
+Base.CartesianIndex(@nospecialize(x::NDIndex)) = dynamic(x)
 
 # comparison
-@inline function Base.isless(x::NDIndex{N}, y::NDIndex{N}) where {N}
-    return Bool(_isless(static(0), Tuple(x), Tuple(y)))
+@inline function Base.isless(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex))
+    Bool(_isless(static(0), Tuple(x), Tuple(y)))
 end
 
-lt(x::NDIndex{N}, y::NDIndex{N}) where {N} = _isless(static(0), Tuple(x), Tuple(y))
+lt(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex)) = _isless(static(0), Tuple(x), Tuple(y))
 
 _final_isless(c::Int) = c === 1
 _final_isless(::StaticInt{N}) where {N} = static(false)
 _final_isless(::StaticInt{1}) = static(true)
 _isless(c::C, x::Tuple{}, y::Tuple{}) where {C} = _final_isless(c)
 function _isless(c::C, x::Tuple, y::Tuple) where {C}
-    return _isless(icmp(c, x, y), Base.front(x), Base.front(y))
+    _isless(icmp(c, x, y), Base.front(x), Base.front(y))
 end
 icmp(::StaticInt{0}, x::Tuple, y::Tuple) = icmp(last(x), last(y))
 icmp(::StaticInt{N}, x::Tuple, y::Tuple) where {N} = static(N)
@@ -142,7 +146,7 @@ __icmp(x::Bool) = ifelse(x, 0, -1)
 # In simple cases, we know that we don't need to use axes(A). Optimize those
 # until Julia gets smart enough to elide the call on its own:
 @inline function Base.to_indices(A, inds, I::Tuple{NDIndex, Vararg{Any}})
-    return to_indices(A, inds, (Tuple(I[1])..., Base.tail(I)...))
+    to_indices(A, inds, (Tuple(I[1])..., Base.tail(I)...))
 end
 # But for arrays of CartesianIndex, we just skip the appropriate number of inds
 @inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{NDIndex{N,J}}, Vararg{Any}}) where {N,J}
