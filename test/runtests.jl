@@ -1,4 +1,5 @@
 using Static, Aqua
+using Static: Zero
 using Test
 
 @testset "Static.jl" begin
@@ -45,6 +46,7 @@ using Test
                 @test convert(typeof(z), @inferred(f(2 // 7, i))) === z 
             end
         end
+        @test @inferred(*(Zero(), 3)) === @inferred(*(3, Zero())) === *(Zero(), Zero())
 
         @test UnitRange{Int16}(StaticInt(-9), 17) === Int16(-9):Int16(17)
         @test UnitRange{Int16}(-7, StaticInt(19)) === Int16(-7):Int16(19)
