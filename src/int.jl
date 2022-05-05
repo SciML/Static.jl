@@ -56,6 +56,7 @@ Base.isone(@nospecialize(x::StaticInt)) = false
 Base.zero(@nospecialize(x::Type{<:StaticInt})) = Zero()
 Base.one(@nospecialize(x::Type{<:StaticInt})) = One()
 
+
 for T in [:Real, :Rational, :Integer]
     for f in [:(-), :(+), :(*)]
         @eval begin
@@ -63,12 +64,21 @@ for T in [:Real, :Rational, :Integer]
             Base.$(f)(@nospecialize(x::StaticInt), y::$T) = $(f)(Int(x), y)
         end
     end
+    @eval begin
+        Base.:(*)(::$T, ::Zero) = Zero()
+        Base.:(*)(::Zero, ::$T) = Zero()
+    end
 end
+Base.:(*)(@nospecialize(x::StaticInt), ::Zero) = Zero()
+Base.:(*)(::Zero, @nospecialize(y::StaticInt)) = Zero()
+Base.:(*)(::Zero, ::Zero) = Zero()
+
 @inline Base.:(-)(::StaticInt{M}) where {M} = StaticInt{-M}()
 
 for f in [:(+), :(-), :(*), :(÷), :(%), :(<<), :(>>), :(>>>), :(&), :(|), :(⊻)]
     eval(:(Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = StaticInt{$f(M,N)}()))
 end
+
 for f in [:(<<), :(>>), :(>>>)]
     @eval begin
         Base.$f(@nospecialize(x::StaticInt), y::UInt) = $f(Int(x), y)

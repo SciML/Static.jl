@@ -61,6 +61,8 @@ Base.:-(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fsub
 Base.:*(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fmul(x, y)
 @inline Base.:*(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = *(x, float(y))
 @inline Base.:*(@nospecialize(x::StaticInt), @nospecialize(y::StaticFloat64)) = *(float(x), y)
+@inline Base.:*(@nospecialize(x::StaticFloat64), ::Zero) = FloatZero()
+@inline Base.:*(::Zero, @nospecialize(y::StaticFloat64)) = FloatZero()
 
 Base.:/(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticFloat64)) = fdiv(x, y)
 Base.:/(@nospecialize(x::StaticFloat64), @nospecialize(y::StaticInt)) = /(x, float(y))
