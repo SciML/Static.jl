@@ -18,6 +18,8 @@ using Test
         @test eltype(one(StaticInt)) <: Int
 
         x = StaticInt(1)
+        y = static(3)
+        @test @inferred(minmax(x, y)) == @inferred(minmax(y, x)) == minmax(1, 3)
         @test @inferred(Bool(x)) isa Bool
         @test @inferred(BigInt(x)) isa BigInt
         @test @inferred(Integer(x)) === x
@@ -26,7 +28,7 @@ using Test
         for i ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             for j ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
                 i === j === 3 && continue
-                for f ∈ [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥]
+                for f ∈ [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
                     (iszero(j) && ((f === ÷) || (f === %))) && continue # integer division error
                     @test convert(Int, @inferred(f(i,j))) == f(convert(Int, i), convert(Int, j))
                 end

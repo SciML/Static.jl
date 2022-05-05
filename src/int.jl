@@ -75,9 +75,11 @@ Base.:(*)(::Zero, ::Zero) = Zero()
 
 @inline Base.:(-)(::StaticInt{M}) where {M} = StaticInt{-M}()
 
-for f in [:(+), :(-), :(*), :(÷), :(%), :(<<), :(>>), :(>>>), :(&), :(|), :(⊻)]
+for f in [:(+), :(-), :(*), :(÷), :(%), :(<<), :(>>), :(>>>), :(&), :(|), :(⊻), :min, :max]
     eval(:(Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = StaticInt{$f(M,N)}()))
 end
+
+Base.minmax(x::StaticInt, y::StaticInt) = y < x ? (y, x) : (x, y)
 
 for f in [:(<<), :(>>), :(>>>)]
     @eval begin
