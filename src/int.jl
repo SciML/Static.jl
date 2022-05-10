@@ -72,6 +72,8 @@ end
 Base.:(*)(@nospecialize(x::StaticInt), ::Zero) = Zero()
 Base.:(*)(::Zero, @nospecialize(y::StaticInt)) = Zero()
 Base.:(*)(::Zero, ::Zero) = Zero()
+# without this defined these are converted to `Int`s
+Base.add_sum(@nospecialize(x::StaticInt), @nospecialize(y::StaticInt)) = +(x, y)
 
 @inline Base.:(-)(::StaticInt{M}) where {M} = StaticInt{-M}()
 

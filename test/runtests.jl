@@ -83,6 +83,7 @@ using Test
             @test static(Int32(-18)) === static(-18)
             @test static(0xffffffef) === static(4294967279)
         end
+        @test cumsum((static(1), static(2))) === (static(1), static(3))
     end
 
     @testset "StaticBool" begin
