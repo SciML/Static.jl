@@ -65,7 +65,7 @@ end
 
 # length
 Base.length(@nospecialize(x::NDIndex))::Int = length(Tuple(x))
-Base.length(@nospecialize(T::Type{<:NDIndex}))::Int = @inbounds(T.parameters[1])
+Base.length(::Type{<:NDIndex{N}}) where {N} = N
 
 # indexing
 @propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::Int)::Int where {N,T}

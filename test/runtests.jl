@@ -338,6 +338,8 @@ using Test
         @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3,))
         @test @inferred(length(x)) === 3
         @test @inferred(length(typeof(x))) === 3
+        NDIndex2{I<:Tuple{Vararg{Union{StaticInt,Int},2}}} = NDIndex{2, I}
+        @test length(NDIndex2) === 2
         @test @inferred(y[2]) === 2
         @test @inferred(y[static(2)]) === static(2)
 
