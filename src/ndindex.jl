@@ -69,10 +69,10 @@ Base.length(::Type{<:NDIndex{N}}) where {N} = N
 
 # indexing
 @propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::Int)::Int where {N,T}
-    return Int(getfield(Tuple(x), i))
+    dynamic(getfield(Tuple(x), i))
 end
 @propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::StaticInt{I}) where {N,T,I}
-    return getfield(Tuple(x), I)
+    getfield(Tuple(x), I)
 end
 
 # Base.get(A::AbstractArray, I::CartesianIndex, default) = get(A, I.I, default)
@@ -131,7 +131,7 @@ icmp(::StaticInt{0}, x::Tuple, y::Tuple) = icmp(last(x), last(y))
 icmp(::StaticInt{N}, x::Tuple, y::Tuple) where {N} = static(N)
 function icmp(cmp::Int, x::Tuple, y::Tuple)
     if cmp === 0
-        return icmp(Int(last(x)), Int(last(y)))
+        return icmp(dynamic(last(x)), dynamic(last(y)))
     else
         return cmp
     end

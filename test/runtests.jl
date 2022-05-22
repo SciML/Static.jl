@@ -30,18 +30,18 @@ using Test
                 i === j === 3 && continue
                 for f ∈ [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
                     (iszero(j) && ((f === ÷) || (f === %))) && continue # integer division error
-                    @test convert(Int, @inferred(f(i,j))) == f(convert(Int, i), convert(Int, j))
+                    @test dynamic(@inferred(f(i,j))) == f(dynamic(i), dynamic(j))
                 end
             end
             i == 3 && break
             for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥]
-                w = f(convert(Int, i), 1.4)
-                x = f(1.4, convert(Int, i))
+                w = f(dynamic(i), 1.4)
+                x = f(1.4, dynamic(i))
                 @test convert(typeof(w), @inferred(f(i, 1.4))) === w
                 @test convert(typeof(x), @inferred(f(1.4, i))) === x # if f is division and i === StaticInt(0), returns `NaN`; hence use of ==== in check.
                 (((f === ÷) || (f === %)) && (i === StaticInt(0))) && continue
-                y = f(convert(Int, i), 2 // 7)
-                z = f(2 // 7, convert(Int, i))
+                y = f(dynamic(i), 2 // 7)
+                z = f(2 // 7, dynamic(i))
                 @test convert(typeof(y), @inferred(f(i, 2 // 7))) === y
                 @test convert(typeof(z), @inferred(f(2 // 7, i))) === z 
             end
@@ -61,20 +61,6 @@ using Test
         IR = typeof(1//1)
         PI = typeof(pi)
         @test @inferred(convert(SI, SI())) === SI()
-        @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
-        @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
-        @test @inferred(promote_rule(SI, SI)) <: Int
-        @test @inferred(promote_rule(Missing, SI)) <: promote_type(Missing, Int)
-        @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-        @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
-        @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-        @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
-        @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
-        @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-        @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
-
         @test static(Int8(-18)) === static(-18)
         @test static(0xef) === static(239)
         @test static(Int16(-18)) === static(-18)
@@ -187,8 +173,8 @@ using Test
         @test y === StaticSymbol(:y)
         @test z === StaticSymbol(Symbol(1))
         @test z == StaticSymbol(Symbol(1))
-        @test :x == x
-        @test x == :x
+        #@test :x == x
+        #@test x == :x
         @test @inferred(StaticSymbol(x)) === x
         @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
         @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
@@ -309,7 +295,7 @@ using Test
         @test @inferred(Static.find_first_eq(static(2), (1, static(2)))) === static(2)
         @test @inferred(Static.find_first_eq(static(2), (1, static(2), 3))) === static(2)
         # inferred is Union{Int,Nothing}
-        @test Static.find_first_eq(1, map(Int, y)) === 3
+        #@test Static.find_first_eq(1, map(Int, y)) === 3
 
         @testset "reduce_tup" begin
             for n ∈ 2:16
