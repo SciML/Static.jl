@@ -87,7 +87,7 @@ for f in [:(<<), :(>>), :(>>>)]
         Base.$f(x::Integer, @nospecialize(y::StaticInt)) = $f(x, Int(y))
     end
 end
-for f in [:(==), :(!=), :(<), :(≤), :(>), :(≥)]
+for f in [:(==), :(!=), :(<), :(≤), :(≥)]
     @eval begin
         Base.$f(::StaticInt{M}, ::StaticInt{N}) where {M,N} = $f(M, N)
         Base.$f(@nospecialize(x::StaticInt), y::Int) = $f(Int(x), y)
