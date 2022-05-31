@@ -43,6 +43,38 @@ end
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
+Base.to_index(x::StaticInt) = known(x)
+
+@noinline unequal_error(x, y) = @assert false "Unequal Indices: x == $x != $y == y"
+@inline check_equal(x, y) = x == y || unequal_error(x,y)
+_try_static(::Nothing, ::Nothing) = nothing
+_try_static(x::Int, ::Nothing) = x
+_try_static(::Nothing, y::Int) = y
+@inline _try_static(::StaticInt{N}, ::StaticInt{N}) where {N} = StaticInt{N}()
+@inline function _try_static(::StaticInt{M}, ::StaticInt{N}) where {M,N}
+    @assert false "Unequal Indices: StaticInt{$M}() != StaticInt{$N}()"
+end
+Base.@propagate_inbounds _try_static(::StaticInt{N}, x) where {N} = static(_try_static(N, x))
+Base.@propagate_inbounds _try_static(x, ::StaticInt{N}) where {N} = static(_try_static(N, x))
+Base.@propagate_inbounds function _try_static(x, y)
+    @boundscheck check_equal(x, y)
+    return x
+end
+
+Base.@propagate_inbounds function _promote_shape(a::Tuple{A,Vararg{Any}}, b::Tuple{B,Vararg{Any}}) where {A,B}
+    (_try_static(getfield(a, 1), getfield(b, 1)), _promote_shape(tail(a), tail(b))...)
+end
+_promote_shape(::Tuple{}, ::Tuple{}) = ()
+Base.@propagate_inbounds function _promote_shape(::Tuple{}, b::Tuple{B}) where {B}
+    (_try_static(static(1), getfield(b, 1)),)
+end
+Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {A}
+    (_try_static(static(1), getfield(a, 1)),)
+end
+Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int,StaticInt}}}, b::Tuple{Vararg{Union{Int,StaticInt}}})
+    _promote_shape(a, b)
+end
+
 """
     StaticFloat64{N}
 
@@ -701,8 +733,6 @@ Base.:∘(x::Mul{StaticInt{0}}, y::Mul{Int}) = x
 Base.:∘(::Mul{Int}, y::Mul{StaticInt{0}}) = y
 Base.:∘(::Mul{StaticInt{1}}, y::Mul{Int}) = y
 Base.:∘(x::Mul{Int}, ::Mul{StaticInt{1}}) = x
-
-Base.to_index(x::StaticInt) = known(x)
 
 # length
 Base.length(@nospecialize(x::NDIndex))::Int = length(Tuple(x))
