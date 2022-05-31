@@ -9,6 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        group:
+          - Core
         version:
           - '1.6'
           - '1'
