@@ -17,7 +17,7 @@ jobs:
         julia-version: [1,1.6]
         os: [ubuntu-latest]
         package:
-          - {user: JuliaArrays, repo: ArrayInterface.jl, group: Core}
+          - {user: JuliaArrays, repo: ArrayInterface.jl, group: ArrayInterface}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
@@ -31,13 +31,12 @@ jobs:
           repository: ${{ matrix.package.user }}/${{ matrix.package.repo }}
           path: downstream
       - name: Load this and run the downstream tests
-        shell: julia --color=yes {0}
+        shell: julia --color=yes --project=downstream {0}
         run: |
           using Pkg
           try
             # force it to use this PR's version of the package
             Pkg.develop(PackageSpec(path="."))  # resolver may fail with main deps
-            Pkg.activate("downstream")
             Pkg.update()
             Pkg.test()  # resolver may fail with test time deps
           catch err
