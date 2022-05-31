@@ -59,34 +59,17 @@ end
     end
     @test @inferred(*(Zero(), 3)) === @inferred(*(3, Zero())) === *(Zero(), Zero())
 
-    @test UnitRange{Int16}(StaticInt(-9), 17) === Int16(-9):Int16(17)
-    @test UnitRange{Int16}(-7, StaticInt(19)) === Int16(-7):Int16(19)
-    @test UnitRange(-11, StaticInt(15)) === -11:15
-    @test UnitRange(StaticInt(-11), 15) === -11:15
-    @test UnitRange{Int}(StaticInt(-11), StaticInt(15)) === -11:15
-    @test UnitRange(StaticInt(-11), StaticInt(15)) === -11:15
     @test float(StaticInt(8)) === static(8.0)
 
     # test specific promote rules to ensure we don't cause ambiguities
-    #=
     SI = StaticInt{1}
     IR = typeof(1//1)
     PI = typeof(pi)
     @test @inferred(convert(SI, SI())) === SI()
-    @test @inferred(promote_rule(SI, PI)) <: promote_type(Int, PI)
-    @test @inferred(promote_rule(SI, IR)) <: promote_type(Int, IR)
+    @test @inferred(promote_type(SI, PI)) <: promote_type(Int, PI)
+    @test @inferred(promote_type(SI, IR)) <: promote_type(Int, IR)
     @test @inferred(promote_rule(SI, SI)) <: Int
-    @test @inferred(promote_rule(Missing, SI)) <: promote_type(Missing, Int)
-    @test @inferred(promote_rule(Nothing, SI)) <: promote_type(Nothing, Int)
-    @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-    @test @inferred(promote_rule(SI, Nothing)) <: promote_type(Int, Nothing)
-    @test @inferred(promote_rule(Union{Missing,Int}, SI)) <: promote_type(Union{Missing,Int}, Int)
-    @test @inferred(promote_rule(Union{Nothing,Int}, SI)) <: promote_type(Union{Nothing,Int}, Int)
-    @test @inferred(promote_rule(Union{Nothing,Missing,Int}, SI)) <: Union{Nothing,Missing,Int}
-    @test @inferred(promote_rule(Union{Nothing,Missing}, SI)) <: promote_type(Union{Nothing,Missing}, Int)
-    @test @inferred(promote_rule(SI, Missing)) <: promote_type(Int, Missing)
-    @test @inferred(promote_rule(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
-    =#
+    @test @inferred(promote_type(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
 
     @test static(Int8(-18)) === static(-18)
     @test static(0xef) === static(239)
@@ -220,10 +203,6 @@ end
     @test @inferred(Static.ifelse(t, x, y)) === x
     @test @inferred(Static.ifelse(f, x, y)) === y
 
-    #@test @inferred(promote_rule(True, True)) <: StaticBool
-    #@test @inferred(promote_rule(True, Bool)) <: Bool
-    #@test @inferred(promote_rule(Bool, True)) <: Bool
-
     sa1 = Static.add(x)
     sa0 = Static.add(y)
     saz = Static.add(z)
@@ -318,53 +297,51 @@ end
     end
 end
 
-    #=
-    @testset "NDIndex" begin
-        x = NDIndex((1,2,3))
-        y = NDIndex((1,static(2),3))
-        z = NDIndex(static(3), static(3), static(3))
+@testset "NDIndex" begin
+    x = NDIndex((1,2,3))
+    y = NDIndex((1,static(2),3))
+    z = NDIndex(static(3), static(3), static(3))
 
-        @testset "constructors" begin
-            @test static(CartesianIndex(3, 3, 3)) === z == Base.setindex(Base.setindex(x, 3, 1), 3, 2)
-            @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) === CartesianIndex(3, 3, 3)
-            @test @inferred(Static.known(z)) === (3, 3, 3)
-            @test Tuple(@inferred(NDIndex{0}())) === ()
-            @test @inferred(NDIndex{3}(1, static(2), 3)) === y
-            @test @inferred(NDIndex{3}((1, static(2), 3))) === y
-            @test @inferred(NDIndex{3}((1, static(2)))) === NDIndex(1, static(2), static(1))
-            @test @inferred(NDIndex(x, y)) === NDIndex(1, 2, 3, 1, static(2), 3)
-        end
-
-        @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3,))
-        @test @inferred(length(x)) === 3
-        @test @inferred(length(typeof(x))) === 3
-        NDIndex2{I<:Tuple{Vararg{Union{StaticInt,Int},2}}} = NDIndex{2, I}
-        @test length(NDIndex2) === 2
-        @test @inferred(y[2]) === 2
-        @test @inferred(y[static(2)]) === static(2)
-
-        @test @inferred(-y) === NDIndex((-1,-static(2),-3))
-        @test @inferred(y + y) === NDIndex((2,static(4),6))
-        @test @inferred(y - y) === NDIndex((0,static(0),0))
-        @test @inferred(zero(x)) === NDIndex(static(0),static(0),static(0))
-        @test @inferred(oneunit(x)) === NDIndex(static(1),static(1),static(1))
-        @test @inferred(x * 3) === NDIndex((3,6,9))
-        @test @inferred(3 * x) === NDIndex((3,6,9))
-
-        @test @inferred(min(x, z)) === x
-        @test @inferred(max(x, z)) === NDIndex(3, 3, 3)
-        @test !@inferred(isless(y, x))
-        @test @inferred(isless(x, z))
-        @test @inferred(Static.lt(oneunit(z), z)) === static(true)
-
-        A = rand(3,3,3);
-        @test @inferred(to_indices(A, axes(A), (x,))) === (1, 2, 3)
-        @test @inferred(to_indices(A, axes(A), ([y,y],))) == ([y, y],)
-
-        # issue #44
-        @test deleteat!(Union{}[], Union{}[]) == Union{}[]
+    @testset "constructors" begin
+        @test static(CartesianIndex(3, 3, 3)) === z == Base.setindex(Base.setindex(x, 3, 1), 3, 2)
+        @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) === CartesianIndex(3, 3, 3)
+        @test @inferred(Static.known(z)) === (3, 3, 3)
+        @test Tuple(@inferred(NDIndex{0}())) === ()
+        @test @inferred(NDIndex{3}(1, static(2), 3)) === y
+        @test @inferred(NDIndex{3}((1, static(2), 3))) === y
+        @test @inferred(NDIndex{3}((1, static(2)))) === NDIndex(1, static(2), static(1))
+        @test @inferred(NDIndex(x, y)) === NDIndex(1, 2, 3, 1, static(2), 3)
     end
-    =#
+
+    @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3,))
+    @test @inferred(length(x)) === 3
+    @test @inferred(length(typeof(x))) === 3
+    NDIndex2{I<:Tuple{Vararg{Union{StaticInt,Int},2}}} = NDIndex{2, I}
+    @test length(NDIndex2) === 2
+    @test @inferred(y[2]) === 2
+    @test @inferred(y[static(2)]) === static(2)
+
+    @test @inferred(-y) === NDIndex((-1,-static(2),-3))
+    @test @inferred(y + y) === NDIndex((2,static(4),6))
+    @test @inferred(y - y) === NDIndex((0,static(0),0))
+    @test @inferred(zero(x)) === NDIndex(static(0),static(0),static(0))
+    @test @inferred(oneunit(x)) === NDIndex(static(1),static(1),static(1))
+    @test @inferred(x * 3) === NDIndex((3,6,9))
+    @test @inferred(3 * x) === NDIndex((3,6,9))
+
+    @test @inferred(min(x, z)) === x
+    @test @inferred(max(x, z)) === NDIndex(3, 3, 3)
+    @test !@inferred(isless(y, x))
+    @test @inferred(isless(x, z))
+    @test @inferred(Static.lt(oneunit(z), z)) === static(true)
+
+    A = rand(3,3,3);
+    @test @inferred(to_indices(A, axes(A), (x,))) === (1, 2, 3)
+    @test @inferred(to_indices(A, axes(A), ([y,y],))) == ([y, y],)
+
+    # issue #44
+    @test deleteat!(Union{}[], Union{}[]) == Union{}[]
+end
 
 
 # for some reason this can't be inferred when in the "Static.jl" test set
@@ -415,13 +392,11 @@ y = 1:10
     @test typeof(fone)(1) isa Static.StaticFloat64
     @test typeof(fone)(1.0) isa Static.StaticFloat64
 
-    #=
     @test @inferred(eltype(Static.StaticFloat64(static(1)))) <: Float64
     @test @inferred(promote_rule(typeof(fone), Int)) <: promote_type(Float64, Int)
     @test @inferred(promote_rule(typeof(fone), Float64)) <: Float64
     @test @inferred(promote_rule(typeof(fone), Float32)) <: Float32
     @test @inferred(promote_rule(typeof(fone), Float16)) <: Float16
-    =#
 
     @test @inferred(inv(static(2.0))) === static(inv(2.0))
 
@@ -446,7 +421,7 @@ end
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"
     @test repr(static(true)) == "static(true)"
-    #@test repr(static(CartesianIndex(1,1))) == "NDIndex(static(1), static(1))"
+    @test repr(static(CartesianIndex(1,1))) == "NDIndex(static(1), static(1))"
     @test string(static(true)) == "static(true)" == "$(static(true))"
 end
 
