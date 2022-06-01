@@ -262,9 +262,9 @@ is_static(T::DataType) = False()
 Returns the "dynamic" or non-static form of `x`.
 """
 @inline dynamic(@nospecialize x::Union{StaticNumber,StaticSymbol}) = known(x)
-dynamic(@nospecialize x::Tuple) = map(dynamic, x)
-@inline dynamic(@nospecialize x) = x
+@inline dynamic(@nospecialize x::Tuple) = map(dynamic, x)
 dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
+dynamic(@nospecialize x) = x
 
 function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
@@ -538,7 +538,7 @@ value is a `StaticInt`.
     #  through `I.parameters` instead of `known(I)`.
     index = ifelse(known(X) === nothing, nothing, findfirst(==(X), I.parameters))
     if index === nothing
-        :(Base.Cartesian.@nif $(N + 1) d->(x == getfield(itr, d)) d->(d) d->(nothing))
+        :(Base.Cartesian.@nif $(N + 1) d->(dynamic(x) == dynamic(getfield(itr, d))) d->(d) d->(nothing))
     else
         :($(static(index)))
     end
