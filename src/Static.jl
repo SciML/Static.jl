@@ -406,22 +406,57 @@ Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
 @inline field_type(::Type{T}, ::StaticInt{N}) where {T,N} = fieldtype(T, N)
 @inline field_type(::Type{T}, ::StaticSymbol{S}) where {T,S} = fieldtype(T, S)
 
-for f in (:rad2deg, :deg2rad, :cbrt,
-          :mod2pi, :rem2pi, :sinpi, :cospi,
-          :exp, :exp2, :exp10, :expm1,
-          :log, :log2, :log10, :log1p,
-          :sin, :cos, :tan, :sec, :csc, :cot,
-          :asin, :acos, :atan, :asec, :acsc, :acot,
-          :sind, :cosd, :tand, :secd, :cscd, :cotd,
-          :asind, :acosd, :atand, :asecd, :acscd, :acotd,
-          :sinh, :cosh, :tanh, :sech, :csch, :coth,
-          :asinh, :acosh, :atanh, :asech, :acsch, :acoth,
-         )
-    @eval @generated function (Base.$f)(::StaticFloat64{M}) where {M}
-        Expr(:call, Expr(:curly, :StaticFloat64, $f(M)))
-    end
-end
-
+Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
+Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
+Base.cbrt(::StaticFloat64{M}) where {M} = StaticFloat64(cbrt(M))
+Base.mod2pi(::StaticFloat64{M}) where {M} = StaticFloat64(mod2pi(M))
+Base.rem2pi(::StaticFloat64{M}) where {M} = StaticFloat64(rem2pi(M))
+Base.sinpi(::StaticFloat64{M}) where {M} = StaticFloat64(sinpi(M))
+Base.cospi(::StaticFloat64{M}) where {M} = StaticFloat64(cospi(M))
+Base.exp(::StaticFloat64{M}) where {M} = StaticFloat64(exp(M))
+Base.exp2(::StaticFloat64{M}) where {M} = StaticFloat64(exp2(M))
+Base.exp10(::StaticFloat64{M}) where {M} = StaticFloat64(exp10(M))
+Base.expm1(::StaticFloat64{M}) where {M} = StaticFloat64(expm1(M))
+Base.log(::StaticFloat64{M}) where {M} = StaticFloat64(log(M))
+Base.log2(::StaticFloat64{M}) where {M} = StaticFloat64(log2(M))
+Base.log10(::StaticFloat64{M}) where {M} = StaticFloat64(log10(M))
+Base.log1p(::StaticFloat64{M}) where {M} = StaticFloat64(log1p(M))
+@generated Base.sin(::StaticFloat64{M}) where {M} = StaticFloat64(sin(M))
+@generated Base.cos(::StaticFloat64{M}) where {M} = StaticFloat64(cos(M))
+@generated Base.tan(::StaticFloat64{M}) where {M} = StaticFloat64(tan(M))
+Base.sec(::StaticFloat64{M}) where {M} = StaticFloat64(sec(M))
+Base.csc(::StaticFloat64{M}) where {M} = StaticFloat64(csc(M))
+Base.cot(::StaticFloat64{M}) where {M} = StaticFloat64(cot(M))
+@generated Base.asin(::StaticFloat64{M}) where {M} = StaticFloat64(asin(M))
+@generated Base.acos(::StaticFloat64{M}) where {M} = StaticFloat64(acos(M))
+@generated Base.atan(::StaticFloat64{M}) where {M} = StaticFloat64(atan(M))
+Base.asec(::StaticFloat64{M}) where {M} = StaticFloat64(asec(M))
+Base.acsc(::StaticFloat64{M}) where {M} = StaticFloat64(acsc(M))
+Base.acot(::StaticFloat64{M}) where {M} = StaticFloat64(acot(M))
+Base.sind(::StaticFloat64{M}) where {M} = StaticFloat64(sind(M))
+Base.cosd(::StaticFloat64{M}) where {M} = StaticFloat64(cosd(M))
+Base.tand(::StaticFloat64{M}) where {M} = StaticFloat64(tand(M))
+Base.secd(::StaticFloat64{M}) where {M} = StaticFloat64(secd(M))
+Base.cscd(::StaticFloat64{M}) where {M} = StaticFloat64(cscd(M))
+Base.cotd(::StaticFloat64{M}) where {M} = StaticFloat64(cotd(M))
+Base.asind(::StaticFloat64{M}) where {M} = StaticFloat64(asind(M))
+Base.acosd(::StaticFloat64{M}) where {M} = StaticFloat64(acosd(M))
+Base.atand(::StaticFloat64{M}) where {M} = StaticFloat64(atand(M))
+Base.asecd(::StaticFloat64{M}) where {M} = StaticFloat64(asecd(M))
+Base.acscd(::StaticFloat64{M}) where {M} = StaticFloat64(acscd(M))
+Base.acotd(::StaticFloat64{M}) where {M} = StaticFloat64(acotd(M))
+@generated Base.sinh(::StaticFloat64{M}) where {M} = StaticFloat64(sinh(M))
+Base.cosh(::StaticFloat64{M}) where {M} = StaticFloat64(cosh(M))
+Base.tanh(::StaticFloat64{M}) where {M} = StaticFloat64(tanh(M))
+Base.sech(::StaticFloat64{M}) where {M} = StaticFloat64(sech(M))
+Base.csch(::StaticFloat64{M}) where {M} = StaticFloat64(csch(M))
+Base.coth(::StaticFloat64{M}) where {M} = StaticFloat64(coth(M))
+@generated Base.asinh(::StaticFloat64{M}) where {M} = StaticFloat64(asinh(M))
+@generated Base.acosh(::StaticFloat64{M}) where {M} = :($(StaticFloat64(acosh(M))))
+Base.atanh(::StaticFloat64{M}) where {M} = StaticFloat64(atanh(M))
+Base.asech(::StaticFloat64{M}) where {M} = StaticFloat64(asech(M))
+Base.acsch(::StaticFloat64{M}) where {M} = StaticFloat64(acsch(M))
+Base.acoth(::StaticFloat64{M}) where {M} = StaticFloat64(acoth(M))
 
 @inline Base.exponent(::StaticNumber{M}) where {M} = static(exponent(M))
 
