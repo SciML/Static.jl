@@ -44,6 +44,10 @@ end
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
 Base.to_index(x::StaticInt) = known(x)
+function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
+    checkindex(Bool, inds, N)
+end
+
 
 @noinline unequal_error(x, y) = @assert false "Unequal Indices: x == $x != $y == y"
 @inline check_equal(x, y) = x == y || unequal_error(x,y)
