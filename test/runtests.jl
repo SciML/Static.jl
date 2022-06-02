@@ -81,6 +81,7 @@ end
         @test static(0xffffffef) === static(4294967279)
     end
     @test @inferred(getindex([1], static(1))) == 1
+    @test @inferred(Base.checkindex(Bool, 1:10, static(1)))
     @test widen(static(1)) isa Int128
     @test isless(static(1), static(2))
 end
@@ -273,7 +274,9 @@ end
     @test @inferred(Base.promote_shape(x, x)) === (static(1), 1)
     @test @inferred(Base.promote_shape(x, y)) === (static(1), static(1), static(1))
     @test @inferred(Base.promote_shape(y, x)) === (static(1), static(1), static(1))
-
+    @test static_promote(1, nothing) === 1
+    @test static_promote(nothing, 1) === 1
+    @test static_promote(nothing, nothing) === nothing
     @test_throws ErrorException Base.promote_shape((static(1),), (static(2),))
 end
 
@@ -391,7 +394,7 @@ y = 1:10
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(1.0))) === Static.StaticInt(1)
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticInt(2)
     @test @inferred(round(Static.StaticFloat64{1.0}())) === Static.StaticFloat64(1)
-    @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticFloat64(2)
+    @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticFloat64(ComplexF64(2))
 
     fone = static(1.0)
     fzero = static(0.0)
