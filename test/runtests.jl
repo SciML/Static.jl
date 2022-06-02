@@ -402,14 +402,20 @@ y = 1:10
 
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
-    for f in (sin, cos, tan, asin, atan, acos,
-        sinh, cosh, tanh, asinh, atanh,
-        exp, exp2, exp10, expm1, log, log2, log10, log1p,
-        exponent, sqrt, cbrt)
-        @info "Testing $f(0.5)"
-        @inferred f(static(.5))
+    @testset "trig" begin
+        for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh, asinh, atanh, exp, exp2,
+            exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
+            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech, acsch,]
+            @info "Testing $f(0.5)"
+            @test @inferred(f(static(.5))) === static(f(.5))
+        end
     end
-
+    @test @inferred(asec(static(2.0))) === static(asec(2.0))
+    @test @inferred(acsc(static(2.0))) === static(acsc(2.0))
+    @test @inferred(acot(static(2.0))) === static(acot(2.0))
+    @test @inferred(asecd(static(2.0))) === static(asecd(2.0))
+    @test @inferred(acscd(static(2.0))) === static(acscd(2.0))
+    @test @inferred(acoth(static(2.0))) === static(acoth(2.0))
     @info "Testing acosh(1.5)"
     @inferred acosh(static(1.5))
 end
@@ -424,4 +430,3 @@ end
     @test repr(static(CartesianIndex(1,1))) == "NDIndex(static(1), static(1))"
     @test string(static(true)) == "static(true)" == "$(static(true))"
 end
-
