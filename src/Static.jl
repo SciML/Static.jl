@@ -275,7 +275,6 @@ Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int,S
     _promote_shape(a, b)
 end
 
-
 function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
 end
@@ -420,8 +419,8 @@ Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
 Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
 @generated Base.cbrt(::StaticFloat64{M}) where {M} = StaticFloat64(cbrt(M))
 Base.mod2pi(::StaticFloat64{M}) where {M} = StaticFloat64(mod2pi(M))
-Base.sinpi(::StaticFloat64{M}) where {M} = StaticFloat64(sinpi(M))
-Base.cospi(::StaticFloat64{M}) where {M} = StaticFloat64(cospi(M))
+@generated Base.sinpi(::StaticFloat64{M}) where {M} = StaticFloat64(sinpi(M))
+@generated Base.cospi(::StaticFloat64{M}) where {M} = StaticFloat64(cospi(M))
 Base.exp(::StaticFloat64{M}) where {M} = StaticFloat64(exp(M))
 Base.exp2(::StaticFloat64{M}) where {M} = StaticFloat64(exp2(M))
 Base.exp10(::StaticFloat64{M}) where {M} = StaticFloat64(exp10(M))

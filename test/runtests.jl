@@ -14,6 +14,7 @@ Aqua.test_all(Static)
     @test @inferred(StaticSymbol(x)) === x
     @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
     @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
+    @test_throws ErrorException static([])
 end
 
 @testset "StaticInt" begin
@@ -45,7 +46,7 @@ end
             end
         end
         i == 3 && break
-        for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥, isless]
+        for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥]
             w = f(convert(Int, i), 1.4)
             x = f(1.4, convert(Int, i))
             @test convert(typeof(w), @inferred(f(i, 1.4))) === w
@@ -79,6 +80,9 @@ end
         @test static(Int32(-18)) === static(-18)
         @test static(0xffffffef) === static(4294967279)
     end
+    @test @inferred(getindex([1], static(1))) == 1
+    @test widen(static(1)) isa Int128
+    @test isless(static(1), static(2))
 end
 
 @testset "StaticBool" begin
@@ -266,8 +270,11 @@ end
 @testset "promote_shape" begin
     x = (static(1), 1)
     y = (1, static(1), 1)
+    @test @inferred(Base.promote_shape(x, x)) === (static(1), 1)
     @test @inferred(Base.promote_shape(x, y)) === (static(1), static(1), static(1))
     @test @inferred(Base.promote_shape(y, x)) === (static(1), static(1), static(1))
+
+    @test_throws ErrorException Base.promote_shape((static(1),), (static(2),))
 end
 
 @testset "tuple utilities" begin
@@ -383,7 +390,7 @@ y = 1:10
     @test Static.roundtostaticint(prevfloat(2.0)) === 2
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(1.0))) === Static.StaticInt(1)
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticInt(2)
-    @test @inferred(round(Static.StaticFloat64(1.0))) === Static.StaticFloat64(1)
+    @test @inferred(round(Static.StaticFloat64{1.0}())) === Static.StaticFloat64(1)
     @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticFloat64(2)
 
     fone = static(1.0)
