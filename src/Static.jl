@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
-export dynamic, is_static, known, static
+export dynamic, is_static, known, static, static_promote
 
 """
     StaticSymbol
@@ -46,37 +46,6 @@ Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 Base.to_index(x::StaticInt) = known(x)
 function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
     checkindex(Bool, inds, N)
-end
-
-
-@noinline unequal_error(x, y) = @assert false "Unequal Indices: x == $x != $y == y"
-@inline check_equal(x, y) = x == y || unequal_error(x,y)
-_try_static(::Nothing, ::Nothing) = nothing
-_try_static(x::Int, ::Nothing) = x
-_try_static(::Nothing, y::Int) = y
-@inline _try_static(::StaticInt{N}, ::StaticInt{N}) where {N} = StaticInt{N}()
-@inline function _try_static(::StaticInt{M}, ::StaticInt{N}) where {M,N}
-    @assert false "Unequal Indices: StaticInt{$M}() != StaticInt{$N}()"
-end
-Base.@propagate_inbounds _try_static(::StaticInt{N}, x) where {N} = static(_try_static(N, x))
-Base.@propagate_inbounds _try_static(x, ::StaticInt{N}) where {N} = static(_try_static(N, x))
-Base.@propagate_inbounds function _try_static(x, y)
-    @boundscheck check_equal(x, y)
-    return x
-end
-
-Base.@propagate_inbounds function _promote_shape(a::Tuple{A,Vararg{Any}}, b::Tuple{B,Vararg{Any}}) where {A,B}
-    (_try_static(getfield(a, 1), getfield(b, 1)), _promote_shape(tail(a), tail(b))...)
-end
-_promote_shape(::Tuple{}, ::Tuple{}) = ()
-Base.@propagate_inbounds function _promote_shape(::Tuple{}, b::Tuple{B}) where {B}
-    (_try_static(static(1), getfield(b, 1)),)
-end
-Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {A}
-    (_try_static(static(1), getfield(a, 1)),)
-end
-Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int,StaticInt}}}, b::Tuple{Vararg{Union{Int,StaticInt}}})
-    _promote_shape(a, b)
 end
 
 """
@@ -127,6 +96,8 @@ const Zero = StaticInt{0}
 const One = StaticInt{1}
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
+
+const StaticType{T} = Union{StaticNumber{T},StaticSymbol{T}}
 
 Base.eltype(@nospecialize(T::Type{<:StaticFloat64})) = Float64
 Base.eltype(@nospecialize(T::Type{<:StaticInt})) = Int
@@ -199,8 +170,7 @@ Returns the known value corresponding to a static type `T`. If `T` is not a stat
 
 See also: [`static`](@ref), [`is_static`](@ref)
 """
-known(::Type{<:StaticNumber{N}}) where {N} = N
-known(@nospecialize(T::Type{<:StaticSymbol}))::Symbol = T.parameters[1]
+known(::Type{<:StaticType{T}}) where {T} = T
 known(::Type{Val{V}}) where {V} = V
 _get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(field_type(T, dim))
 known(@nospecialize(T::Type{<:Tuple})) = eachop(_get_known, nstatic(Val(fieldcount(T))), T)
@@ -248,7 +218,7 @@ Returns `True` if `T` is a static type.
 See also: [`static`](@ref), [`known`](@ref)
 """
 is_static(@nospecialize(x)) = is_static(typeof(x))
-is_static(@nospecialize(x::Type{<:Union{StaticSymbol,StaticNumber}})) = True()
+is_static(@nospecialize(x::Type{<:StaticType})) = True()
 is_static(@nospecialize(x::Type{<:Val})) = True()
 _tuple_static(::Type{T}, i) where {T} = is_static(field_type(T, i))
 @inline function is_static(@nospecialize(T::Type{<:Tuple}))
@@ -265,10 +235,46 @@ is_static(T::DataType) = False()
 
 Returns the "dynamic" or non-static form of `x`.
 """
-@inline dynamic(@nospecialize x::Union{StaticNumber,StaticSymbol}) = known(x)
+@inline dynamic(@nospecialize x::StaticType) = known(x)
 @inline dynamic(@nospecialize x::Tuple) = map(dynamic, x)
 dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
 dynamic(@nospecialize x) = x
+
+"""
+    static_promote(x, y)
+
+Throws an error if `x` and `y` are not equal, preferentially returning the one that is known
+at compile time.
+"""
+@inline static_promote(x::StaticType{X}, ::StaticType{X}) where {X} = x
+@noinline function static_promote(::StaticType{X}, ::StaticType{Y}) where {X,Y}
+    error("$X and $Y are not equal")
+end
+Base.@propagate_inbounds static_promote(::StaticType{N}, x) where {N} = static(static_promote(N, x))
+Base.@propagate_inbounds static_promote(x, ::StaticType{N}) where {N} = static(static_promote(N, x))
+Base.@propagate_inbounds static_promote(x, y) = _static_promote(x, y)
+Base.@propagate_inbounds function _static_promote(x, y)
+    @boundscheck x === y || error("$x and $y are not equal")
+    x
+end
+_static_promote(::Nothing, ::Nothing) = nothing
+_static_promote(x, ::Nothing) = x
+_static_promote(::Nothing, y) = y
+
+Base.@propagate_inbounds function _promote_shape(a::Tuple{A,Vararg{Any}}, b::Tuple{B,Vararg{Any}}) where {A,B}
+    (static_promote(getfield(a, 1), getfield(b, 1)), _promote_shape(Base.tail(a), Base.tail(b))...)
+end
+_promote_shape(::Tuple{}, ::Tuple{}) = ()
+Base.@propagate_inbounds function _promote_shape(::Tuple{}, b::Tuple{B}) where {B}
+    (static_promote(static(1), getfield(b, 1)),)
+end
+Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {A}
+    (static_promote(static(1), getfield(a, 1)),)
+end
+Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int,StaticInt}}}, b::Tuple{Vararg{Union{Int,StaticInt}}})
+    _promote_shape(a, b)
+end
+
 
 function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
@@ -414,7 +420,6 @@ Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
 Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
 @generated Base.cbrt(::StaticFloat64{M}) where {M} = StaticFloat64(cbrt(M))
 Base.mod2pi(::StaticFloat64{M}) where {M} = StaticFloat64(mod2pi(M))
-Base.rem2pi(::StaticFloat64{M}) where {M} = StaticFloat64(rem2pi(M))
 Base.sinpi(::StaticFloat64{M}) where {M} = StaticFloat64(sinpi(M))
 Base.cospi(::StaticFloat64{M}) where {M} = StaticFloat64(cospi(M))
 Base.exp(::StaticFloat64{M}) where {M} = StaticFloat64(exp(M))

@@ -45,7 +45,7 @@ end
             end
         end
         i == 3 && break
-        for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥]
+        for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥, isless]
             w = f(convert(Int, i), 1.4)
             x = f(1.4, convert(Int, i))
             @test convert(typeof(w), @inferred(f(i, 1.4))) === w
@@ -263,6 +263,13 @@ end
     @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
 end
 
+@testset "promote_shape" begin
+    x = (static(1), 1)
+    y = (1, static(1), 1)
+    @test @inferred(Base.promote_shape(x, y)) === (static(1), static(1), static(1))
+    @test @inferred(Base.promote_shape(y, x)) === (static(1), static(1), static(1))
+end
+
 @testset "tuple utilities" begin
     x = (static(1), static(2), static(3))
     y = (static(3), static(2), static(1))
@@ -405,7 +412,8 @@ y = 1:10
     @testset "trig" begin
         for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh, asinh, atanh, exp, exp2,
             exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
-            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech, acsch,]
+            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
+            acsch, deg2rad, mod2pi, sinpi, cospi]
             @info "Testing $f(0.5)"
             @test @inferred(f(static(.5))) === static(f(.5))
         end
