@@ -104,3 +104,4 @@ Base.UnitRange(@nospecialize(start::StaticInt), stop) = UnitRange(Int(start), st
 Base.UnitRange(start, @nospecialize(stop::StaticInt)) = UnitRange(start, Int(stop))
 Base.UnitRange(@nospecialize(start::StaticInt), @nospecialize(stop::StaticInt)) = UnitRange(Int(start), Int(stop))
 
+Base.eltype(::Base.OneTo{StaticInt{N}}) where {N} = Int
