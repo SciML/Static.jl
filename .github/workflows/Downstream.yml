@@ -20,6 +20,15 @@ jobs:
           - {user: JuliaArrays, repo: ArrayInterface.jl, group: ArrayInterface}
           - {user: JuliaSIMD, repo: VectorizationBase.jl, group: Interface}
           - {user: JuliaSIMD, repo: LoopVectorization.jl, group: Downstream3}
+          - {user: JuliaDiff, repo: SparseDiffTools.jl, group: Core}
+          - {user: SciML, repo: SciMLBase.jl, group: Core}
+          - {user: SciML, repo: DiffEqBase.jl, group: Core}
+          - {user: SciML, repo: DiffEqBase.jl, group: Downstream}
+          - {user: SciML, repo: DiffEqBase.jl, group: Downstream2}
+          - {user: SciML, repo: DiffEqSensitivity.jl, group: Core}
+          - {user: SciML, repo: OrdinaryDiffEq.jl, group: Core}
+          - {user: SciML, repo: OrdinaryDiffEq.jl, group: Interface}
+          - {user: SciML, repo: DelayDiffEq.jl, group: Interface}
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
