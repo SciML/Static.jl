@@ -485,8 +485,7 @@ Base.:(^)(x::BigInt, y::True) = x
     (N >= 0) || throw(ArgumentError(string("tuple length should be ≥ 0, got ", N)))
     if @generated
         quote
-            Base.Cartesian.@nexprs $N i -> t_i = f(i)
-            Base.Cartesian.@ncall $N tuple t
+            Base.Cartesian.@ntuple $N i -> f(i)
         end
     else
         Tuple(f(i) for i = 1:N)
