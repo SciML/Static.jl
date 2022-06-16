@@ -481,8 +481,20 @@ Base.:(^)(x::Integer, y::True) = x
 Base.:(^)(x::BigInt, y::False) = one(x)
 Base.:(^)(x::BigInt, y::True) = x
 
+@inline function Base.ntuple(f::F, ::StaticInt{N}) where {F,N}
+    (N >= 0) || throw(ArgumentError(string("tuple length should be ≥ 0, got ", N)))
+    if @generated
+        quote
+            Base.Cartesian.@nexprs $N i -> t_i = f(i)
+            Base.Cartesian.@ncall $N tuple t
+        end
+    else
+        Tuple(f(i) for i = 1:N)
+    end
+end
+
 @inline function invariant_permutation(@nospecialize(x::Tuple), @nospecialize(y::Tuple))
-    if y === x === nstatic(Val(nfields(x)))
+    if y === x === ntuple(static, StaticInt(nfields(x)))
         return True()
     else
         return False()
