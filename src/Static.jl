@@ -322,6 +322,7 @@ Base.:(/)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X / Y)
 Base.:(-)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X - Y)
 Base.:(+)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X + Y)
 Base.:(-)(x::Ptr, ::StaticInt{N}) where {N} = x - N
+Base.:(-)(::StaticInt{N}, y::Ptr) where {N} = y - N
 Base.:(+)(x::Ptr, ::StaticInt{N}) where {N} = x + N
 Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 
