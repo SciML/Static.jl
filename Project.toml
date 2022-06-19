@@ -1,7 +1,7 @@
 name = "Static"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
-version = "0.7.1"
+version = "0.7.2"
 
 [deps]
 IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"

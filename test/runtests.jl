@@ -84,6 +84,13 @@ end
     @test @inferred(Base.checkindex(Bool, 1:10, static(1)))
     @test widen(static(1)) isa Int128
     @test isless(static(1), static(2))
+
+    v = rand(3);
+    GC.@preserve v begin
+        p = pointer(v)
+        @test +(p, static(1)) == +(static(1), p) == +(p, 1)
+        @test -(p, static(1)) == -(static(1), p) == -(p, 1)
+    end
 end
 
 @testset "StaticBool" begin
