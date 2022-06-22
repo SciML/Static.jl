@@ -61,6 +61,11 @@ end
     @test @inferred(*(Zero(), 3)) === @inferred(*(3, Zero())) === *(Zero(), Zero())
 
     @test float(StaticInt(8)) === static(8.0)
+    @test @inferred(cld(40, static(4))) === cld(40, 4)
+    @test @inferred(fld(40, static(4))) === fld(40, 4)
+    @test @inferred(cld(static(40), static(4))) === static(cld(40, 4))
+    @test @inferred(fld(static(40), static(4))) === static(fld(40, 4))
+
 
     # test specific promote rules to ensure we don't cause ambiguities
     SI = StaticInt{1}

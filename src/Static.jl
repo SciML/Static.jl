@@ -328,9 +328,9 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
-Base.div(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(div(X, Y))
-Base.div(x::Real, ::StaticNumber{Y}) where {Y} = div(x, Y)
-Base.div(::StaticNumber{X}, y::Real) where {X} = div(X, y)
+Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X,Y} = static(div(X, Y, m))
+Base.div(x::Real, ::StaticNumber{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
+Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
