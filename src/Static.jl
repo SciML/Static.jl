@@ -16,7 +16,7 @@ struct StaticSymbol{s}
     StaticSymbol(@nospecialize x::StaticSymbol) = x
     StaticSymbol(x) = StaticSymbol(Symbol(x))
     StaticSymbol(x, y) = StaticSymbol(Symbol(x, y))
-    @generated function StaticSymbol(::StaticSymbol{X}, ::StaticSymbol{Y}) where {X,Y}
+    @generated function StaticSymbol(::StaticSymbol{X}, ::StaticSymbol{Y}) where {X, Y}
         StaticSymbol(Symbol(X, Y))
     end
     StaticSymbol(x, y, z...) = StaticSymbol(StaticSymbol(x, y), z...)
@@ -97,7 +97,7 @@ const One = StaticInt{1}
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
-const StaticType{T} = Union{StaticNumber{T},StaticSymbol{T}}
+const StaticType{T} = Union{StaticNumber{T}, StaticSymbol{T}}
 
 Base.eltype(@nospecialize(T::Type{<:StaticFloat64})) = Float64
 Base.eltype(@nospecialize(T::Type{<:StaticInt})) = Int
@@ -124,30 +124,31 @@ julia> i[1]
 
 ```
 """
-struct NDIndex{N,I<:Tuple{Vararg{Union{StaticInt,Int},N}}} <: Base.AbstractCartesianIndex{N}
+struct NDIndex{N, I <: Tuple{Vararg{Union{StaticInt, Int}, N}}} <:
+       Base.AbstractCartesianIndex{N}
     index::I
 
-    NDIndex{N}(i::Tuple{Vararg{Union{StaticInt,Int},N}}) where {N} = new{N,typeof(i)}(i)
+    NDIndex{N}(i::Tuple{Vararg{Union{StaticInt, Int}, N}}) where {N} = new{N, typeof(i)}(i)
     NDIndex{N}(index::Tuple) where {N} = _ndindex(static(N), _flatten(index...))
     NDIndex{N}(index...) where {N} = NDIndex{N}(index)
 
-    NDIndex{0}(::Tuple{}) = new{0,Tuple{}}(())
+    NDIndex{0}(::Tuple{}) = new{0, Tuple{}}(())
     NDIndex{0}() = NDIndex{0}(())
 
-    NDIndex(i::Tuple{Vararg{Union{StaticInt,Int},N}}) where {N} = new{N,typeof(i)}(i)
-    NDIndex(i::Vararg{Union{StaticInt,Int},N}) where {N} = NDIndex(i)
+    NDIndex(i::Tuple{Vararg{Union{StaticInt, Int}, N}}) where {N} = new{N, typeof(i)}(i)
+    NDIndex(i::Vararg{Union{StaticInt, Int}, N}) where {N} = NDIndex(i)
 
     NDIndex(index::Tuple) = NDIndex(_flatten(index...))
     NDIndex(index...) = NDIndex(index)
 end
 
-_ndindex(n::StaticInt{N}, i::Tuple{Vararg{Union{Int,StaticInt},N}}) where {N} = NDIndex(i)
-function _ndindex(n::StaticInt{N}, i::Tuple{Vararg{Any,M}}) where {N,M}
+_ndindex(n::StaticInt{N}, i::Tuple{Vararg{Union{Int, StaticInt}, N}}) where {N} = NDIndex(i)
+function _ndindex(n::StaticInt{N}, i::Tuple{Vararg{Any, M}}) where {N, M}
     M > N && throw(ArgumentError("input tuple of length $M, requested $N"))
     return NDIndex(_fill_to_length(i, n))
 end
-_fill_to_length(x::Tuple{Vararg{Any,N}}, n::StaticInt{N}) where {N} = x
-@inline function _fill_to_length(x::Tuple{Vararg{Any,M}}, n::StaticInt{N}) where {M,N}
+_fill_to_length(x::Tuple{Vararg{Any, N}}, n::StaticInt{N}) where {N} = x
+@inline function _fill_to_length(x::Tuple{Vararg{Any, M}}, n::StaticInt{N}) where {M, N}
     return _fill_to_length((x..., static(1)), n)
 end
 
@@ -158,9 +159,8 @@ _flatten(i::Base.AbstractCartesianIndex) = _flatten(Tuple(i)...)
 @inline _flatten(i::Integer, I...) = (Int(i), _flatten(I...)...)
 @inline function _flatten(i::Base.AbstractCartesianIndex, I...)
     return (_flatten(Tuple(i)...)..., _flatten(I...)...)
- end
+end
 Base.Tuple(@nospecialize(x::NDIndex)) = getfield(x, :index)
-
 
 """
     known(::Type{T})
@@ -172,7 +172,7 @@ See also: [`static`](@ref), [`is_static`](@ref)
 """
 known(::Type{<:StaticType{T}}) where {T} = T
 known(::Type{Val{V}}) where {V} = V
-_get_known(::Type{T}, dim::StaticInt{D}) where {T,D} = known(field_type(T, dim))
+_get_known(::Type{T}, dim::StaticInt{D}) where {T, D} = known(field_type(T, dim))
 known(@nospecialize(T::Type{<:Tuple})) = eachop(_get_known, nstatic(Val(fieldcount(T))), T)
 known(T::DataType) = nothing
 known(@nospecialize(x)) = known(typeof(x))
@@ -200,11 +200,13 @@ static(:x)
 
 ```
 """
-static(@nospecialize(x::Union{StaticSymbol,StaticNumber})) = x
+static(@nospecialize(x::Union{StaticSymbol, StaticNumber})) = x
 static(x::Integer) = StaticInt(x)
-static(x::Union{AbstractFloat,Complex,Rational,AbstractIrrational}) = StaticFloat64(Float64(x))
+function static(x::Union{AbstractFloat, Complex, Rational, AbstractIrrational})
+    StaticFloat64(Float64(x))
+end
 static(x::Bool) = StaticBool(x)
-static(x::Union{Symbol,AbstractChar,AbstractString}) = StaticSymbol(x)
+static(x::Union{Symbol, AbstractChar, AbstractString}) = StaticSymbol(x)
 static(x::Tuple{Vararg{Any}}) = map(static, x)
 static(::Val{V}) where {V} = static(V)
 static(x::CartesianIndex) = NDIndex(static(Tuple(x)))
@@ -247,11 +249,15 @@ Throws an error if `x` and `y` are not equal, preferentially returning the one t
 at compile time.
 """
 @inline static_promote(x::StaticType{X}, ::StaticType{X}) where {X} = x
-@noinline function static_promote(::StaticType{X}, ::StaticType{Y}) where {X,Y}
+@noinline function static_promote(::StaticType{X}, ::StaticType{Y}) where {X, Y}
     error("$X and $Y are not equal")
 end
-Base.@propagate_inbounds static_promote(::StaticType{N}, x) where {N} = static(static_promote(N, x))
-Base.@propagate_inbounds static_promote(x, ::StaticType{N}) where {N} = static(static_promote(N, x))
+Base.@propagate_inbounds function static_promote(::StaticType{N}, x) where {N}
+    static(static_promote(N, x))
+end
+Base.@propagate_inbounds function static_promote(x, ::StaticType{N}) where {N}
+    static(static_promote(N, x))
+end
 Base.@propagate_inbounds static_promote(x, y) = _static_promote(x, y)
 Base.@propagate_inbounds function _static_promote(x, y)
     @boundscheck x === y || error("$x and $y are not equal")
@@ -261,8 +267,10 @@ _static_promote(::Nothing, ::Nothing) = nothing
 _static_promote(x, ::Nothing) = x
 _static_promote(::Nothing, y) = y
 
-Base.@propagate_inbounds function _promote_shape(a::Tuple{A,Vararg{Any}}, b::Tuple{B,Vararg{Any}}) where {A,B}
-    (static_promote(getfield(a, 1), getfield(b, 1)), _promote_shape(Base.tail(a), Base.tail(b))...)
+Base.@propagate_inbounds function _promote_shape(a::Tuple{A, Vararg{Any}},
+                                                 b::Tuple{B, Vararg{Any}}) where {A, B}
+    (static_promote(getfield(a, 1), getfield(b, 1)),
+     _promote_shape(Base.tail(a), Base.tail(b))...)
 end
 _promote_shape(::Tuple{}, ::Tuple{}) = ()
 Base.@propagate_inbounds function _promote_shape(::Tuple{}, b::Tuple{B}) where {B}
@@ -271,17 +279,25 @@ end
 Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {A}
     (static_promote(static(1), getfield(a, 1)),)
 end
-Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int,StaticInt}}}, b::Tuple{Vararg{Union{Int,StaticInt}}})
+Base.@propagate_inbounds function Base.promote_shape(a::Tuple{Vararg{Union{Int, StaticInt}}
+                                                              },
+                                                     b::Tuple{Vararg{Union{Int, StaticInt}}
+                                                              })
     _promote_shape(a, b)
 end
 
-function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), @nospecialize(T2::Type{<:StaticNumber}))
+function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
+                           @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
 end
-function Base.promote_rule(::Type{<:Base.TwicePrecision{R}}, @nospecialize(T::Type{<:StaticNumber})) where {R<:Number}
+function Base.promote_rule(::Type{<:Base.TwicePrecision{R}},
+                           @nospecialize(T::Type{<:StaticNumber})) where {R <: Number}
     promote_rule(Base.TwicePrecision{R}, eltype(T))
 end
-Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), T2::Type{<:Union{Rational,AbstractFloat,Signed}}) = promote_rule(T2, eltype(T1))
+function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
+                           T2::Type{<:Union{Rational, AbstractFloat, Signed}})
+    promote_rule(T2, eltype(T1))
+end
 
 Base.:(~)(::StaticNumber{N}) where {N} = static(~N)
 
@@ -289,9 +305,9 @@ Base.inv(x::StaticNumber{N}) where {N} = one(x) / x
 
 @inline Base.one(@nospecialize T::Type{<:StaticNumber}) = static(one(eltype(T)))
 @inline Base.zero(@nospecialize T::Type{<:StaticNumber}) = static(zero(eltype(T)))
-@inline Base.iszero(::Union{StaticInt{0},StaticFloat64{0.0},False}) = true
+@inline Base.iszero(::Union{StaticInt{0}, StaticFloat64{0.0}, False}) = true
 @inline Base.iszero(@nospecialize x::StaticNumber) = false
-@inline Base.isone(::Union{One,FloatOne,True}) = true
+@inline Base.isone(::Union{One, FloatOne, True}) = true
 @inline Base.isone(@nospecialize x::StaticNumber) = false
 
 Base.AbstractFloat(x::StaticNumber) = StaticFloat64(x)
@@ -302,25 +318,27 @@ Base.sign(::StaticNumber{N}) where {N} = static(sign(N))
 
 Base.widen(@nospecialize(x::StaticNumber)) = widen(known(x))
 
-function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T<:Number}
+function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
     convert(T, known(N))
 end
 
 #Base.Bool(::StaticInt{N}) where {N} = Bool(N)
 
 Base.Integer(@nospecialize(x::StaticInt)) = x
-(::Type{T})(x::StaticNumber) where {T<:Real} = T(known(x))
-function (@nospecialize(T::Type{<:StaticNumber}))(x::Union{AbstractFloat,AbstractIrrational,Integer,Rational})
+(::Type{T})(x::StaticNumber) where {T <: Real} = T(known(x))
+function (@nospecialize(T::Type{<:StaticNumber}))(x::Union{AbstractFloat,
+                                                           AbstractIrrational, Integer,
+                                                           Rational})
     static(convert(eltype(T), x))
 end
 
 @inline Base.:(-)(::StaticNumber{N}) where {N} = static(-N)
-Base.:(*)(::Union{AbstractFloat,AbstractIrrational,Integer,Rational}, y::Zero) = y
-Base.:(*)(x::Zero, ::Union{AbstractFloat,AbstractIrrational,Integer,Rational}) = x
-Base.:(*)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X * Y)
-Base.:(/)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X / Y)
-Base.:(-)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X - Y)
-Base.:(+)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(X + Y)
+Base.:(*)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
+Base.:(*)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
+Base.:(*)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X * Y)
+Base.:(/)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X / Y)
+Base.:(-)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X - Y)
+Base.:(+)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X + Y)
 Base.:(-)(x::Ptr, ::StaticInt{N}) where {N} = x - N
 Base.:(-)(::StaticInt{N}, y::Ptr) where {N} = y - N
 Base.:(+)(x::Ptr, ::StaticInt{N}) where {N} = x + N
@@ -328,18 +346,20 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
-Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X,Y} = static(div(X, Y, m))
+function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
+    static(div(X, Y, m))
+end
 Base.div(x::Real, ::StaticNumber{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
 Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
-Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(rem(X, Y))
+Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
 Base.rem(x::Real, ::StaticNumber{Y}) where {Y} = rem(x, Y)
 Base.rem(::StaticNumber{X}, y::Real) where {X} = rem(X, y)
 
-Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(mod(X, Y))
+Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
 
 Base.round(::StaticFloat64{M}) where {M} = StaticFloat64(round(M))
 roundtostaticint(::StaticFloat64{M}) where {M} = StaticInt(round(Int, M))
@@ -347,55 +367,55 @@ roundtostaticint(x::AbstractFloat) = round(Int, x)
 floortostaticint(::StaticFloat64{M}) where {M} = StaticInt(Base.fptosi(Int, M))
 floortostaticint(x::AbstractFloat) = Base.fptosi(Int, x)
 
-Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = ==(X, Y)
+Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 
-Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = <(X, Y)
+Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <(X, Y)
 
-Base.isless(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = isless(X,Y)
+Base.isless(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = isless(X, Y)
 Base.isless(::StaticNumber{X}, y::Real) where {X} = isless(X, y)
 Base.isless(x::Real, ::StaticInteger{Y}) where {Y} = isless(x, Y)
 
-Base.min(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(min(X, Y))
+Base.min(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(min(X, Y))
 Base.min(::StaticNumber{X}, y::Number) where {X} = min(X, y)
 Base.min(x::Number, ::StaticNumber{Y}) where {Y} = min(x, Y)
 
-Base.max(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(max(X, Y))
+Base.max(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(max(X, Y))
 Base.max(::StaticNumber{X}, y::Number) where {X} = max(X, y)
 Base.max(x::Number, ::StaticNumber{Y}) where {Y} = max(x, Y)
 
-Base.minmax(::StaticNumber{X}, ::StaticNumber{Y}) where {X,Y} = static(minmax(X, Y))
+Base.minmax(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(minmax(X, Y))
 
-Base.:(<<)(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(<<(X,Y))
-Base.:(<<)(::StaticInteger{X}, n::Integer) where {X} = <<(X,n)
-Base.:(<<)(x::Integer, ::StaticInteger{N}) where {N} = <<(x,N)
+Base.:(<<)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(<<(X, Y))
+Base.:(<<)(::StaticInteger{X}, n::Integer) where {X} = <<(X, n)
+Base.:(<<)(x::Integer, ::StaticInteger{N}) where {N} = <<(x, N)
 
-Base.:(>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(>>(X,Y))
-Base.:(>>)(::StaticInteger{X}, n::Integer) where {X} = >>(X,n)
-Base.:(>>)(x::Integer, ::StaticInteger{N}) where {N} = >>(x,N)
+Base.:(>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>(X, Y))
+Base.:(>>)(::StaticInteger{X}, n::Integer) where {X} = >>(X, n)
+Base.:(>>)(x::Integer, ::StaticInteger{N}) where {N} = >>(x, N)
 
-Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(>>>(X,Y))
+Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>>(X, Y))
 Base.:(>>>)(::StaticInteger{X}, n::Integer) where {X} = >>>(X, n)
-Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x,N)
+Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x, N)
 
-Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(X & Y)
-Base.:(&)(::StaticInteger{X}, y::Union{Integer,Missing}) where {X} = X & y
-Base.:(&)(x::Union{Integer,Missing}, ::StaticInteger{Y}) where {Y} = x & Y
+Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X & Y)
+Base.:(&)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X & y
+Base.:(&)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x & Y
 Base.:(&)(x::Bool, y::True) = x
 Base.:(&)(x::Bool, y::False) = y
 Base.:(&)(x::True, y::Bool) = y
 Base.:(&)(x::False, y::Bool) = x
 
-Base.:(|)(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(|(X,Y))
-Base.:(|)(::StaticInteger{X}, y::Union{Integer,Missing}) where {X} = X | y
-Base.:(|)(x::Union{Integer,Missing}, ::StaticInteger{Y}) where {Y} = x | Y
+Base.:(|)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(|(X, Y))
+Base.:(|)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X | y
+Base.:(|)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x | Y
 Base.:(|)(x::Bool, y::True) = y
 Base.:(|)(x::Bool, y::False) = x
 Base.:(|)(x::True, y::Bool) = x
 Base.:(|)(x::False, y::Bool) = y
 
-Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X,Y} = static(xor(X,Y))
-Base.xor(::StaticInteger{X}, y::Union{Integer,Missing}) where {X} = xor(X, y)
-Base.xor(x::Union{Integer,Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
+Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(xor(X, Y))
+Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
+Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
@@ -403,11 +423,11 @@ Base.:(!)(::False) = True()
 Base.real(@nospecialize(x::StaticNumber)) = known(x)
 
 Base.all(::Tuple{Vararg{True}}) = true
-Base.all(::Tuple{Vararg{Union{True,False}}}) = false
+Base.all(::Tuple{Vararg{Union{True, False}}}) = false
 Base.all(::Tuple{Vararg{False}}) = false
 
 Base.any(::Tuple{Vararg{True}}) = true
-Base.any(::Tuple{Vararg{Union{True,False}}}) = true
+Base.any(::Tuple{Vararg{Union{True, False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
 
 """
@@ -415,9 +435,9 @@ Base.any(::Tuple{Vararg{False}}) = false
 
 Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
 """
-@inline field_type(T::Type, f::Union{Int,Symbol}) = fieldtype(T, f)
-@inline field_type(::Type{T}, ::StaticInt{N}) where {T,N} = fieldtype(T, N)
-@inline field_type(::Type{T}, ::StaticSymbol{S}) where {T,S} = fieldtype(T, S)
+@inline field_type(T::Type, f::Union{Int, Symbol}) = fieldtype(T, f)
+@inline field_type(::Type{T}, ::StaticInt{N}) where {T, N} = fieldtype(T, N)
+@inline field_type(::Type{T}, ::StaticSymbol{S}) where {T, S} = fieldtype(T, S)
 
 Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
 Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
@@ -485,14 +505,14 @@ Base.:(^)(x::Integer, y::True) = x
 Base.:(^)(x::BigInt, y::False) = one(x)
 Base.:(^)(x::BigInt, y::True) = x
 
-@inline function Base.ntuple(f::F, ::StaticInt{N}) where {F,N}
+@inline function Base.ntuple(f::F, ::StaticInt{N}) where {F, N}
     (N >= 0) || throw(ArgumentError(string("tuple length should be ≥ 0, got ", N)))
     if @generated
         quote
-            Base.Cartesian.@ntuple $N i -> f(i)
+            Base.Cartesian.@ntuple $N i->f(i)
         end
     else
-        Tuple(f(i) for i = 1:N)
+        Tuple(f(i) for i in 1:N)
     end
 end
 
@@ -520,7 +540,7 @@ end
 
 Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
 """
-@inline function eachop(op::F, itr::Tuple{T,Vararg{Any}}, args::Vararg{Any}) where {F,T}
+@inline function eachop(op::F, itr::Tuple{T, Vararg{Any}}, args::Vararg{Any}) where {F, T}
     (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
 end
 eachop(::F, ::Tuple{}, args::Vararg{Any}) where {F} = ()
@@ -533,7 +553,7 @@ Note that if one of the arguments passed to `op` is a `Tuple` type then it shoul
 instead of one of the trailing arguments, ensuring type inference of each element of the tuple.
 """
 eachop_tuple(op, itr, arg, args...) = _eachop_tuple(op, itr, arg, args)
-@generated function _eachop_tuple(op, ::I, arg, args::A) where {A,I}
+@generated function _eachop_tuple(op, ::I, arg, args::A) where {A, I}
     t = Expr(:curly, Tuple)
     narg = length(A.parameters)
     for p in I.parameters
@@ -556,7 +576,7 @@ Finds the position in the tuple `collection` that is exactly equal (i.e. `===`) 
 If `x` and `collection` are static (`is_static`) and `x` is in `collection` then the return
 value is a `StaticInt`.
 =#
-@generated function find_first_eq(x::X, itr::I) where {X,N,I<:Tuple{Vararg{Any,N}}}
+@generated function find_first_eq(x::X, itr::I) where {X, N, I <: Tuple{Vararg{Any, N}}}
     # we avoid incidental code gen when evaluated a tuple of known values by iterating
     #  through `I.parameters` instead of `known(I)`.
     index = known(X) === nothing ? nothing : findfirst(==(X), I.parameters)
@@ -670,7 +690,7 @@ julia> @btime Static.reduce_tup(ArrayInterface._pick_range, \$(Ref(inds))[])
 Base.Slice(static(1):100)
 ```
 """
-@generated function reduce_tup(f::F, inds::Tuple{Vararg{Any,N}}) where {F,N}
+@generated function reduce_tup(f::F, inds::Tuple{Vararg{Any, N}}) where {F, N}
     q = Expr(:block, Expr(:meta, :inline, :propagate_inbounds))
     if N == 1
         push!(q.args, :(inds[1]))
@@ -678,20 +698,20 @@ Base.Slice(static(1):100)
     end
     syms = Vector{Symbol}(undef, N)
     i = 0
-    for n ∈ 1:N
+    for n in 1:N
         syms[n] = iₙ = Symbol(:i_, (i += 1))
         push!(q.args, Expr(:(=), iₙ, Expr(:ref, :inds, n)))
     end
-    W =  1 << (8sizeof(N) - 2 - leading_zeros(N))
+    W = 1 << (8sizeof(N) - 2 - leading_zeros(N))
     while W > 0
         _N = length(syms)
-        for _ ∈ 2W:W:_N
-            for w ∈ 1:W
+        for _ in (2W):W:_N
+            for w in 1:W
                 new_sym = Symbol(:i_, (i += 1))
-                push!(q.args, Expr(:(=), new_sym, Expr(:call, :f, syms[w], syms[w+W])))
+                push!(q.args, Expr(:(=), new_sym, Expr(:call, :f, syms[w], syms[w + W])))
                 syms[w] = new_sym
             end
-            deleteat!(syms, 1+W:2W)
+            deleteat!(syms, (1 + W):(2W))
         end
         W >>>= 1
     end
@@ -701,7 +721,7 @@ end
 # This method assumes that `f` uetrieves compile time information and `g` is the fall back
 # for the corresponding dynamic method. If the `f(x)` doesn't return `nothing` that means
 # the value is known and compile time and returns `static(f(x))`.
-@inline function maybe_static(f::F, g::G, x) where {F,G}
+@inline function maybe_static(f::F, g::G, x) where {F, G}
     L = f(x)
     if L === nothing
         return g(x)
@@ -715,7 +735,7 @@ end
 
 Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
 """
-eq(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
+eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
 eq(x) = Base.Fix2(eq, x)
 
 """
@@ -723,7 +743,7 @@ eq(x) = Base.Fix2(eq, x)
 
 Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
 """
-ne(x::X, y::Y) where {X,Y} = !eq(x, y)
+ne(x::X, y::Y) where {X, Y} = !eq(x, y)
 ne(x) = Base.Fix2(ne, x)
 
 """
@@ -731,7 +751,7 @@ ne(x) = Base.Fix2(ne, x)
 
 Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool.
 """
-gt(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
+gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
 gt(x) = Base.Fix2(gt, x)
 
 """
@@ -739,7 +759,7 @@ gt(x) = Base.Fix2(gt, x)
 
 Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool.
 """
-ge(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
+ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
 ge(x) = Base.Fix2(ge, x)
 
 """
@@ -747,7 +767,7 @@ ge(x) = Base.Fix2(ge, x)
 
 Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool.
 """
-le(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
+le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
 le(x) = Base.Fix2(le, x)
 
 """
@@ -755,7 +775,7 @@ le(x) = Base.Fix2(le, x)
 
 Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
 """
-lt(x::X, y::Y) where {X,Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
+lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
 lt(x) = Base.Fix2(lt, x)
 
 """
@@ -774,10 +794,10 @@ Equivalent to `+` but allows for lazy addition when passing functions.
 """
 add(x) = Base.Fix2(+, x)
 
-const Mul{X} = Base.Fix2{typeof(*),X}
-const Add{X} = Base.Fix2{typeof(+),X}
+const Mul{X} = Base.Fix2{typeof(*), X}
+const Add{X} = Base.Fix2{typeof(+), X}
 
-Base.:∘(::Add{StaticInt{X}}, ::Add{StaticInt{Y}}) where {X,Y} = Base.Fix2(+, static(X + Y))
+Base.:∘(::Add{StaticInt{X}}, ::Add{StaticInt{Y}}) where {X, Y} = Base.Fix2(+, static(X + Y))
 Base.:∘(x::Mul{Int}, ::Add{StaticInt{0}}) = x
 Base.:∘(x::Mul{StaticInt{X}}, ::Add{StaticInt{0}}) where {X} = x
 Base.:∘(x::Mul{StaticInt{0}}, ::Add{StaticInt{0}}) = x
@@ -786,7 +806,7 @@ Base.:∘(x::Mul{StaticInt{0}}, y::Add{StaticInt{Y}}) where {Y} = x
 Base.:∘(::Mul{StaticInt{1}}, y::Add{StaticInt{Y}}) where {Y} = y
 Base.:∘(x::Mul{StaticInt{0}}, y::Add{Int}) = x
 Base.:∘(::Mul{StaticInt{1}}, y::Add{Int}) = y
-Base.:∘(::Mul{StaticInt{X}}, ::Mul{StaticInt{Y}}) where {X,Y} = Base.Fix2(*, static(X * Y))
+Base.:∘(::Mul{StaticInt{X}}, ::Mul{StaticInt{Y}}) where {X, Y} = Base.Fix2(*, static(X * Y))
 Base.:∘(x::Mul{StaticInt{0}}, y::Mul{Int}) = x
 Base.:∘(::Mul{Int}, y::Mul{StaticInt{0}}) = y
 Base.:∘(::Mul{StaticInt{1}}, y::Mul{Int}) = y
@@ -797,10 +817,11 @@ Base.length(@nospecialize(x::NDIndex))::Int = length(Tuple(x))
 Base.length(::Type{<:NDIndex{N}}) where {N} = N
 
 # indexing
-Base.@propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::Int)::Int where {N,T}
+Base.@propagate_inbounds function Base.getindex(x::NDIndex{N, T}, i::Int)::Int where {N, T}
     return Int(getfield(Tuple(x), i))
 end
-Base.@propagate_inbounds function Base.getindex(x::NDIndex{N,T}, i::StaticInt{I}) where {N,T,I}
+Base.@propagate_inbounds function Base.getindex(x::NDIndex{N, T},
+                                                i::StaticInt{I}) where {N, T, I}
     return getfield(Tuple(x), I)
 end
 
@@ -814,9 +835,13 @@ Base.:(==)(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex)) = ==(Tuple(x), 
 
 # zeros and ones
 Base.zero(@nospecialize(x::NDIndex)) = zero(typeof(x))
-Base.zero(@nospecialize(T::Type{<:NDIndex})) = NDIndex(ntuple(_ -> static(0), Val(length(T))))
+function Base.zero(@nospecialize(T::Type{<:NDIndex}))
+    NDIndex(ntuple(_ -> static(0), Val(length(T))))
+end
 Base.oneunit(@nospecialize(x::NDIndex)) = oneunit(typeof(x))
-Base.oneunit(@nospecialize(T::Type{<:NDIndex})) = NDIndex(ntuple(_ -> static(1), Val(length(T))))
+function Base.oneunit(@nospecialize(T::Type{<:NDIndex}))
+    NDIndex(ntuple(_ -> static(1), Val(length(T))))
+end
 
 @inline function Base.IteratorsMD.split(i::NDIndex, V::Val)
     i, j = Base.IteratorsMD.split(Tuple(i), V)
@@ -837,7 +862,9 @@ end
 @inline function Base.max(@nospecialize(i1::NDIndex), @nospecialize(i2::NDIndex))
     NDIndex(map(max, Tuple(i1), Tuple(i2)))
 end
-@inline Base.:(*)(a::Integer, @nospecialize(i::NDIndex)) = NDIndex(map(x->a*x, Tuple(i)))
+@inline function Base.:(*)(a::Integer, @nospecialize(i::NDIndex))
+    NDIndex(map(x -> a * x, Tuple(i)))
+end
 @inline Base.:(*)(@nospecialize(i::NDIndex), a::Integer) = *(a, i)
 
 Base.CartesianIndex(@nospecialize(x::NDIndex)) = dynamic(x)
@@ -847,7 +874,9 @@ Base.CartesianIndex(@nospecialize(x::NDIndex)) = dynamic(x)
     Bool(_isless(static(0), Tuple(x), Tuple(y)))
 end
 
-lt(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex)) = _isless(static(0), Tuple(x), Tuple(y))
+function lt(@nospecialize(x::NDIndex), @nospecialize(y::NDIndex))
+    _isless(static(0), Tuple(x), Tuple(y))
+end
 
 _final_isless(c::Int) = c === 1
 _final_isless(::StaticInt{N}) where {N} = static(false)
@@ -878,13 +907,20 @@ __icmp(x::Bool) = ifelse(x, 0, -1)
     to_indices(A, inds, (Tuple(I[1])..., Base.tail(I)...))
 end
 # But for arrays of CartesianIndex, we just skip the appropriate number of inds
-@inline function Base.to_indices(A, inds, I::Tuple{AbstractArray{NDIndex{N,J}}, Vararg{Any}}) where {N,J}
+@inline function Base.to_indices(A, inds,
+                                 I::Tuple{AbstractArray{NDIndex{N, J}}, Vararg{Any}}) where {
+                                                                                             N,
+                                                                                             J
+                                                                                             }
     _, indstail = Base.IteratorsMD.split(inds, Val(N))
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 
-Base.show(io::IO, @nospecialize(x::Union{StaticNumber,StaticSymbol,NDIndex})) = show(io, MIME"text/plain"(), x)
-function Base.show(io::IO, ::MIME"text/plain", @nospecialize(x::Union{StaticNumber,StaticSymbol}))
+function Base.show(io::IO, @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
+    show(io, MIME"text/plain"(), x)
+end
+function Base.show(io::IO, ::MIME"text/plain",
+                   @nospecialize(x::Union{StaticNumber, StaticSymbol}))
     print(io, "static(" * repr(known(typeof(x))) * ")")
 end
 function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
