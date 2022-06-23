@@ -37,16 +37,17 @@ end
     @test @inferred(Integer(x)) === x
     @test @inferred(%(x, Integer)) === 1
     # test for ambiguities and correctness
-    for i ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
-        for j ∈ Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
+    for i in Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
+        for j in Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             i === j === 3 && continue
-            for f ∈ [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
+            for f in [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
                 (iszero(j) && ((f === ÷) || (f === %))) && continue # integer division error
-                @test convert(Int, @inferred(f(i,j))) == f(convert(Int, i), convert(Int, j))
+                @test convert(Int, @inferred(f(i, j))) ==
+                      f(convert(Int, i), convert(Int, j))
             end
         end
         i == 3 && break
-        for f ∈ [+, -, *, /, ÷, %, ==, ≤, ≥]
+        for f in [+, -, *, /, ÷, %, ==, ≤, ≥]
             w = f(convert(Int, i), 1.4)
             x = f(1.4, convert(Int, i))
             @test convert(typeof(w), @inferred(f(i, 1.4))) === w
@@ -66,16 +67,16 @@ end
     @test @inferred(cld(static(40), static(4))) === static(cld(40, 4))
     @test @inferred(fld(static(40), static(4))) === static(fld(40, 4))
 
-
     # test specific promote rules to ensure we don't cause ambiguities
     SI = StaticInt{1}
-    IR = typeof(1//1)
+    IR = typeof(1 // 1)
     PI = typeof(pi)
     @test @inferred(convert(SI, SI())) === SI()
     @test @inferred(promote_type(SI, PI)) <: promote_type(Int, PI)
     @test @inferred(promote_type(SI, IR)) <: promote_type(Int, IR)
     @test @inferred(promote_rule(SI, SI)) <: Int
-    @test @inferred(promote_type(Base.TwicePrecision{Int}, StaticInt{1})) <: Base.TwicePrecision{Int}
+    @test @inferred(promote_type(Base.TwicePrecision{Int}, StaticInt{1})) <:
+          Base.TwicePrecision{Int}
 
     @test static(Int8(-18)) === static(-18)
     @test static(0xef) === static(239)
@@ -90,7 +91,7 @@ end
     @test widen(static(1)) isa Int128
     @test isless(static(1), static(2))
 
-    v = rand(3);
+    v = rand(3)
     GC.@preserve v begin
         p = pointer(v)
         @test +(p, static(1)) == +(static(1), p) == +(p, 1)
@@ -262,8 +263,8 @@ end
     @test @inferred(Static.is_static(typeof(static(1)))) === True()
     @test @inferred(Static.is_static(typeof(static(:x)))) === True()
     @test @inferred(Static.is_static(typeof(1))) === False()
-    @test @inferred(Static.is_static(typeof((static(:x),static(:x))))) === True()
-    @test @inferred(Static.is_static(typeof((static(:x),:x)))) === False()
+    @test @inferred(Static.is_static(typeof((static(:x), static(:x))))) === True()
+    @test @inferred(Static.is_static(typeof((static(:x), :x)))) === False()
     @test @inferred(Static.is_static(typeof(static(1.0)))) === True()
 
     @test @inferred(Static.known(v)) === (:a, 1, true)
@@ -274,8 +275,8 @@ end
     @test @inferred(Static.known(typeof(static(1)))) === 1
     @test @inferred(Static.known(typeof(static(:x)))) === :x
     @test @inferred(Static.known(typeof(1))) === nothing
-    @test @inferred(Static.known(typeof((static(:x),static(:x))))) === (:x, :x)
-    @test @inferred(Static.known(typeof((static(:x),:x)))) === (:x, nothing)
+    @test @inferred(Static.known(typeof((static(:x), static(:x))))) === (:x, :x)
+    @test @inferred(Static.known(typeof((static(:x), :x)))) === (:x, nothing)
 
     @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
 end
@@ -296,7 +297,7 @@ end
     x = (static(1), static(2), static(3))
     y = (static(3), static(2), static(1))
     z = (static(1), static(2), static(3), static(4))
-    T = Tuple{Int,Float64,String}
+    T = Tuple{Int, Float64, String}
     @test @inferred(Static.invariant_permutation(x, x)) === True()
     @test @inferred(Static.invariant_permutation(x, y)) === False()
     @test @inferred(Static.invariant_permutation(x, z)) === False()
@@ -309,31 +310,36 @@ end
 
     @test Static.field_type(typeof((x = 1, y = 2)), :x) <: Int
     @test Static.field_type(typeof((x = 1, y = 2)), static(:x)) <: Int
-    get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T,X} = Tuple{Static.field_type(T, dim),X}
-    @test @inferred(Static.eachop_tuple(Static.field_type, y, T)) === Tuple{String,Float64,Int}
-    @test @inferred(Static.eachop_tuple(get_tuple_add, y, T, String)) === Tuple{Tuple{String,String},Tuple{Float64,String},Tuple{Int,String}}
+    function get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T, X}
+        Tuple{Static.field_type(T, dim), X}
+    end
+    @test @inferred(Static.eachop_tuple(Static.field_type, y, T)) ===
+          Tuple{String, Float64, Int}
+    @test @inferred(Static.eachop_tuple(get_tuple_add, y, T, String)) ===
+          Tuple{Tuple{String, String}, Tuple{Float64, String}, Tuple{Int, String}}
     @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
     @test @inferred(Static.find_first_eq(static(2), (1, static(2)))) === static(2)
     @test @inferred(Static.find_first_eq(static(2), (1, static(2), 3))) === static(2)
     # inferred is Union{Int,Nothing}
     @test Static.find_first_eq(1, map(Int, y)) === 3
 
-    @testset "reduce_tup" begin
-        for n ∈ 2:16
-            x = ntuple(_ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)), n)
-            @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
-        end
-    end
+    @testset "reduce_tup" begin for n in 2:16
+        x = ntuple(_ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)),
+                   n)
+        @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
+    end end
 end
 
 @testset "NDIndex" begin
-    x = NDIndex((1,2,3))
-    y = NDIndex((1,static(2),3))
+    x = NDIndex((1, 2, 3))
+    y = NDIndex((1, static(2), 3))
     z = NDIndex(static(3), static(3), static(3))
 
     @testset "constructors" begin
-        @test static(CartesianIndex(3, 3, 3)) === z == Base.setindex(Base.setindex(x, 3, 1), 3, 2)
-        @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) === CartesianIndex(3, 3, 3)
+        @test static(CartesianIndex(3, 3, 3)) === z ==
+              Base.setindex(Base.setindex(x, 3, 1), 3, 2)
+        @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) ===
+              CartesianIndex(3, 3, 3)
         @test @inferred(Static.known(z)) === (3, 3, 3)
         @test Tuple(@inferred(NDIndex{0}())) === ()
         @test @inferred(NDIndex{3}(1, static(2), 3)) === y
@@ -342,21 +348,21 @@ end
         @test @inferred(NDIndex(x, y)) === NDIndex(1, 2, 3, 1, static(2), 3)
     end
 
-    @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3,))
+    @test @inferred(Base.IteratorsMD.split(x, Val(2))) === (NDIndex(1, 2), NDIndex(3))
     @test @inferred(length(x)) === 3
     @test @inferred(length(typeof(x))) === 3
-    NDIndex2{I<:Tuple{Vararg{Union{StaticInt,Int},2}}} = NDIndex{2, I}
+    NDIndex2{I <: Tuple{Vararg{Union{StaticInt, Int}, 2}}} = NDIndex{2, I}
     @test length(NDIndex2) === 2
     @test @inferred(y[2]) === 2
     @test @inferred(y[static(2)]) === static(2)
 
-    @test @inferred(-y) === NDIndex((-1,-static(2),-3))
-    @test @inferred(y + y) === NDIndex((2,static(4),6))
-    @test @inferred(y - y) === NDIndex((0,static(0),0))
-    @test @inferred(zero(x)) === NDIndex(static(0),static(0),static(0))
-    @test @inferred(oneunit(x)) === NDIndex(static(1),static(1),static(1))
-    @test @inferred(x * 3) === NDIndex((3,6,9))
-    @test @inferred(3 * x) === NDIndex((3,6,9))
+    @test @inferred(-y) === NDIndex((-1, -static(2), -3))
+    @test @inferred(y+y) === NDIndex((2, static(4), 6))
+    @test @inferred(y-y) === NDIndex((0, static(0), 0))
+    @test @inferred(zero(x)) === NDIndex(static(0), static(0), static(0))
+    @test @inferred(oneunit(x)) === NDIndex(static(1), static(1), static(1))
+    @test @inferred(x*3) === NDIndex((3, 6, 9))
+    @test @inferred(3*x) === NDIndex((3, 6, 9))
 
     @test @inferred(min(x, z)) === x
     @test @inferred(max(x, z)) === NDIndex(3, 3, 3)
@@ -364,18 +370,17 @@ end
     @test @inferred(isless(x, z))
     @test @inferred(Static.lt(oneunit(z), z)) === static(true)
 
-    A = rand(3,3,3);
+    A = rand(3, 3, 3)
     @test @inferred(to_indices(A, axes(A), (x,))) === (1, 2, 3)
-    @test @inferred(to_indices(A, axes(A), ([y,y],))) == ([y, y],)
+    @test @inferred(to_indices(A, axes(A), ([y, y],))) == ([y, y],)
 
     # issue #44
     @test deleteat!(Union{}[], Union{}[]) == Union{}[]
 end
 
-
 # for some reason this can't be inferred when in the "Static.jl" test set
 known_length(x) = known_length(typeof(x))
-known_length(::Type{T}) where {N,T<:Tuple{Vararg{Any,N}}} = N
+known_length(::Type{T}) where {N, T <: Tuple{Vararg{Any, N}}} = N
 known_length(::Type{T}) where {T} = nothing
 maybe_static_length(x) = Static.maybe_static(known_length, length, x)
 x = ntuple(+, 10)
@@ -384,29 +389,52 @@ y = 1:10
 @test @inferred(maybe_static_length(y)) === 10
 
 @testset "StaticFloat64" begin
-    for i ∈ -10:10
-        for j ∈ -10:10
-            @test i+j == @inferred(Static.StaticInt(i) + Static.StaticFloat64(j)) == @inferred(i + Static.StaticFloat64(j)) == @inferred(Static.StaticFloat64(i) + j) == @inferred(Static.StaticFloat64(i) + Static.StaticInt(j)) == @inferred(Static.StaticFloat64(i) + Static.StaticFloat64(j))
-            @test i-j == @inferred(Static.StaticInt(i) - Static.StaticFloat64(j)) == @inferred(i - Static.StaticFloat64(j)) == @inferred(Static.StaticFloat64(i) - Static.StaticInt(j)) == @inferred(Static.StaticFloat64(i) - j) == @inferred(Static.StaticFloat64(i) - Static.StaticFloat64(j))
-            @test i*j == @inferred(Static.StaticInt(i) * Static.StaticFloat64(j)) == @inferred(i * Static.StaticFloat64(j)) == @inferred(Static.StaticFloat64(i) * Static.StaticInt(j)) == @inferred(Static.StaticFloat64(i) * j) == @inferred(Static.StaticFloat64(i) * Static.StaticFloat64(j))
+    for i in -10:10
+        for j in -10:10
+            @test i + j == @inferred(Static.StaticInt(i)+Static.StaticFloat64(j)) ==
+                  @inferred(i+Static.StaticFloat64(j)) ==
+                  @inferred(Static.StaticFloat64(i)+j) ==
+                  @inferred(Static.StaticFloat64(i)+Static.StaticInt(j)) ==
+                  @inferred(Static.StaticFloat64(i)+Static.StaticFloat64(j))
+            @test i - j == @inferred(Static.StaticInt(i)-Static.StaticFloat64(j)) ==
+                  @inferred(i-Static.StaticFloat64(j)) ==
+                  @inferred(Static.StaticFloat64(i)-Static.StaticInt(j)) ==
+                  @inferred(Static.StaticFloat64(i)-j) ==
+                  @inferred(Static.StaticFloat64(i)-Static.StaticFloat64(j))
+            @test i * j == @inferred(Static.StaticInt(i)*Static.StaticFloat64(j)) ==
+                  @inferred(i*Static.StaticFloat64(j)) ==
+                  @inferred(Static.StaticFloat64(i)*Static.StaticInt(j)) ==
+                  @inferred(Static.StaticFloat64(i)*j) ==
+                  @inferred(Static.StaticFloat64(i)*Static.StaticFloat64(j))
             i == j == 0 && continue
-            @test i/j == @inferred(Static.StaticInt(i) / Static.StaticFloat64(j)) == @inferred(i / Static.StaticFloat64(j)) == @inferred(Static.StaticFloat64(i) / Static.StaticInt(j)) == @inferred(Static.StaticFloat64(i) / j) == @inferred(Static.StaticFloat64(i) / Static.StaticFloat64(j))
+            @test i / j == @inferred(Static.StaticInt(i)/Static.StaticFloat64(j)) ==
+                  @inferred(i/Static.StaticFloat64(j)) ==
+                  @inferred(Static.StaticFloat64(i)/Static.StaticInt(j)) ==
+                  @inferred(Static.StaticFloat64(i)/j) ==
+                  @inferred(Static.StaticFloat64(i)/Static.StaticFloat64(j))
         end
         if i ≥ 0
-            @test sqrt(i) == @inferred(sqrt(Static.StaticInt(i))) == @inferred(sqrt(Static.StaticFloat64(i))) == @inferred(sqrt(Static.StaticFloat64(Float64(i))))
+            @test sqrt(i) == @inferred(sqrt(Static.StaticInt(i))) ==
+                  @inferred(sqrt(Static.StaticFloat64(i))) ==
+                  @inferred(sqrt(Static.StaticFloat64(Float64(i))))
         end
     end
     @test Static.floortostaticint(1.0) === 1
     @test Static.floortostaticint(prevfloat(2.0)) === 1
-    @test @inferred(Static.floortostaticint(Static.StaticFloat64(1.0))) === Static.StaticInt(1)
-    @test @inferred(Static.floortostaticint(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticInt(1)
+    @test @inferred(Static.floortostaticint(Static.StaticFloat64(1.0))) ===
+          Static.StaticInt(1)
+    @test @inferred(Static.floortostaticint(Static.StaticFloat64(prevfloat(2.0)))) ===
+          Static.StaticInt(1)
 
     @test Static.roundtostaticint(1.0) === 1
     @test Static.roundtostaticint(prevfloat(2.0)) === 2
-    @test @inferred(Static.roundtostaticint(Static.StaticFloat64(1.0))) === Static.StaticInt(1)
-    @test @inferred(Static.roundtostaticint(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticInt(2)
+    @test @inferred(Static.roundtostaticint(Static.StaticFloat64(1.0))) ===
+          Static.StaticInt(1)
+    @test @inferred(Static.roundtostaticint(Static.StaticFloat64(prevfloat(2.0)))) ===
+          Static.StaticInt(2)
     @test @inferred(round(Static.StaticFloat64{1.0}())) === Static.StaticFloat64(1)
-    @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) === Static.StaticFloat64(ComplexF64(2))
+    @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) ===
+          Static.StaticFloat64(ComplexF64(2))
 
     fone = static(1.0)
     fzero = static(0.0)
@@ -431,15 +459,14 @@ y = 1:10
 
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
-    @testset "trig" begin
-        for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh, asinh, atanh, exp, exp2,
-            exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
-            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
-            acsch, deg2rad, mod2pi, sinpi, cospi]
-            @info "Testing $f(0.5)"
-            @test @inferred(f(static(.5))) === static(f(.5))
-        end
-    end
+    @testset "trig" begin for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh,
+        asinh, atanh, exp, exp2,
+        exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
+        secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
+        acsch, deg2rad, mod2pi, sinpi, cospi]
+        @info "Testing $f(0.5)"
+        @test @inferred(f(static(0.5))) === static(f(0.5))
+    end end
     @test @inferred(asec(static(2.0))) === static(asec(2.0))
     @test @inferred(acsc(static(2.0))) === static(acsc(2.0))
     @test @inferred(acot(static(2.0))) === static(acot(2.0))
@@ -457,6 +484,6 @@ end
     @test repr(static(1)) == "static(1)"
     @test repr(static(:x)) == "static(:x)"
     @test repr(static(true)) == "static(true)"
-    @test repr(static(CartesianIndex(1,1))) == "NDIndex(static(1), static(1))"
+    @test repr(static(CartesianIndex(1, 1))) == "NDIndex(static(1), static(1))"
     @test string(static(true)) == "static(true)" == "$(static(true))"
 end
