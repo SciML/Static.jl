@@ -87,17 +87,17 @@ end
 ifelse(::True, @nospecialize(x), @nospecialize(y)) = x
 ifelse(::False, @nospecialize(x), @nospecialize(y)) = y
 
-StaticInt(x::False) = Zero()
-StaticInt(x::True) = One()
-Base.Bool(::True) = true
-Base.Bool(::False) = false
-
 const Zero = StaticInt{0}
 const One = StaticInt{1}
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
 const StaticType{T} = Union{StaticNumber{T}, StaticSymbol{T}}
+
+StaticInt(x::False) = Zero()
+StaticInt(x::True) = One()
+Base.Bool(::True) = true
+Base.Bool(::False) = false
 
 Base.eltype(@nospecialize(T::Type{<:StaticFloat64})) = Float64
 Base.eltype(@nospecialize(T::Type{<:StaticInt})) = Int
@@ -315,7 +315,7 @@ Base.AbstractFloat(x::StaticNumber) = StaticFloat64(x)
 Base.abs(::StaticNumber{N}) where {N} = static(abs(N))
 Base.abs2(::StaticNumber{N}) where {N} = static(abs2(N))
 Base.sign(::StaticNumber{N}) where {N} = static(sign(N))
-
+                                    
 Base.widen(@nospecialize(x::StaticNumber)) = widen(known(x))
 
 function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
@@ -430,6 +430,9 @@ Base.any(::Tuple{Vararg{True}}) = true
 Base.any(::Tuple{Vararg{Union{True, False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
 
+Base.real(@nospecialize(x::StaticInteger)) = x
+Base.imag(@nospecialize(_::StaticInteger)) = Zero()
+                            
 """
     field_type(::Type{T}, f)
 
