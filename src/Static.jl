@@ -590,8 +590,8 @@ value is a `StaticInt`.
     end
 end
 
-function Base.invperm(p::Tuple{Vararg{StaticInt,N}}) where {N}
-    map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N)))
+function Base.invperm(p::Tuple{StaticInt,Vararg{StaticInt,N}}) where {N}
+    map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N + 1)))
 end
 
 """
