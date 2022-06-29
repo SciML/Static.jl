@@ -14,6 +14,7 @@ Aqua.test_all(Static)
     @test @inferred(StaticSymbol(x)) === x
     @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
     @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
+    @test @inferred(static(nothing)) === nothing
     @test_throws ErrorException static([])
 end
 
@@ -328,6 +329,12 @@ end
                    n)
         @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
     end end
+end
+
+@testset "invperm" begin
+    perm = static((10, 3, 4, 5, 6, 2, 9, 7, 8, 1))
+    invp = static((10, 6, 2, 3, 4, 5, 8, 9, 7, 1))
+    @test @inferred(invperm(perm)) === invp
 end
 
 @testset "NDIndex" begin
