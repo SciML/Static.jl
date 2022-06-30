@@ -87,17 +87,17 @@ end
 ifelse(::True, @nospecialize(x), @nospecialize(y)) = x
 ifelse(::False, @nospecialize(x), @nospecialize(y)) = y
 
-StaticInt(x::False) = Zero()
-StaticInt(x::True) = One()
-Base.Bool(::True) = true
-Base.Bool(::False) = false
-
 const Zero = StaticInt{0}
 const One = StaticInt{1}
 const FloatOne = StaticFloat64{one(Float64)}
 const FloatZero = StaticFloat64{zero(Float64)}
 
 const StaticType{T} = Union{StaticNumber{T}, StaticSymbol{T}}
+
+StaticInt(x::False) = Zero()
+StaticInt(x::True) = One()
+Base.Bool(::True) = true
+Base.Bool(::False) = false
 
 Base.eltype(@nospecialize(T::Type{<:StaticFloat64})) = Float64
 Base.eltype(@nospecialize(T::Type{<:StaticInt})) = Int
@@ -423,8 +423,6 @@ Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
-Base.real(@nospecialize(x::StaticNumber)) = known(x)
-
 Base.all(::Tuple{Vararg{True}}) = true
 Base.all(::Tuple{Vararg{Union{True, False}}}) = false
 Base.all(::Tuple{Vararg{False}}) = false
@@ -432,6 +430,10 @@ Base.all(::Tuple{Vararg{False}}) = false
 Base.any(::Tuple{Vararg{True}}) = true
 Base.any(::Tuple{Vararg{Union{True, False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
+
+Base.real(@nospecialize(x::StaticNumber)) = x
+Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
+Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
 
 """
     field_type(::Type{T}, f)
@@ -590,7 +592,7 @@ value is a `StaticInt`.
     end
 end
 
-function Base.invperm(p::Tuple{StaticInt,Vararg{StaticInt,N}}) where {N}
+function Base.invperm(p::Tuple{StaticInt, Vararg{StaticInt, N}}) where {N}
     map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N + 1)))
 end
 
