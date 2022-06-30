@@ -315,7 +315,7 @@ Base.AbstractFloat(x::StaticNumber) = StaticFloat64(x)
 Base.abs(::StaticNumber{N}) where {N} = static(abs(N))
 Base.abs2(::StaticNumber{N}) where {N} = static(abs2(N))
 Base.sign(::StaticNumber{N}) where {N} = static(sign(N))
-                                    
+
 Base.widen(@nospecialize(x::StaticNumber)) = widen(known(x))
 
 function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
@@ -433,7 +433,7 @@ Base.any(::Tuple{Vararg{False}}) = false
 Base.real(@nospecialize(x::StaticNumber)) = x
 Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
 Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
-                            
+
 """
     field_type(::Type{T}, f)
 
