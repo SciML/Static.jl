@@ -423,8 +423,6 @@ Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
-Base.real(@nospecialize(x::StaticNumber)) = known(x)
-
 Base.all(::Tuple{Vararg{True}}) = true
 Base.all(::Tuple{Vararg{Union{True, False}}}) = false
 Base.all(::Tuple{Vararg{False}}) = false
