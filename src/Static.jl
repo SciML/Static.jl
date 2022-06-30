@@ -210,7 +210,10 @@ static(x::Union{Symbol, AbstractChar, AbstractString}) = StaticSymbol(x)
 static(x::Tuple{Vararg{Any}}) = map(static, x)
 static(::Val{V}) where {V} = static(V)
 static(x::CartesianIndex) = NDIndex(static(Tuple(x)))
-@noinline static(x) = error("There is no static alternative for type $(typeof(x)).")
+function static(x::X) where {X}
+    Base.issingletontype(X) && return x
+    error("There is no static alternative for type $(typeof(x)).")
+end
 
 """
     is_static(::Type{T}) -> StaticBool
@@ -589,6 +592,10 @@ value is a `StaticInt`.
     else
         :($(static(index)))
     end
+end
+
+function Base.invperm(p::Tuple{StaticInt,Vararg{StaticInt,N}}) where {N}
+    map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N + 1)))
 end
 
 """
