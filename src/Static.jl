@@ -431,7 +431,7 @@ Base.any(::Tuple{Vararg{Union{True, False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
 
 Base.real(@nospecialize(x::StaticInteger)) = x
-Base.imag(@nospecialize(_::StaticInteger)) = Zero()
+Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
                             
 """
     field_type(::Type{T}, f)
