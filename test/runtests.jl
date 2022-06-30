@@ -98,6 +98,9 @@ end
         @test +(p, static(1)) == +(static(1), p) == +(p, 1)
         @test -(p, static(1)) == -(static(1), p) == -(p, 1)
     end
+
+    @test real(static(3)) === static(3)
+    @test imag(static(3)) === static(0)
 end
 
 @testset "StaticBool" begin
