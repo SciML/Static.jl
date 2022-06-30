@@ -430,7 +430,8 @@ Base.any(::Tuple{Vararg{True}}) = true
 Base.any(::Tuple{Vararg{Union{True, False}}}) = true
 Base.any(::Tuple{Vararg{False}}) = false
 
-Base.real(@nospecialize(x::StaticInteger)) = x
+Base.real(@nospecialize(x::StaticNumber)) = x
+Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
 Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
                             
 """
