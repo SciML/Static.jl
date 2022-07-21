@@ -29,6 +29,8 @@ end
     @test @inferred(one(StaticInt)) === StaticInt(1)
     @test @inferred(zero(StaticInt)) === StaticInt(0) === StaticInt(StaticInt(Val(0)))
     @test eltype(one(StaticInt)) <: Int
+    @test @inferred(isodd(one(StaticInt)))
+    @test @inferred(iseven(zero(StaticInt)))
 
     x = StaticInt(1)
     y = static(3)
