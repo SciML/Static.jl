@@ -312,6 +312,9 @@ Base.inv(x::StaticNumber{N}) where {N} = one(x) / x
 @inline Base.iszero(@nospecialize x::StaticNumber) = false
 @inline Base.isone(::Union{One, FloatOne, True}) = true
 @inline Base.isone(@nospecialize x::StaticNumber) = false
+@inline Base.iseven(@nospecialize x::StaticNumber) = iseven(known(x))
+@inline Base.isodd(@nospecialize x::StaticNumber) = isodd(known(x))
+
 
 Base.AbstractFloat(x::StaticNumber) = StaticFloat64(x)
 
