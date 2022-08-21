@@ -117,8 +117,6 @@ end
 
     @test @inferred(~t) === f
     @test @inferred(~f) === t
-    @test @inferred(!t) === f
-    @test @inferred(!f) === t
     @test @inferred(+t) === StaticInt(1)
     @test @inferred(+f) === StaticInt(0)
     @test @inferred(-t) === StaticInt(-1)

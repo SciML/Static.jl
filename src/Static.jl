@@ -423,8 +423,9 @@ Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(xor(X, Y)
 Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
 Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 
-Base.:(!)(::True) = False()
-Base.:(!)(::False) = True()
+# These are heavily invalidating, leading to major compile time increases downstream
+#Base.:(!)(::True) = False()
+#Base.:(!)(::False) = True()
 
 Base.all(::Tuple{Vararg{True}}) = true
 Base.all(::Tuple{Vararg{Union{True, False}}}) = false
