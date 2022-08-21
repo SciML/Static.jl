@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
-export dynamic, is_static, known, static, static_promote
+export dynamic, is_static, known, static, static_promote, static_!
 
 """
     StaticSymbol
@@ -315,7 +315,6 @@ Base.inv(x::StaticNumber{N}) where {N} = one(x) / x
 @inline Base.iseven(@nospecialize x::StaticNumber) = iseven(known(x))
 @inline Base.isodd(@nospecialize x::StaticNumber) = isodd(known(x))
 
-
 Base.AbstractFloat(x::StaticNumber) = StaticFloat64(x)
 
 Base.abs(::StaticNumber{N}) where {N} = static(abs(N))
@@ -426,6 +425,9 @@ Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 # These are heavily invalidating, leading to major compile time increases downstream
 #Base.:(!)(::True) = False()
 #Base.:(!)(::False) = True()
+# Instead, use the not invalidating form
+static_!(::True) = False()
+static_!(::False) = True()
 
 Base.all(::Tuple{Vararg{True}}) = true
 Base.all(::Tuple{Vararg{Union{True, False}}}) = false
