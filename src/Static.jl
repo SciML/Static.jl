@@ -746,7 +746,7 @@ end
 """
     eq(x, y)
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
 eq(x) = Base.Fix2(eq, x)
@@ -754,15 +754,15 @@ eq(x) = Base.Fix2(eq, x)
 """
     ne(x, y)
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool`.
 """
-ne(x::X, y::Y) where {X, Y} = !eq(x, y)
+ne(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x != y)
 ne(x) = Base.Fix2(ne, x)
 
 """
     gt(x, y)
 
-Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool`.
 """
 gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
 gt(x) = Base.Fix2(gt, x)
@@ -770,7 +770,7 @@ gt(x) = Base.Fix2(gt, x)
 """
     ge(x, y)
 
-Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
 ge(x) = Base.Fix2(ge, x)
@@ -778,7 +778,7 @@ ge(x) = Base.Fix2(ge, x)
 """
     le(x, y)
 
-Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
 le(x) = Base.Fix2(le, x)
@@ -786,7 +786,7 @@ le(x) = Base.Fix2(le, x)
 """
     lt(x, y)
 
-Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool`.
 """
 lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
 lt(x) = Base.Fix2(lt, x)
