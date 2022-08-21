@@ -426,6 +426,7 @@ Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 #Base.:(!)(::True) = False()
 #Base.:(!)(::False) = True()
 # Instead, use the not invalidating form
+static_!(x::Bool) = !x
 static_!(::True) = False()
 static_!(::False) = True()
 
