@@ -948,7 +948,7 @@ Base.setproperty!(x, ::StaticSymbol{S}, v) where {S} = setproperty!(x, S, v)
 Base.hasproperty(x, ::StaticSymbol{S}) where {S} = hasproperty(x, S)
 
 Base.getindex(nt::NamedTuple, ::StaticSymbol{S}) where {S} = getfield(nt, S)
-function Base.getindex(nt::NamedTuple, idxs::Tuple{Vararg{<:StaticSymbol}})
+function Base.getindex(nt::NamedTuple, idxs::Tuple{<:StaticSymbol,Vararg{<:StaticSymbol}})
     NamedTuple{known(idxs)}(nt)
 end
 function Base.setindex(nt::NamedTuple, v, ::StaticSymbol{S}) where {S}
