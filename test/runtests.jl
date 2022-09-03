@@ -16,6 +16,15 @@ Aqua.test_all(Static)
     @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
     @test @inferred(static(nothing)) === nothing
     @test_throws ErrorException static([])
+    nt = (x = 1, y = 2)
+    @test nt[static(:x)] ===
+        getproperty(nt, static(:x)) ===
+        Base.Fix2(getfield, static(:x))(nt) === 1
+    @test hasproperty(nt, static(:x))
+    @test Base.setindex((a=1, b=2, c=3), 4, static(:b)) ==
+        (a = 1, b = 4, c = 3)
+    @test Base.setindex((a=1, b=2, c=3), (4, 5), (static(:b), static(:d))) ==
+        (a = 1, b = 4, c = 3, d = 5)
 end
 
 @testset "StaticInt" begin
