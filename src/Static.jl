@@ -954,7 +954,7 @@ end
 function Base.setindex(nt::NamedTuple, v, ::StaticSymbol{S}) where {S}
     merge(nt, NamedTuple{(S,)}((v,)))
 end
-function Base.setindex(nt::NamedTuple, vs, idxs::Tuple{Vararg{<:StaticSymbol}})
+function Base.setindex(nt::NamedTuple, vs, idxs::Tuple{<:StaticSymbol,Vararg{<:StaticSymbol}})
     merge(nt, NamedTuple{known(idxs)}((vs...,)))
 end
 
