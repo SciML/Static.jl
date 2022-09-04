@@ -17,14 +17,21 @@ Aqua.test_all(Static)
     @test @inferred(static(nothing)) === nothing
     @test_throws ErrorException static([])
     nt = (x = 1, y = 2)
-    @test nt[static(:x)] ===
-        getproperty(nt, static(:x)) ===
-        Base.Fix2(getfield, static(:x))(nt) === 1
+    @test nt[static(:x)] === 1
     @test hasproperty(nt, static(:x))
-    @test Base.setindex((a=1, b=2, c=3), 4, static(:b)) ==
-        (a = 1, b = 4, c = 3)
-    @test Base.setindex((a=1, b=2, c=3), (4, 5), (static(:b), static(:d))) ==
-        (a = 1, b = 4, c = 3, d = 5)
+    @test Base.setindex((a = 1, b = 2, c = 3), 4, static(:b)) ==
+          (a = 1, b = 4, c = 3)
+    @test Base.setindex((a = 1, b = 2, c = 3), (4, 5), (static(:b), static(:d))) ==
+          (a = 1, b = 4, c = 3, d = 5)
+    @test getindex((a = 1, b = 2, c = 3), (static(:b), static(:c))) ==
+          (b = 2, c = 3)
+    mutable struct Foo
+        x::Int
+    end
+    f = Foo(3)
+    @test getproperty(f, static(:x)) === 3
+    setproperty!(f, static(:x), 4)
+    @test Base.Fix2(getfield, static(:x))(f) === 4
 end
 
 @testset "StaticInt" begin
@@ -323,6 +330,7 @@ end
     @test @inferred(Static.permute(x, y)) === y
     @test @inferred(Static.eachop(getindex, x)) === x
 
+    @test Base.Fix2(fieldtype, static(:x))(typeof((x = 1, y = 2))) <: Int
     @test Static.field_type(typeof((x = 1, y = 2)), :x) <: Int
     @test Static.field_type(typeof((x = 1, y = 2)), static(:x)) <: Int
     function get_tuple_add(::Type{T}, ::Type{X}, dim::StaticInt) where {T, X}
