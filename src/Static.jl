@@ -43,6 +43,8 @@ end
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
+Base.zero(@nospecialize(::StaticInt)) = StaticInt{0}()
+
 Base.to_index(x::StaticInt) = known(x)
 function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
     checkindex(Bool, inds, N)
