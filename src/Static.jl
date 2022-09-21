@@ -439,15 +439,6 @@ Base.real(@nospecialize(x::StaticNumber)) = x
 Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
 Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
 
-"""
-    field_type(::Type{T}, f)
-
-Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
-"""
-@inline field_type(T::Type, f::Union{Int, Symbol}) = fieldtype(T, f)
-@inline field_type(::Type{T}, ::StaticInt{N}) where {T, N} = fieldtype(T, N)
-@inline field_type(::Type{T}, ::StaticSymbol{S}) where {T, S} = fieldtype(T, S)
-
 Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
 Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
 @generated Base.cbrt(::StaticFloat64{M}) where {M} = StaticFloat64(cbrt(M))
@@ -939,6 +930,41 @@ end
 function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
     print(io, "NDIndex")
     show(io, m, Tuple(x))
+end
+
+# field and property accessors
+"""
+    field_type(::Type{T}, f)
+
+Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
+"""
+@inline field_type(T::Type, f::Union{Int, Symbol}) = fieldtype(T, f)
+@inline field_type(::Type{T}, ::StaticInt{N}) where {T, N} = fieldtype(T, N)
+@inline field_type(::Type{T}, ::StaticSymbol{S}) where {T, S} = fieldtype(T, S)
+
+function (::Base.Fix2{typeof(getfield), <:Union{StaticSymbol{f}, StaticInt{f}}})(x) where {f
+                                                                                           }
+    getfield(x, f)
+end
+function (::Base.Fix2{typeof(fieldtype), <:Union{StaticSymbol{f}, StaticInt{f}}})(x) where {
+                                                                                            f
+                                                                                            }
+    fieldtype(x, f)
+end
+
+Base.getproperty(x, ::StaticSymbol{S}) where {S} = getproperty(x, S)
+Base.setproperty!(x, ::StaticSymbol{S}, v) where {S} = setproperty!(x, S, v)
+Base.hasproperty(x, ::StaticSymbol{S}) where {S} = hasproperty(x, S)
+
+Base.getindex(nt::NamedTuple, ::StaticSymbol{S}) where {S} = getfield(nt, S)
+function Base.getindex(nt::NamedTuple, idxs::Tuple{<:StaticSymbol, Vararg{<:StaticSymbol}})
+    NamedTuple{known(idxs)}(nt)
+end
+function Base.setindex(nt::NamedTuple, v, ::StaticSymbol{S}) where {S}
+    merge(nt, NamedTuple{(S,)}((v,)))
+end
+function Base.setindex(nt::NamedTuple, vs, idxs::Tuple{Vararg{<:StaticSymbol}})
+    merge(nt, NamedTuple{known(idxs)}((vs...,)))
 end
 
 end
