@@ -31,3 +31,11 @@ julia> known(typeof(1)) === nothing  # `Int`  has no compile time known value
 true
 
 ```
+
+## Types, Dispatch, Compile-Time, and StaticNumbers.jl
+
+Static.jl does not subtype the Base number types. For example, `!(StaticInt <: Integer)`. The reason for this is that it
+invalidates all downstream compilation caches. This has a major effect, for example, causing LoopVectorization.jl to
+not precompile and ultimately giving the ODE solvers >20 second extra compile times. To avoid these invalidations, the
+dispatches were removed. An alternative library [StaticNumbers.jl](https://github.com/perrutquist/StaticNumbers.jl) is 
+more ergonomic but has these invalidations. Use the library that is more appropriate for your use case.
