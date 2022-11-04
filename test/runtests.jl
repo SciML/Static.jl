@@ -404,7 +404,7 @@ y = 1:10
     for i in -10:10
         for j in -10:10
             @test i + j == @inferred(Static.StaticInt(i)+Static.StaticFloat64(j)) ==
-                  @inferred(i+Static.StaticFloat64(j)) ==
+                @inferred(i+Static.StaticFloat64(Static.StaticFloat64(j))) ==
                   @inferred(Static.StaticFloat64(i)+j) ==
                   @inferred(Static.StaticFloat64(i)+Static.StaticInt(j)) ==
                   @inferred(Static.StaticFloat64(i)+Static.StaticFloat64(j))
@@ -447,6 +447,24 @@ y = 1:10
     @test @inferred(round(Static.StaticFloat64{1.0}())) === Static.StaticFloat64(1)
     @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) ===
           Static.StaticFloat64(ComplexF64(2))
+
+    x = static(5.0)
+    y = static(10.0)
+    @test @inferred(rem(x, y)) === x
+    @test @inferred(rem(x, 10.0)) === 5.0
+    @test @inferred(rem(5.0, y)) === 5.0
+
+    @test @inferred(min(x, y)) === x
+    @test @inferred(min(x, 10.0)) === 5.0
+    @test @inferred(min(5.0, y)) === 5.0
+
+    @test @inferred(max(x, y)) === y
+    @test @inferred(max(x, 10.0)) === 10.0
+    @test @inferred(max(5.0, y)) === 10.0
+
+    @test @inferred(isless(x, y))
+    @test @inferred(isless(x, 10.0))
+    @test @inferred(isless(5.0, y))
 
     fone = static(1.0)
     fzero = static(0.0)
