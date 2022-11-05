@@ -499,3 +499,6 @@ end
     @test repr(static(CartesianIndex(1, 1))) == "NDIndex(static(1), static(1))"
     @test string(static(true)) == "static(true)" == "$(static(true))"
 end
+
+include("ranges.jl")
+

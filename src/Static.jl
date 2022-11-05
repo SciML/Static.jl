@@ -941,4 +941,6 @@ function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
     show(io, m, Tuple(x))
 end
 
+include("ranges.jl")
+
 end
