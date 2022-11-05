@@ -126,6 +126,8 @@ end
     @test @inferred(sign(t)) === t
     @test @inferred(abs(t)) === t
     @test @inferred(abs2(t)) === t
+    @test @inferred(iszero(zero(True)))
+    @test @inferred(isone(one(True)))
     @test !@inferred(iszero(t))
     @test @inferred(isone(t))
     @test @inferred(iszero(f))
@@ -404,7 +406,7 @@ y = 1:10
     for i in -10:10
         for j in -10:10
             @test i + j == @inferred(Static.StaticInt(i)+Static.StaticFloat64(j)) ==
-                @inferred(i+Static.StaticFloat64(Static.StaticFloat64(j))) ==
+                  @inferred(i+Static.StaticFloat64(Static.StaticFloat64(j))) ==
                   @inferred(Static.StaticFloat64(i)+j) ==
                   @inferred(Static.StaticFloat64(i)+Static.StaticInt(j)) ==
                   @inferred(Static.StaticFloat64(i)+Static.StaticFloat64(j))
@@ -485,7 +487,7 @@ y = 1:10
     @test @inferred(promote_rule(typeof(fone), Float32)) <: Float32
     @test @inferred(promote_rule(typeof(fone), Float16)) <: Float16
 
-    @test @inferred(inv(static(2.0))) === static(inv(2.0))
+    @test @inferred(inv(static(2.0))) === static(inv(2.0)) === inv(static(2))
 
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
