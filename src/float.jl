@@ -76,17 +76,17 @@ Base.acot(x::StaticFloat64{M}) where {M} = atan(inv(x))
 
 Base.rem(x::Real, ::StaticFloat64{Y}) where {Y} = rem(x, Y)
 Base.rem(::StaticFloat64{X}, y::Real) where {X} = rem(X, y)
-Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y} = StaticFloat64(rem(X, Y))
+Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = StaticFloat64(rem(X, Y))
 
-Base.min(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = X > Y ? y : x
+Base.min(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X, Y} = X > Y ? y : x
 Base.min(x::Real, ::StaticFloat64{Y}) where {Y} = min(x, Y)
 Base.min(::StaticFloat64{X}, y::Real) where {X} = min(X, y)
 
-Base.max(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X,Y} = X > Y ? x : y
+Base.max(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X, Y} = X > Y ? x : y
 Base.max(x::Real, ::StaticFloat64{Y}) where {Y} = max(x, Y)
 Base.max(::StaticFloat64{X}, y::Real) where {X} = max(X, y)
 
-Base.isless(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X,Y} = isless(X, Y)
+Base.isless(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = isless(X, Y)
 Base.isless(x::AbstractFloat, ::StaticFloat64{Y}) where {Y} = isless(x, Y)
 Base.isless(::StaticFloat64{X}, y::AbstractFloat) where {X} = isless(X, y)
 
@@ -96,4 +96,3 @@ Base.:(*)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X * Y)
 Base.:(/)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X / Y)
 Base.:(-)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X - Y)
 Base.:(+)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X + Y)
-

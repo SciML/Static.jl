@@ -63,7 +63,7 @@ end
 
 include("float.jl")
 
-const StaticNumber{N} = Union{StaticInt{N},StaticBool{N},StaticFloat64{N}}
+const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
@@ -303,7 +303,7 @@ Base.one(@nospecialize T::Type{<:StaticBool}) = True()
 Base.one(@nospecialize T::Type{<:StaticInt}) = StaticInt(1)
 
 @inline Base.iszero(::Union{StaticInt{0}, StaticFloat64{0.0}, False}) = true
-@inline Base.iszero(@nospecialize x::Union{StaticInt,True,StaticFloat64}) = false
+@inline Base.iszero(@nospecialize x::Union{StaticInt, True, StaticFloat64}) = false
 
 @inline Base.isone(::Union{One, True, StaticFloat64{1.0}}) = true
 @inline Base.isone(@nospecialize x::Union{StaticInt, False, StaticFloat64}) = false
