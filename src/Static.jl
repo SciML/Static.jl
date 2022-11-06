@@ -24,45 +24,7 @@ end
 
 Base.Symbol(@nospecialize(s::StaticSymbol)) = known(s)
 
-abstract type StaticNumber{N} <: Number end
-
-abstract type StaticInteger{N} <: StaticNumber{N} end
-
-"""
-    StaticInt(N::Int) -> StaticInt{N}()
-
-A statically sized `Int`.
-Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
-"""
-struct StaticInt{N} <: StaticInteger{N}
-    StaticInt{N}() where {N} = new{N::Int}()
-    StaticInt(N::Int) = new{N}()
-    StaticInt(@nospecialize N::StaticInt) = N
-    StaticInt(::Val{N}) where {N} = StaticInt(N)
-end
-
-Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
-
-Base.zero(@nospecialize(::StaticInt)) = StaticInt{0}()
-
-Base.to_index(x::StaticInt) = known(x)
-function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
-    checkindex(Bool, inds, N)
-end
-
-"""
-    StaticFloat64{N}
-
-A statically sized `Float64`.
-Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
-"""
-struct StaticFloat64{N} <: StaticNumber{N}
-    StaticFloat64{N}() where {N} = new{N::Float64}()
-    StaticFloat64(x::Float64) = new{x}()
-    StaticFloat64(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
-    StaticFloat64(x::StaticInt{N}) where {N} = StaticFloat64(convert(Float64, N))
-    StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
-end
+abstract type StaticInteger{N} <: Number end
 
 """
     StaticBool(x::Bool) -> True/False
@@ -84,6 +46,32 @@ function StaticBool(x::Bool)
     else
         return False()
     end
+end
+
+"""
+    StaticInt(N::Int) -> StaticInt{N}()
+
+A statically sized `Int`.
+Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
+"""
+struct StaticInt{N} <: StaticInteger{N}
+    StaticInt{N}() where {N} = new{N::Int}()
+    StaticInt(N::Int) = new{N}()
+    StaticInt(@nospecialize N::StaticInt) = N
+    StaticInt(::Val{N}) where {N} = StaticInt(N)
+end
+
+include("float.jl")
+
+const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
+
+Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
+
+Base.zero(@nospecialize(::StaticInt)) = StaticInt{0}()
+
+Base.to_index(x::StaticInt) = known(x)
+function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
+    checkindex(Bool, inds, N)
 end
 
 ifelse(::True, @nospecialize(x), @nospecialize(y)) = x
@@ -304,16 +292,22 @@ function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
     promote_rule(T2, eltype(T1))
 end
 
-Base.:(~)(::StaticNumber{N}) where {N} = static(~N)
+Base.:(~)(::StaticInteger{N}) where {N} = static(~N)
 
-Base.inv(x::StaticNumber{N}) where {N} = one(x) / x
+Base.inv(x::StaticInteger{N}) where {N} = one(x) / x
 
-@inline Base.one(@nospecialize T::Type{<:StaticNumber}) = static(one(eltype(T)))
-@inline Base.zero(@nospecialize T::Type{<:StaticNumber}) = static(zero(eltype(T)))
+Base.zero(@nospecialize T::Type{<:StaticInt}) = StaticInt(0)
+Base.zero(@nospecialize T::Type{<:StaticBool}) = False()
+
+Base.one(@nospecialize T::Type{<:StaticBool}) = True()
+Base.one(@nospecialize T::Type{<:StaticInt}) = StaticInt(1)
+
 @inline Base.iszero(::Union{StaticInt{0}, StaticFloat64{0.0}, False}) = true
-@inline Base.iszero(@nospecialize x::StaticNumber) = false
-@inline Base.isone(::Union{One, FloatOne, True}) = true
-@inline Base.isone(@nospecialize x::StaticNumber) = false
+@inline Base.iszero(@nospecialize x::Union{StaticInt, True, StaticFloat64}) = false
+
+@inline Base.isone(::Union{One, True, StaticFloat64{1.0}}) = true
+@inline Base.isone(@nospecialize x::Union{StaticInt, False, StaticFloat64}) = false
+
 @inline Base.iseven(@nospecialize x::StaticNumber) = iseven(known(x))
 @inline Base.isodd(@nospecialize x::StaticNumber) = isodd(known(x))
 
@@ -332,7 +326,7 @@ end
 #Base.Bool(::StaticInt{N}) where {N} = Bool(N)
 
 Base.Integer(@nospecialize(x::StaticInt)) = x
-(::Type{T})(x::StaticNumber) where {T <: Real} = T(known(x))
+(::Type{T})(x::StaticInteger) where {T <: Real} = T(known(x))
 function (@nospecialize(T::Type{<:StaticNumber}))(x::Union{AbstractFloat,
                                                            AbstractIrrational, Integer,
                                                            Rational})
@@ -342,10 +336,10 @@ end
 @inline Base.:(-)(::StaticNumber{N}) where {N} = static(-N)
 Base.:(*)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
 Base.:(*)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
-Base.:(*)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X * Y)
-Base.:(/)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X / Y)
-Base.:(-)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X - Y)
-Base.:(+)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(X + Y)
+Base.:(*)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X * Y)
+Base.:(/)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X / Y)
+Base.:(-)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X - Y)
+Base.:(+)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X + Y)
 Base.:(-)(x::Ptr, ::StaticInt{N}) where {N} = x - N
 Base.:(-)(::StaticInt{N}, y::Ptr) where {N} = y - N
 Base.:(+)(x::Ptr, ::StaticInt{N}) where {N} = x + N
@@ -356,39 +350,32 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
     static(div(X, Y, m))
 end
-Base.div(x::Real, ::StaticNumber{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
+Base.div(x::Real, ::StaticInteger{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
 Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
 Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
-Base.rem(x::Real, ::StaticNumber{Y}) where {Y} = rem(x, Y)
-Base.rem(::StaticNumber{X}, y::Real) where {X} = rem(X, y)
-
+Base.rem(x::Real, ::StaticInteger{Y}) where {Y} = rem(x, Y)
+Base.rem(::StaticInteger{X}, y::Real) where {X} = rem(X, y)
 Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
-
-Base.round(::StaticFloat64{M}) where {M} = StaticFloat64(round(M))
-roundtostaticint(::StaticFloat64{M}) where {M} = StaticInt(round(Int, M))
-roundtostaticint(x::AbstractFloat) = round(Int, x)
-floortostaticint(::StaticFloat64{M}) where {M} = StaticInt(Base.fptosi(Int, M))
-floortostaticint(x::AbstractFloat) = Base.fptosi(Int, x)
 
 Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 
 Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <(X, Y)
 
-Base.isless(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = isless(X, Y)
-Base.isless(::StaticNumber{X}, y::Real) where {X} = isless(X, y)
+Base.isless(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = isless(X, Y)
+Base.isless(::StaticInteger{X}, y::Real) where {X} = isless(X, y)
 Base.isless(x::Real, ::StaticInteger{Y}) where {Y} = isless(x, Y)
 
-Base.min(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(min(X, Y))
-Base.min(::StaticNumber{X}, y::Number) where {X} = min(X, y)
-Base.min(x::Number, ::StaticNumber{Y}) where {Y} = min(x, Y)
+Base.min(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(min(X, Y))
+Base.min(::StaticInteger{X}, y::Number) where {X} = min(X, y)
+Base.min(x::Number, ::StaticInteger{Y}) where {Y} = min(x, Y)
 
-Base.max(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(max(X, Y))
-Base.max(::StaticNumber{X}, y::Number) where {X} = max(X, y)
-Base.max(x::Number, ::StaticNumber{Y}) where {Y} = max(x, Y)
+Base.max(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(max(X, Y))
+Base.max(::StaticInteger{X}, y::Number) where {X} = max(X, y)
+Base.max(x::Number, ::StaticInteger{Y}) where {Y} = max(x, Y)
 
 Base.minmax(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(minmax(X, Y))
 
@@ -447,57 +434,6 @@ Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
 @inline field_type(T::Type, f::Union{Int, Symbol}) = fieldtype(T, f)
 @inline field_type(::Type{T}, ::StaticInt{N}) where {T, N} = fieldtype(T, N)
 @inline field_type(::Type{T}, ::StaticSymbol{S}) where {T, S} = fieldtype(T, S)
-
-Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
-Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))
-@generated Base.cbrt(::StaticFloat64{M}) where {M} = StaticFloat64(cbrt(M))
-Base.mod2pi(::StaticFloat64{M}) where {M} = StaticFloat64(mod2pi(M))
-@generated Base.sinpi(::StaticFloat64{M}) where {M} = StaticFloat64(sinpi(M))
-@generated Base.cospi(::StaticFloat64{M}) where {M} = StaticFloat64(cospi(M))
-Base.exp(::StaticFloat64{M}) where {M} = StaticFloat64(exp(M))
-Base.exp2(::StaticFloat64{M}) where {M} = StaticFloat64(exp2(M))
-Base.exp10(::StaticFloat64{M}) where {M} = StaticFloat64(exp10(M))
-@generated Base.expm1(::StaticFloat64{M}) where {M} = StaticFloat64(expm1(M))
-@generated Base.log(::StaticFloat64{M}) where {M} = StaticFloat64(log(M))
-@generated Base.log2(::StaticFloat64{M}) where {M} = StaticFloat64(log2(M))
-@generated Base.log10(::StaticFloat64{M}) where {M} = StaticFloat64(log10(M))
-@generated Base.log1p(::StaticFloat64{M}) where {M} = StaticFloat64(log1p(M))
-@generated Base.sin(::StaticFloat64{M}) where {M} = StaticFloat64(sin(M))
-@generated Base.cos(::StaticFloat64{M}) where {M} = StaticFloat64(cos(M))
-@generated Base.tan(::StaticFloat64{M}) where {M} = StaticFloat64(tan(M))
-Base.sec(x::StaticFloat64{M}) where {M} = inv(cos(x))
-Base.csc(x::StaticFloat64{M}) where {M} = inv(sin(x))
-Base.cot(x::StaticFloat64{M}) where {M} = inv(tan(x))
-@generated Base.asin(::StaticFloat64{M}) where {M} = StaticFloat64(asin(M))
-@generated Base.acos(::StaticFloat64{M}) where {M} = StaticFloat64(acos(M))
-@generated Base.atan(::StaticFloat64{M}) where {M} = StaticFloat64(atan(M))
-@generated Base.sind(::StaticFloat64{M}) where {M} = StaticFloat64(sind(M))
-@generated Base.cosd(::StaticFloat64{M}) where {M} = StaticFloat64(cosd(M))
-Base.tand(x::StaticFloat64{M}) where {M} = sind(x) / cosd(x)
-Base.secd(x::StaticFloat64{M}) where {M} = inv(cosd(x))
-Base.cscd(x::StaticFloat64{M}) where {M} = inv(sind(x))
-Base.cotd(x::StaticFloat64{M}) where {M} = inv(tand(x))
-Base.asind(x::StaticFloat64{M}) where {M} = rad2deg(asin(x))
-Base.acosd(x::StaticFloat64{M}) where {M} = rad2deg(acos(x))
-Base.asecd(x::StaticFloat64{M}) where {M} = rad2deg(asec(x))
-Base.acscd(x::StaticFloat64{M}) where {M} = rad2deg(acsc(x))
-Base.acotd(x::StaticFloat64{M}) where {M} = rad2deg(acot(x))
-Base.atand(x::StaticFloat64{M}) where {M} = rad2deg(atan(x))
-@generated Base.sinh(::StaticFloat64{M}) where {M} = StaticFloat64(sinh(M))
-Base.cosh(::StaticFloat64{M}) where {M} = StaticFloat64(cosh(M))
-Base.tanh(x::StaticFloat64{M}) where {M} = StaticFloat64(tanh(M))
-Base.sech(x::StaticFloat64{M}) where {M} = inv(cosh(x))
-Base.csch(x::StaticFloat64{M}) where {M} = inv(sinh(x))
-Base.coth(x::StaticFloat64{M}) where {M} = inv(tanh(x))
-@generated Base.asinh(::StaticFloat64{M}) where {M} = StaticFloat64(asinh(M))
-@generated Base.acosh(::StaticFloat64{M}) where {M} = StaticFloat64(acosh(M))
-@generated Base.atanh(::StaticFloat64{M}) where {M} = StaticFloat64(atanh(M))
-Base.asech(x::StaticFloat64{M}) where {M} = acosh(inv(x))
-Base.acsch(x::StaticFloat64{M}) where {M} = asinh(inv(x))
-Base.acoth(x::StaticFloat64{M}) where {M} = atanh(inv(x))
-Base.asec(x::StaticFloat64{M}) where {M} = acos(inv(x))
-Base.acsc(x::StaticFloat64{M}) where {M} = asin(inv(x))
-Base.acot(x::StaticFloat64{M}) where {M} = atan(inv(x))
 
 @inline Base.exponent(::StaticNumber{M}) where {M} = static(exponent(M))
 
@@ -935,10 +871,12 @@ end
 function Base.show(io::IO, ::MIME"text/plain",
                    @nospecialize(x::Union{StaticNumber, StaticSymbol}))
     print(io, "static(" * repr(known(typeof(x))) * ")")
+    nothing
 end
 function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
     print(io, "NDIndex")
     show(io, m, Tuple(x))
+    nothing
 end
 
 end
