@@ -14,7 +14,7 @@
     @test Static.SUnitRange(1, 10) == 1:10
     @test @inferred(Static.OptionallyStaticUnitRange{Int, Int}(1:10)) == 1:10
     @test @inferred(Static.OptionallyStaticUnitRange(1:10)) == 1:10 ==
-        @inferred(Static.OptionallyStaticUnitRange(Static.OptionallyStaticUnitRange(1:10)))
+          @inferred(Static.OptionallyStaticUnitRange(Static.OptionallyStaticUnitRange(1:10)))
 
     sr = Static.OptionallyStaticStepRange(static(1), static(1), static(1))
     @test @inferred(Static.OptionallyStaticStepRange(sr)) == sr == 1:1:1
@@ -62,7 +62,7 @@
 end
 
 # iteration
-@test iterate(static(1):static(5)) === (1,1)
+@test iterate(static(1):static(5)) === (1, 1)
 @test iterate(static(1):static(5), 1) === (2, 2)
 @test iterate(static(1):static(5), 5) === nothing
 @test iterate(static(2):static(5), 5) === nothing
@@ -118,3 +118,12 @@ end
 
 @test Base.Broadcast.axistype(static(1):10, static(1):10) === Base.OneTo(10)
 @test Base.Broadcast.axistype(Base.OneTo(10), static(1):10) === Base.OneTo(10)
+
+@testset "static_promote(::AbstractRange, ::AbstractRange)" begin
+    ur1 = static(1):10
+    ur2 = 1:static(10)
+    @test @inferred(static_promote(ur1, ur2)) === static(1):static(10)
+    sr1 = static(1):2:10
+    sr2 = static(1):static(2):static(10)
+    @test @inferred(static_promote(sr1, sr2)) === sr2
+end

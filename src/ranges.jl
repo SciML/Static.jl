@@ -147,8 +147,8 @@ An alias for `OptionallyStaticUnitRange` usfeul for statically sized axes.
 const SOneTo{L} = SUnitRange{1, L}
 SOneTo(n::Int) = SOneTo{n}()
 
-const OptionallyStaticRange = Union{<:OptionallyStaticUnitRange, <:OptionallyStaticStepRange
-                                    }
+const OptionallyStaticRange{F, L} = Union{OptionallyStaticUnitRange{F, L},
+                                          OptionallyStaticStepRange{F, <:Any, L}}
 
 # these probide a generic method for extracting potentially static values.
 static_first(x::Base.OneTo) = StaticInt(1)
@@ -156,7 +156,7 @@ static_first(x::Union{Base.Slice, Base.IdentityUnitRange}) = static_first(x.indi
 static_first(x::OptionallyStaticRange) = getfield(x, :start)
 static_first(x) = first(x)
 
-static_step(x::AbstractUnitRange) = StaticInt(1)
+static_step(@nospecialize x::AbstractUnitRange) = StaticInt(1)
 static_step(x::OptionallyStaticStepRange) = getfield(x, :step)
 static_step(x) = step(x)
 
@@ -164,9 +164,12 @@ static_last(x::OptionallyStaticRange) = getfield(x, :stop)
 static_last(x) = last(x)
 static_last(x::Union{Base.Slice, Base.IdentityUnitRange}) = static_last(x.indices)
 
-Base.first(x::OptionallyStaticRange) = Int(static_first(x))
-Base.step(x::OptionallyStaticStepRange) = Int(static_step(x))
-Base.last(x::OptionallyStaticRange) = Int(static_last(x))
+Base.first(x::OptionallyStaticRange{Int}) = getfield(x, :start)
+Base.first(::OptionallyStaticRange{StaticInt{F}}) where {F} = F
+Base.step(x::OptionallyStaticStepRange{<:Any, Int}) = getfield(x, :step)
+Base.step(::OptionallyStaticStepRange{<:Any, StaticInt{S}}) where {S} = S
+Base.last(x::OptionallyStaticRange{<:Any, Int}) = getfield(x, :stop)
+Base.last(::OptionallyStaticRange{<:Any, StaticInt{L}}) where {L} = L
 
 # FIXME this line causes invalidations
 Base.:(:)(L::Integer, ::StaticInt{U}) where {U} = OptionallyStaticUnitRange(L, StaticInt(U))
@@ -202,10 +205,16 @@ function Base.:(:)(start::Integer, ::StaticInt{1}, stop::Integer)
     OptionallyStaticUnitRange(start, stop)
 end
 
-Base.isempty(r::OptionallyStaticUnitRange{One}) = last(r) <= 0
 Base.isempty(r::OptionallyStaticUnitRange) = first(r) > last(r)
-function Base.isempty(r::OptionallyStaticStepRange)
-    (r.start != r.stop) & ((r.step > 0) != (r.stop > r.start))
+@inline function Base.isempty(x::OptionallyStaticStepRange)
+    start = first(x)
+    stop = last(x)
+    if start === stop
+        return false
+    else
+        s = step(x)
+        s > 0 ? start > stop : start < stop
+    end
 end
 
 function Base.checkindex(::Type{Bool},
@@ -233,23 +242,17 @@ function Base.getindex(x::OptionallyStaticUnitRange, i::Int)
 end
 
 ## length
-@inline function Base.length(r::OptionallyStaticUnitRange)
-    isempty(r) ? 0 : last(r) - first(r) + 1
+@inline function Base.length(x::OptionallyStaticUnitRange)
+    start = first(x)
+    stop = last(x)
+    start > stop ? 0 : stop - start + 1
 end
 Base.length(r::OptionallyStaticStepRange) = _range_length(first(r), step(r), last(r))
 @inline function _range_length(start::Int, s::Int, stop::Int)
     if s > 0
-        if stop < start  # isempty
-            return 0
-        else
-            return div(stop - start, s) + 1
-        end
+        stop < start ? 0 : div(stop - start, s) + 1
     else
-        if stop > start  # isempty
-            return 0
-        else
-            return div(start - stop, -s) + 1
-        end
+        stop > start ? 0 : div(start - stop, -s) + 1
     end
 end
 
@@ -263,19 +266,22 @@ function Base.AbstractUnitRange{T}(r::OptionallyStaticUnitRange) where {T}
     end
 end
 
-@inline function Base.iterate(r::OptionallyStaticRange)
-    isempty(r) && return nothing
-    fi = Int(first(r))
-    fi, fi
+Base.isdone(x::OptionallyStaticRange, state::Int) = state === last(x)
+function _next(x::OptionallyStaticRange)
+    new_state = first(x)
+    (new_state, new_state)
 end
-Base.iterate(::SUnitRange{F, L}) where {F, L} = L < F ? nothing : (F, F)
-@inline function Base.iterate(::SUnitRange{F,L}, s::Int) where {F,L}
-    if L <= s
-        s2 = s + 1
-        return (s2, s2)
-    else
-        return nothing
-    end
+@inline function _next(@nospecialize(x::OptionallyStaticUnitRange), state::Int)
+    new_state = state + 1
+    (new_state, new_state)
+end
+@inline function _next(x::OptionallyStaticStepRange, state::Int)
+    new_state = state + step(x)
+    (new_state, new_state)
+end
+@inline Base.iterate(x::OptionallyStaticRange) = isempty(x) ? nothing : _next(x)
+@inline function Base.iterate(x::OptionallyStaticRange, s::Int)
+    Base.isdone(x, s) ? nothing : _next(x, s)
 end
 
 Base.to_shape(x::OptionallyStaticRange) = length(x)

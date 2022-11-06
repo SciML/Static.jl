@@ -260,6 +260,38 @@ _static_promote(::Nothing, ::Nothing) = nothing
 _static_promote(x, ::Nothing) = x
 _static_promote(::Nothing, y) = y
 
+"""
+    static_promote(x::AbstractRange{<:Integer}, y::AbstractRange{<:Integer})
+
+A type stable method for combining two equal ranges into a new range that preserves static
+parameters. Throws an error if `x != y`.
+
+# Examples
+
+```julia
+julia> static_promote(static(1):10, 1:static(10))
+static(1):static(10)
+
+julia> static_promote(1:2:9, static(1):static(2):static(9))
+static(1):static(2):static(9)
+```
+"""
+Base.@propagate_inbounds function static_promote(x::AbstractUnitRange{<:Integer},
+                                                 y::AbstractUnitRange{<:Integer})
+    @inline
+    fst = static_promote(static_first(x), static_first(y))
+    lst = static_promote(static_last(x), static_last(y))
+    return OptionallyStaticUnitRange(fst, lst)
+end
+Base.@propagate_inbounds function static_promote(x::AbstractRange{<:Integer},
+                                                 y::AbstractRange{<:Integer})
+    @inline
+    fst = static_promote(static_first(x), static_first(y))
+    stp = static_promote(static_step(x), static_step(y))
+    lst = static_promote(static_last(x), static_last(y))
+    return _OptionallyStaticStepRange(fst, stp, lst)
+end
+
 Base.@propagate_inbounds function _promote_shape(a::Tuple{A, Vararg{Any}},
                                                  b::Tuple{B, Vararg{Any}}) where {A, B}
     (static_promote(getfield(a, 1), getfield(b, 1)),
