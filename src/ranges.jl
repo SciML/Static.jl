@@ -237,7 +237,6 @@ end
     isempty(r) ? 0 : last(r) - first(r) + 1
 end
 Base.length(r::OptionallyStaticStepRange) = _range_length(first(r), step(r), last(r))
-_range_length(start, s, stop) = nothing
 @inline function _range_length(start::Int, s::Int, stop::Int)
     if s > 0
         if stop < start  # isempty
@@ -270,8 +269,8 @@ end
     fi, fi
 end
 Base.iterate(::SUnitRange{F, L}) where {F, L} = L < F ? nothing : (F, F)
-function Base.iterate(::SOneTo{n}, s::Int) where {n}
-    if s < n::Int
+@inline function Base.iterate(::SUnitRange{F,L}, s::Int) where {F,L}
+    if L <= s
         s2 = s + 1
         return (s2, s2)
     else

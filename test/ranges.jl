@@ -13,14 +13,13 @@
     @test @inferred(UInt(1):static(1):static(10)) === 1:static(10)
     @test Static.SUnitRange(1, 10) == 1:10
     @test @inferred(Static.OptionallyStaticUnitRange{Int, Int}(1:10)) == 1:10
-    @test @inferred(Static.OptionallyStaticUnitRange(1:10)) == 1:10
+    @test @inferred(Static.OptionallyStaticUnitRange(1:10)) == 1:10 ==
+        @inferred(Static.OptionallyStaticUnitRange(Static.OptionallyStaticUnitRange(1:10)))
 
-    @inferred(Static.OptionallyStaticUnitRange(1:10))
-
-    @test @inferred(Static.OptionallyStaticStepRange(static(1), static(1), static(1))) ==
-          1:1:1
+    sr = Static.OptionallyStaticStepRange(static(1), static(1), static(1))
+    @test @inferred(Static.OptionallyStaticStepRange(sr)) == sr == 1:1:1
     @test @inferred(Static.OptionallyStaticStepRange(static(1), 1, UInt(10))) ==
-          static(1):1:10
+          static(1):1:10 == Static.SOneTo(10)
     @test @inferred(Static.OptionallyStaticStepRange(UInt(1), 1, static(10))) ==
           static(1):1:10
     @test @inferred(Static.OptionallyStaticStepRange(1:10)) == 1:1:10
@@ -28,6 +27,7 @@
     @test_throws ArgumentError Static.OptionallyStaticUnitRange(1:2:10)
     @test_throws ArgumentError Static.OptionallyStaticUnitRange{Int, Int}(1:2:10)
     @test_throws ArgumentError Static.OptionallyStaticStepRange(1, 0, 10)
+    @test_throws ArgumentError Static.OptionallyStaticStepRange(1, StaticInt(0), 10)
 
     @test @inferred(static(1):static(1):static(10)) ===
           Static.OptionallyStaticUnitRange(static(1), static(10))
@@ -62,6 +62,8 @@
 end
 
 # iteration
+@test iterate(static(1):static(5)) === (1,1)
+@test iterate(static(1):static(5), 1) === (2, 2)
 @test iterate(static(1):static(5), 5) === nothing
 @test iterate(static(2):static(5), 5) === nothing
 
@@ -108,3 +110,11 @@ end
 @test similar(Array{Int}, (static(1):(4),)) isa Vector{Int}
 @test similar(Array{Int}, (static(1):(4), Base.OneTo(4))) isa Matrix{Int}
 @test similar(Array{Int}, (Base.OneTo(4), static(1):(4))) isa Matrix{Int}
+
+@test Base.to_shape(static(1):10) == 10
+@test Base.to_shape(Base.Slice(static(1):10)) == 10
+@test axes(Base.Slice(static(1):10)) === (static(1):10,)
+@test isa(axes(Base.Slice(static(0):static(1):10))[1], Base.IdentityUnitRange)
+
+@test Base.Broadcast.axistype(static(1):10, static(1):10) === Base.OneTo(10)
+@test Base.Broadcast.axistype(Base.OneTo(10), static(1):10) === Base.OneTo(10)
