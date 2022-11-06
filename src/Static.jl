@@ -1,10 +1,5 @@
 module Static
 
-struct Foo end
-
-Base.:(:)(::Integer, ::Foo) = nothing
-
-#=
 import IfElse: ifelse
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
@@ -885,6 +880,5 @@ function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
 end
 
 include("ranges.jl")
-=#
 
 end
