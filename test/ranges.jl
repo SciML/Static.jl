@@ -61,11 +61,22 @@
     @test reverse(static(1):static(2):static(9)) === static(9):static(-2):static(1)
 end
 
-# iteration
-@test iterate(static(1):static(5)) === (1, 1)
-@test iterate(static(1):static(5), 1) === (2, 2)
-@test iterate(static(1):static(5), 5) === nothing
-@test iterate(static(2):static(5), 5) === nothing
+@testset "range properties" begin
+    x = static(1):static(2):static(9)
+    @test getproperty(x, :start) === first(x)
+    @test getproperty(x, :step) === step(x)
+    @test getproperty(x, :stop) === last(x)
+    @test_throws ErrorException getproperty(x, :foo)
+end
+
+@testset "iterate" begin
+    @test iterate(static(1):static(5)) === (1, 1)
+    @test iterate(static(1):static(5), 1) === (2, 2)
+    @test iterate(static(1):static(5), 5) === nothing
+    @test iterate(static(2):static(5), 5) === nothing
+    @test iterate(static(1):static(2):static(9), 1) === (3, 3)
+    @test iterate(static(1):static(2):static(9), 9) === nothing
+end
 
 # CartesianIndices
 CI = CartesianIndices((static(1):static(2), static(1):static(2)))
@@ -90,6 +101,7 @@ CI = CartesianIndices((static(1):static(2), static(1):static(2)))
                                                             static(10)))) == 5
 end
 
+@test @inferred(getindex(static(1):10, Base.Slice(static(1):10))) === static(1):10
 @test @inferred(getindex(Static.OptionallyStaticUnitRange(static(1), 10), 1)) == 1
 @test @inferred(getindex(Static.OptionallyStaticUnitRange(static(0), 10), 1)) == 0
 @test_throws BoundsError getindex(Static.OptionallyStaticUnitRange(static(1), 10), 0)
@@ -113,8 +125,10 @@ end
 
 @test Base.to_shape(static(1):10) == 10
 @test Base.to_shape(Base.Slice(static(1):10)) == 10
+@test Base.axes1(Base.Slice(static(1):10)) === static(1):10
 @test axes(Base.Slice(static(1):10)) === (static(1):10,)
 @test isa(axes(Base.Slice(static(0):static(1):10))[1], Base.IdentityUnitRange)
+@test isa(Base.axes1(Base.Slice(static(0):static(1):10)), Base.IdentityUnitRange)
 
 @test Base.Broadcast.axistype(static(1):10, static(1):10) === Base.OneTo(10)
 @test Base.Broadcast.axistype(Base.OneTo(10), static(1):10) === Base.OneTo(10)

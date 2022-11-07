@@ -319,6 +319,7 @@ function Base.reverse(x::OptionallyStaticStepRange)
     _OptionallyStaticStepRange(getfield(x, :stop), -getfield(x, :step), getfield(x, :start))
 end
 
+Base.show(io::IO, @nospecialize(x::OptionallyStaticRange)) = show(io, MIME"text/plain"(), x)
 function Base.show(io::IO, ::MIME"text/plain", @nospecialize(r::OptionallyStaticUnitRange))
     print(io, "$(getfield(r, :start)):$(getfield(r, :stop))")
 end
@@ -326,6 +327,8 @@ function Base.show(io::IO, ::MIME"text/plain", @nospecialize(r::OptionallyStatic
     print(io, "$(getfield(r, :start)):$(getfield(r, :step)):$(getfield(r, :stop))")
 end
 
+# we overload properties because occasionally Base assumes that abstract range types have
+# the same exact same set up as native types where `x.start === first(x)`
 @inline function Base.getproperty(x::OptionallyStaticRange, s::Symbol)
     if s === :start
         return first(x)

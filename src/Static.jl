@@ -277,13 +277,13 @@ static(1):static(2):static(9)
 ```
 """
 Base.@propagate_inbounds @inline function static_promote(x::AbstractUnitRange{<:Integer},
-                                                 y::AbstractUnitRange{<:Integer})
+                                                         y::AbstractUnitRange{<:Integer})
     fst = static_promote(static_first(x), static_first(y))
     lst = static_promote(static_last(x), static_last(y))
     return OptionallyStaticUnitRange(fst, lst)
 end
 Base.@propagate_inbounds @inline function static_promote(x::AbstractRange{<:Integer},
-                                                 y::AbstractRange{<:Integer})
+                                                         y::AbstractRange{<:Integer})
     fst = static_promote(static_first(x), static_first(y))
     stp = static_promote(static_step(x), static_step(y))
     lst = static_promote(static_last(x), static_last(y))
