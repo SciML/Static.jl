@@ -76,6 +76,10 @@ end
     @test iterate(static(2):static(5), 5) === nothing
     @test iterate(static(1):static(2):static(9), 1) === (3, 3)
     @test iterate(static(1):static(2):static(9), 9) === nothing
+    # make sure single length ranges work correctly
+    @test iterate(static(2):static(3):static(2))[1] === 2 ===
+          (static(2):static(3):static(2))[1]
+    @test iterate(static(2):static(3):static(2), 2) === nothing
 end
 
 # CartesianIndices
