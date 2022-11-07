@@ -1,7 +1,4 @@
 
-_int(x::Integer) = Int(x)
-_int(@nospecialize x::Union{StaticInt, Int}) = x
-
 """
     OptionallyStaticUnitRange(start, stop) <: AbstractUnitRange{Int}
 
@@ -10,17 +7,17 @@ Similar to `UnitRange` except each field may be an `Int` or `StaticInt`. An
 indices. Therefore, users should not expect the same checks are used to ensure construction
 of a valid `OptionallyStaticUnitRange` as a `UnitRange`.
 """
-struct OptionallyStaticUnitRange{F <: Union{Int, StaticInt}, L <: Union{Int, StaticInt}} <:
+struct OptionallyStaticUnitRange{F <: IntType, L <: IntType} <:
        AbstractUnitRange{Int}
     start::F
     stop::L
 
-    function OptionallyStaticUnitRange(start::Union{Int, StaticInt},
-                                       stop::Union{Int, StaticInt})
+    function OptionallyStaticUnitRange(start::IntType,
+                                       stop::IntType)
         new{typeof(start), typeof(stop)}(start, stop)
     end
     function OptionallyStaticUnitRange(start, stop)
-        OptionallyStaticUnitRange(_int(start), _int(stop))
+        OptionallyStaticUnitRange(IntType(start), IntType(stop))
     end
     OptionallyStaticUnitRange(@nospecialize x::OptionallyStaticUnitRange) = x
     function OptionallyStaticUnitRange(x::AbstractRange)
@@ -59,40 +56,40 @@ static(2):static(2):10
 
 ```
 """
-struct OptionallyStaticStepRange{F <: Union{Int, StaticInt}, S <: Union{Int, StaticInt},
-                                 L <: Union{Int, StaticInt}} <: OrdinalRange{Int, Int}
+struct OptionallyStaticStepRange{F <: IntType, S <: IntType,
+                                 L <: IntType} <: OrdinalRange{Int, Int}
     start::F
     step::S
     stop::L
 
-    global function _OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
-                                               @nospecialize(step::Union{Int, StaticInt}),
-                                               @nospecialize(stop::Union{Int, StaticInt}))
+    global function _OptionallyStaticStepRange(@nospecialize(start::IntType),
+                                               @nospecialize(step::IntType),
+                                               @nospecialize(stop::IntType))
         new{typeof(start), typeof(step), typeof(stop)}(start, step, stop)
     end
 end
-@noinline function OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
+@noinline function OptionallyStaticStepRange(@nospecialize(start::IntType),
                                              ::StaticInt{0},
-                                             @nospecialize(stop::Union{Int, StaticInt}))
+                                             @nospecialize(stop::IntType))
     throw(ArgumentError("step cannot be zero"))
 end
 # we don't need to check the `stop` if we know it acts like a unit range
-function OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
+function OptionallyStaticStepRange(@nospecialize(start::IntType),
                                    step::StaticInt{1},
-                                   @nospecialize(stop::Union{Int, StaticInt}))
+                                   @nospecialize(stop::IntType))
     _OptionallyStaticStepRange(start, step, stop)
 end
-function OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
+function OptionallyStaticStepRange(@nospecialize(start::IntType),
                                    @nospecialize(step::StaticInt),
-                                   @nospecialize(stop::Union{Int, StaticInt}))
+                                   @nospecialize(stop::IntType))
     _OptionallyStaticStepRange(start, step, _steprange_last(start, step, stop))
 end
 function OptionallyStaticStepRange(start, step, stop)
-    OptionallyStaticStepRange(_int(start), _int(step), _int(stop))
+    OptionallyStaticStepRange(IntType(start), IntType(step), IntType(stop))
 end
-function OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
+function OptionallyStaticStepRange(@nospecialize(start::IntType),
                                    step::Int,
-                                   @nospecialize(stop::Union{Int, StaticInt}))
+                                   @nospecialize(stop::IntType))
     if step === 0
         throw(ArgumentError("step cannot be zero"))
     else
@@ -101,7 +98,7 @@ function OptionallyStaticStepRange(@nospecialize(start::Union{Int, StaticInt}),
 end
 OptionallyStaticStepRange(@nospecialize x::OptionallyStaticStepRange) = x
 function OptionallyStaticStepRange(x::AbstractRange)
-    _OptionallyStaticStepRange(_int(first(x)), _int(step(x)), _int(last(x)))
+    _OptionallyStaticStepRange(IntType(first(x)), IntType(step(x)), IntType(last(x)))
 end
 
 # to make StepRange constructor inlineable, so optimizer can see `step` value
