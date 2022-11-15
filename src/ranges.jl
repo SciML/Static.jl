@@ -98,7 +98,8 @@ function OptionallyStaticStepRange(@nospecialize(start::IntType),
 end
 OptionallyStaticStepRange(@nospecialize x::OptionallyStaticStepRange) = x
 function OptionallyStaticStepRange(x::AbstractRange)
-    _OptionallyStaticStepRange(IntType(first(x)), IntType(step(x)), IntType(last(x)))
+    _OptionallyStaticStepRange(IntType(static_first(x)), IntType(static_step(x)),
+                               IntType(static_last(x)))
 end
 
 # to make StepRange constructor inlineable, so optimizer can see `step` value
@@ -282,7 +283,7 @@ end
 end
 
 Base.to_shape(x::OptionallyStaticRange) = length(x)
-Base.to_shape(x::Base.Slice{T}) where {T <: OptionallyStaticRange} = Base.length(x)
+Base.to_shape(x::Base.Slice{T}) where {T <: OptionallyStaticRange} = length(x)
 Base.axes(S::Base.Slice{<:OptionallyStaticUnitRange{StaticInt{1}}}) = (S.indices,)
 Base.axes(S::Base.Slice{<:OptionallyStaticRange}) = (Base.IdentityUnitRange(S.indices),)
 
@@ -365,4 +366,29 @@ function Base.similar(::Type{<:Array{T}},
                                                                                                   T
                                                                                                   }
     Array{T}(undef, map(last, axes))
+end
+
+function Base.first(x::OptionallyStaticUnitRange, n::IntType)
+    n < 0 && throw(ArgumentError("Number of elements must be nonnegative"))
+    start = static_first(x)
+    OptionallyStaticUnitRange(start, min(start - one(start) + n, static_last(x)))
+end
+function Base.first(x::OptionallyStaticStepRange, n::IntType)
+    n < 0 && throw(ArgumentError("Number of elements must be nonnegative"))
+    start = static_first(x)
+    s = static_step(x)
+    stop = min(((n - one(n)) * s) + static_first(x), static_last(x))
+    OptionallyStaticStepRange(start, s, stop)
+end
+function Base.last(x::OptionallyStaticUnitRange, n::IntType)
+    n < 0 && throw(ArgumentError("Number of elements must be nonnegative"))
+    stop = static_last(x)
+    OptionallyStaticUnitRange(max(stop + one(stop) - n, static_first(x)), stop)
+end
+function Base.last(x::OptionallyStaticStepRange, n::IntType)
+    n < 0 && throw(ArgumentError("Number of elements must be nonnegative"))
+    start = static_first(x)
+    s = static_step(x)
+    stop = static_last(x)
+    OptionallyStaticStepRange(max(stop + one(stop) - (n * s), start), s, stop)
 end
