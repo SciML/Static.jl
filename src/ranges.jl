@@ -98,7 +98,8 @@ function OptionallyStaticStepRange(@nospecialize(start::IntType),
 end
 OptionallyStaticStepRange(@nospecialize x::OptionallyStaticStepRange) = x
 function OptionallyStaticStepRange(x::AbstractRange)
-    _OptionallyStaticStepRange(IntType(static_first(x)), IntType(static_step(x)), IntType(static_last(x)))
+    _OptionallyStaticStepRange(IntType(static_first(x)), IntType(static_step(x)),
+                               IntType(static_last(x)))
 end
 
 # to make StepRange constructor inlineable, so optimizer can see `step` value
