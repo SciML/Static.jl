@@ -299,6 +299,9 @@ Base.@propagate_inbounds @inline function static_promote(x::AbstractRange{<:Inte
     lst = static_promote(static_last(x), static_last(y))
     return _OptionallyStaticStepRange(fst, stp, lst)
 end
+function static_promote(x::Base.Slice, y::Base.Slice)
+    Base.Slice(static_promote(x.indices, y.indices))
+end
 
 Base.@propagate_inbounds function _promote_shape(a::Tuple{A, Vararg{Any}},
                                                  b::Tuple{B, Vararg{Any}}) where {A, B}

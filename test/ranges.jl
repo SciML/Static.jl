@@ -141,7 +141,19 @@ end
     ur1 = static(1):10
     ur2 = 1:static(10)
     @test @inferred(static_promote(ur1, ur2)) === static(1):static(10)
+    @test static_promote(Base.Slice(ur1), Base.Slice(ur2)) === Base.Slice(static(1):static(10))
     sr1 = static(1):2:10
     sr2 = static(1):static(2):static(10)
     @test @inferred(static_promote(sr1, sr2)) === sr2
 end
+
+@testset "n-last/first" begin
+    ur = static(2):static(10);
+    sr = static(2):static(2):static(10)
+    n3 = static(3)
+    @test @inferred(first(ur, n3)) === static(2):static(4)
+    @test @inferred(last(ur, n3)) === static(8):static(10)
+    @test @inferred(first(sr, n3)) === static(2):static(2):static(6)
+    @test @inferred(last(sr, n3)) === static(5):static(2):static(9)
+end
+
