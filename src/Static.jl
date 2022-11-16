@@ -163,20 +163,39 @@ end
 Base.Tuple(@nospecialize(x::NDIndex)) = getfield(x, :index)
 
 """
-    known(::Type{T})
+    known(T::Type)
 
 Returns the known value corresponding to a static type `T`. If `T` is not a static type then
 `nothing` is returned.
 
-See also: [`static`](@ref), [`is_static`](@ref)
+`known` ensures that the type of the returned value is always inferred, even if the
+compiler fails to infer the exact value.
+
+See also: [`static`](@ref), [`is_static`](@ref), [`dynamic`](@ref)
+
+# Examples
+```julia
+julia> known(StaticInt{1})
+1
+
+julia> known(Int)
+
+```
 """
-known(::Type{<:StaticType{T}}) where {T} = T
-known(::Type{Val{V}}) where {V} = V
+known(@nospecialize(x)) = known(typeof(x))
 _get_known(::Type{T}, dim::StaticInt{D}) where {T, D} = known(field_type(T, dim))
 known(@nospecialize(T::Type{<:Tuple})) = eachop(_get_known, nstatic(Val(fieldcount(T))), T)
 known(T::DataType) = nothing
-known(@nospecialize(x)) = known(typeof(x))
 known(@nospecialize(T::Type{<:NDIndex})) = known(T.parameters[2])
+known(::Union{True, Type{True}}) = true
+known(::Union{False, Type{False}}) = false
+known(::Union{Val{V}, Type{Val{V}}}) where {V} = V
+known(::Union{StaticInt{N}, Type{StaticInt{N}}}) where {N} = _return_int(N)
+_return_int(x::Int) = x
+known(::Union{StaticSymbol{S}, Type{StaticSymbol{S}}}) where {S} = _return_symbol(S)
+_return_symbol(x::Symbol) = x
+known(::Union{StaticFloat64{F}, Type{StaticFloat64{F}}}) where {F} = _return_float(F)
+_return_float(x::Float64) = x
 
 """
     static(x)
@@ -185,6 +204,8 @@ Returns a static form of `x`. If `x` is already in a static form then `x` is ret
 there is no static alternative for `x` then an error is thrown.
 
 See also: [`is_static`](@ref), [`known`](@ref)
+
+# Examples
 
 ```julia
 julia> using Static
@@ -238,9 +259,29 @@ is_static(T::DataType) = False()
 """
     dynamic(x)
 
-Returns the "dynamic" or non-static form of `x`.
+Returns the "dynamic" or non-static form of `x`. If `x` is not a static type, then it is
+returned unchanged.
+
+`dynamic` ensures that the type of the returned value is always inferred, even if the
+compiler fails to infer the exact value.
+
+See also: [`known`](@ref)
+
+# Examples
+
+```julia
+julia> dynamic(static(1))
+1
+
+julia> dynamic(1)
+1
+
+```
 """
-@inline dynamic(@nospecialize x::StaticType) = known(x)
+@inline dynamic(@nospecialize x::StaticInt) = known(x)
+@inline dynamic(@nospecialize x::StaticFloat64) = known(x)
+@inline dynamic(@nospecialize x::StaticSymbol) = known(x)
+@inline dynamic(@nospecialize x::Union{True, False}) = known(x)
 @inline dynamic(@nospecialize x::Tuple) = map(dynamic, x)
 dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
 dynamic(@nospecialize x) = x
