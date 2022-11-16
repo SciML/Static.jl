@@ -109,6 +109,7 @@ end
     t = static(static(true))
     f = StaticBool(static(false))
 
+    @test @inferred(dynamic(t)) === @inferred(known(t)) === true
     @test StaticBool{true}() === t
     @test StaticBool{false}() === f
 
@@ -403,6 +404,8 @@ y = 1:10
 @test @inferred(maybe_static_length(y)) === 10
 
 @testset "StaticFloat64" begin
+    f = static(1.0)
+    @test @inferred(dynamic(f)) === @inferred(known(f)) === 1.0
     for i in -10:10
         for j in -10:10
             @test i + j == @inferred(Static.StaticInt(i)+Static.StaticFloat64(j)) ==

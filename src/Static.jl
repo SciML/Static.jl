@@ -187,14 +187,14 @@ _get_known(::Type{T}, dim::StaticInt{D}) where {T, D} = known(field_type(T, dim)
 known(@nospecialize(T::Type{<:Tuple})) = eachop(_get_known, nstatic(Val(fieldcount(T))), T)
 known(T::DataType) = nothing
 known(@nospecialize(T::Type{<:NDIndex})) = known(T.parameters[2])
-known(::Union{True,Type{True}}) = true
-known(::Union{False,Type{False}}) = false
-known(::Union{Val{V},Type{Val{V}}}) where {V} = V
-known(::Union{StaticInt{N},Type{StaticInt{N}}}) where {N} = _return_int(N)
+known(::Union{True, Type{True}}) = true
+known(::Union{False, Type{False}}) = false
+known(::Union{Val{V}, Type{Val{V}}}) where {V} = V
+known(::Union{StaticInt{N}, Type{StaticInt{N}}}) where {N} = _return_int(N)
 _return_int(x::Int) = x
-known(::Union{StaticSymbol{S},Type{StaticSymbol{S}}}) where {S} = _return_symbol(S)
+known(::Union{StaticSymbol{S}, Type{StaticSymbol{S}}}) where {S} = _return_symbol(S)
 _return_symbol(x::Symbol) = x
-known(::Union{StaticFloat64{F},Type{StaticFloat64{F}}}) where {F} = _return_float(F)
+known(::Union{StaticFloat64{F}, Type{StaticFloat64{F}}}) where {F} = _return_float(F)
 _return_float(x::Float64) = x
 
 """
@@ -281,7 +281,7 @@ julia> dynamic(1)
 @inline dynamic(@nospecialize x::StaticInt) = known(x)
 @inline dynamic(@nospecialize x::StaticFloat64) = known(x)
 @inline dynamic(@nospecialize x::StaticSymbol) = known(x)
-@inline dynamic(@nospecialize x::Union{True,False}) = known(x)
+@inline dynamic(@nospecialize x::Union{True, False}) = known(x)
 @inline dynamic(@nospecialize x::Tuple) = map(dynamic, x)
 dynamic(@nospecialize(x::NDIndex)) = CartesianIndex(dynamic(Tuple(x)))
 dynamic(@nospecialize x) = x
