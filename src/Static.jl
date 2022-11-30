@@ -430,19 +430,29 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
-function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
+#=function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
     static(div(X, Y, m))
+end=#
+for mode in (:RoundUp, :RoundDown, :ToZero, :Nearest, :NearestTiesAway, :NearestTiesUp)
+    @eval function Base.div(::StaticBool{X}, ::StaticBool{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
+    @eval function Base.div(::StaticFloat64{X}, ::StaticFloat64{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
+    @eval function Base.div(::StaticInt{X}, ::StaticInt{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
 end
-function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::Union{RoundingMode{:Nearest}, RoundingMode{:NearestTiesAway}, RoundingMode{:NearestTiesUp}}) where {X, Y}
+#=function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::Union{RoundingMode{:RoundUp},RoundingMode{:RoundDown},RoundingMode{:Nearest}, RoundingMode{:NearestTiesAway}, RoundingMode{:NearestTiesUp}}) where {X, Y}
     static(div(X, Y, m))
-end
-function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode{:Up}) where {X, Y}
-    static(div(X, Y, m))
-end
+end=#
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
+Base.rem(@nospecialize(x::StaticNumber), T::Type{Bool}) = rem(known(x), T)
+Base.rem(@nospecialize(x::StaticNumber), T::Type{BigInt}) = rem(known(x), T)
 Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
 Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
 
