@@ -9,10 +9,11 @@ struct StaticFloat64{N} <: Real
     StaticFloat64{N}() where {N} = new{N::Float64}()
     StaticFloat64(x::Float64) = new{x}()
     StaticFloat64(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
-    StaticFloat64(x::StaticInt{N}) where {N} = StaticFloat64(convert(Float64, N))
     StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
     StaticFloat64(@nospecialize x::StaticFloat64) = x
+    #!!!StaticFloat64(x::Real) = StaticFloat64(convert(Float64, x))
 end
+
 
 Base.zero(@nospecialize T::Type{<:StaticFloat64}) = Float64(0.0)
 Base.one(@nospecialize T::Type{<:StaticFloat64}) = Float64(1.0)

@@ -44,6 +44,7 @@ end
         for j in Any[StaticInt(0), StaticInt(1), StaticInt(2), 3]
             i === j === 3 && continue
             for f in [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
+                @info "XXXXXXXXXXX" i, j, f
                 (iszero(j) && ((f === ÷) || (f === %))) && continue # integer division error
                 @test convert(Int, @inferred(f(i, j))) ==
                       f(convert(Int, i), convert(Int, j))

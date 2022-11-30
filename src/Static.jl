@@ -47,6 +47,8 @@ function StaticBool(x::Bool)
         return False()
     end
 end
+#!!!StaticBool(x::Real) = StaticBool(convert(Bool, x))
+
 
 """
     StaticInt(N::Int) -> StaticInt{N}()
@@ -59,12 +61,18 @@ struct StaticInt{N} <: StaticInteger{N}
     StaticInt(N::Int) = new{N}()
     StaticInt(@nospecialize N::StaticInt) = N
     StaticInt(::Val{N}) where {N} = StaticInt(N)
+    StaticInt(N::UInt) = StaticInt(Int(N))
+    #!!!StaticInt(x::Real) = StaticInt(convert(Int, x))
 end
 
 
 include("float.jl")
 
 const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
+
+StaticInt(::StaticNumber{X}) where X = StaticInt{convert(Int, x)}()
+StaticBool(::StaticNumber{X}) where X = StaticBool{convert(Bool, x)}()
+StaticFloat64(::StaticNumber{X}) where {X} = StaticFloat64{convert(Float64, X)}()
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
@@ -85,8 +93,8 @@ const FloatZero = StaticFloat64{zero(Float64)}
 
 const StaticType{T} = Union{StaticNumber{T}, StaticSymbol{T}}
 
-StaticInt(x::False) = Zero()
-StaticInt(x::True) = One()
+#!!!StaticInt(x::False) = Zero()
+#!!!StaticInt(x::True) = One()
 Base.Bool(::True) = true
 Base.Bool(::False) = false
 
@@ -213,7 +221,7 @@ static(:x)
 ```
 """
 static(@nospecialize(x::Union{StaticSymbol, StaticNumber})) = x
-static(x::Integer) = StaticInt(x)
+static(x::Integer) = StaticInt{convert(Int, x)}()
 function static(x::Union{AbstractFloat, Complex, Rational, AbstractIrrational})
     StaticFloat64(Float64(x))
 end
@@ -371,11 +379,11 @@ Base.:(~)(::StaticInteger{N}) where {N} = static(~N)
 
 Base.inv(x::StaticInteger{N}) where {N} = one(x) / x
 
-Base.zero(@nospecialize T::Type{<:StaticInt}) = StaticInt(0)
+Base.zero(@nospecialize T::Type{<:StaticInt}) = static(0)
 Base.zero(@nospecialize T::Type{<:StaticBool}) = False()
 
 Base.one(@nospecialize T::Type{<:StaticBool}) = True()
-Base.one(@nospecialize T::Type{<:StaticInt}) = StaticInt(1)
+Base.one(@nospecialize T::Type{<:StaticInt}) = static(1)
 
 @inline Base.iszero(::Union{StaticInt{0}, StaticFloat64{0.0}, False}) = true
 @inline Base.iszero(@nospecialize x::Union{StaticInt, True, StaticFloat64}) = false
@@ -547,7 +555,7 @@ Base.:(^)(x::BigInt, y::True) = x
 end
 
 @inline function invariant_permutation(@nospecialize(x::Tuple), @nospecialize(y::Tuple))
-    if y === x === ntuple(static, StaticInt(nfields(x)))
+    if y === x === ntuple(static, static(nfields(x)))
         return True()
     else
         return False()
@@ -618,7 +626,7 @@ value is a `StaticInt`.
 end
 
 function Base.invperm(p::Tuple{StaticInt, Vararg{StaticInt, N}}) where {N}
-    map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N + 1)))
+    map(Base.Fix2(find_first_eq, p), ntuple(static, static(N + 1)))
 end
 
 """
