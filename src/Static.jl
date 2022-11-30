@@ -61,15 +61,6 @@ struct StaticInt{N} <: StaticInteger{N}
     StaticInt(::Val{N}) where {N} = StaticInt(N)
 end
 
-"""
-    IntType(x::Integer) -> Union{Int,StaticInt}
-
-`IntType` is a union of `Int` and `StaticInt`. As a function, it ensures that `x` one of the
-two.
-"""
-const IntType = Union{StaticInt, Int}
-IntType(x::Integer) = Int(x)
-IntType(@nospecialize x::Union{Int, StaticInt}) = x
 
 include("float.jl")
 
@@ -962,7 +953,5 @@ function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
     show(io, m, Tuple(x))
     nothing
 end
-
-#include("ranges.jl")
 
 end
