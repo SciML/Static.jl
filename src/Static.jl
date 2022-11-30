@@ -425,15 +425,11 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
     static(div(X, Y, m))
 end
-Base.div(x::Real, ::StaticInteger{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
-Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
 Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
-Base.rem(x::Real, ::StaticInteger{Y}) where {Y} = rem(x, Y)
-Base.rem(::StaticInteger{X}, y::Real) where {X} = rem(X, y)
 Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
 
 Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
@@ -441,50 +437,40 @@ Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <(X, Y)
 
 Base.isless(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = isless(X, Y)
-Base.isless(::StaticInteger{X}, y::Real) where {X} = isless(X, y)
-Base.isless(x::Real, ::StaticInteger{Y}) where {Y} = isless(x, Y)
 
 Base.min(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(min(X, Y))
-Base.min(::StaticInteger{X}, y::Number) where {X} = min(X, y)
-Base.min(x::Number, ::StaticInteger{Y}) where {Y} = min(x, Y)
 
 Base.max(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(max(X, Y))
-Base.max(::StaticInteger{X}, y::Number) where {X} = max(X, y)
-Base.max(x::Number, ::StaticInteger{Y}) where {Y} = max(x, Y)
 
 Base.minmax(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(minmax(X, Y))
 
 Base.:(<<)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(<<(X, Y))
-Base.:(<<)(::StaticInteger{X}, n::Integer) where {X} = <<(X, n)
-Base.:(<<)(x::Integer, ::StaticInteger{N}) where {N} = <<(x, N)
+Base.:(<<)(::StaticInteger{X}, n::UInt) where {X} = <<(X, n)
 
 Base.:(>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>(X, Y))
-Base.:(>>)(::StaticInteger{X}, n::Integer) where {X} = >>(X, n)
-Base.:(>>)(x::Integer, ::StaticInteger{N}) where {N} = >>(x, N)
+Base.:(>>)(::StaticInteger{X}, n::UInt) where {X} = >>(X, n)
 
 Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>>(X, Y))
-Base.:(>>>)(::StaticInteger{X}, n::Integer) where {X} = >>>(X, n)
-Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x, N)
+Base.:(>>>)(::StaticInteger{X}, n::UInt) where {X} = >>>(X, n)
+
 
 Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X & Y)
-Base.:(&)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X & y
-Base.:(&)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x & Y
-Base.:(&)(x::Bool, y::True) = x
-Base.:(&)(x::Bool, y::False) = y
-Base.:(&)(x::True, y::Bool) = y
-Base.:(&)(x::False, y::Bool) = x
+#!!Base.:(&)(x::Bool, y::True) = x
+#!!Base.:(&)(x::Bool, y::False) = y
+#!!Base.:(&)(x::True, y::Bool) = y
+#!!Base.:(&)(x::False, y::Bool) = x
 
 Base.:(|)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(|(X, Y))
-Base.:(|)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X | y
-Base.:(|)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x | Y
-Base.:(|)(x::Bool, y::True) = y
-Base.:(|)(x::Bool, y::False) = x
-Base.:(|)(x::True, y::Bool) = x
-Base.:(|)(x::False, y::Bool) = y
+#!!Base.:(|)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X | y
+#!!Base.:(|)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x | Y
+#!!Base.:(|)(x::Bool, y::True) = y
+#!!Base.:(|)(x::Bool, y::False) = x
+#!!Base.:(|)(x::True, y::Bool) = x
+#!!Base.:(|)(x::False, y::Bool) = y
 
 Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(xor(X, Y))
-Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
-Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
+#!!Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
+#!!Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
