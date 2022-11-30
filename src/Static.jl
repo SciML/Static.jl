@@ -24,7 +24,7 @@ end
 
 Base.Symbol(@nospecialize(s::StaticSymbol)) = known(s)
 
-abstract type StaticInteger{N} <: Number end
+abstract type StaticInteger{N} <: Integer end
 
 """
     StaticBool(x::Bool) -> True/False
