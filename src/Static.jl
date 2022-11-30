@@ -401,16 +401,24 @@ end
 #Base.Bool(::StaticInt{N}) where {N} = Bool(N)
 
 Base.Integer(@nospecialize(x::StaticInt)) = x
-(::Type{T})(x::StaticInteger) where {T <: Real} = T(known(x))
-function (@nospecialize(T::Type{<:StaticNumber}))(x::Union{AbstractFloat,
-                                                           AbstractIrrational, Integer,
-                                                           Rational})
-    static(convert(eltype(T), x))
-end
+
+#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::AbstractFloat) = static(convert(eltype(T), x))
+#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::AbstractIrrational) = static(convert(eltype(T), x))
+#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::Integer) = static(convert(eltype(T), x))
+#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::Rational) = static(convert(eltype(T), x))
+
+
 
 @inline Base.:(-)(::StaticNumber{N}) where {N} = static(-N)
-Base.:(*)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
-Base.:(*)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
+Base.:(*)(x::Zero, ::Zero) = x
+Base.:(*)(::Real, y::Zero) = y
+Base.:(*)(::Integer, y::Zero) = y
+Base.:(*)(::Rational, y::Zero) = y
+Base.:(*)(x::Zero, ::Real) = x
+Base.:(*)(x::Zero, ::Integer) = x
+Base.:(*)(x::Zero, ::Rational) = x
+Base.:(*)(x::Zero, ::StaticInteger{Y}) where {Y} = x
+Base.:(*)(::StaticInteger{X}, y::Zero) where {X} = y
 Base.:(*)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X * Y)
 Base.:(/)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X / Y)
 Base.:(-)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X - Y)
@@ -423,6 +431,12 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
 function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
+    static(div(X, Y, m))
+end
+function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::Union{RoundingMode{:Nearest}, RoundingMode{:NearestTiesAway}, RoundingMode{:NearestTiesUp}}) where {X, Y}
+    static(div(X, Y, m))
+end
+function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode{:Up}) where {X, Y}
     static(div(X, Y, m))
 end
 Base.div(x::StaticBool, y::False) = throw(DivideError())

@@ -74,9 +74,9 @@ Base.asec(x::StaticFloat64{M}) where {M} = acos(inv(x))
 Base.acsc(x::StaticFloat64{M}) where {M} = asin(inv(x))
 Base.acot(x::StaticFloat64{M}) where {M} = atan(inv(x))
 
-Base.rem(x::Real, ::StaticFloat64{Y}) where {Y} = rem(x, Y)
-Base.rem(::StaticFloat64{X}, y::Real) where {X} = rem(X, y)
-Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = StaticFloat64(rem(X, Y))
+#!!!Base.rem(x::Real, ::StaticFloat64{Y}) where {Y} = rem(x, Y)
+#!!!Base.rem(::StaticFloat64{X}, y::Real) where {X} = rem(X, y)
+#!!!Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = StaticFloat64(rem(X, Y))
 
 Base.min(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X, Y} = X > Y ? y : x
 Base.min(x::Real, ::StaticFloat64{Y}) where {Y} = min(x, Y)
