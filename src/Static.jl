@@ -441,7 +441,7 @@ Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 #=function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
     static(div(X, Y, m))
 end=#
-for mode in (:RoundUp, :RoundDown, :ToZero, :Nearest, :NearestTiesAway, :NearestTiesUp)
+for mode in (:Up, :Down, :ToZero, :Nearest, :NearestTiesAway, :NearestTiesUp)
     @eval function Base.div(::StaticBool{X}, ::StaticBool{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
         static(div(X, Y, m))
     end
@@ -467,6 +467,7 @@ Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
 Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 
 Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <(X, Y)
+Base.:(<=)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <=(X, Y)
 
 Base.isless(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = isless(X, Y)
 
