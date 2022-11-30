@@ -524,5 +524,3 @@ end
     @test repr(static(1):static(10)) == "static(1):static(10)"
     @test repr(static(1):static(2):static(9)) == "static(1):static(2):static(9)"
 end
-
-include("ranges.jl")
