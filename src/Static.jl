@@ -76,11 +76,19 @@ StaticInt(x::BigFloat) = StaticInt{Int(x)}() # Resolves ambiguities with Base
 
 StaticInt{X}(y::Real) where X = StaticInt{Int(y)}()
 StaticInt{X}(y::Rational) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
-StaticInt{X}(y::BigFloat) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
+StaticInt{X}(yt::BigFloat) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
 
 StaticBool(x::Real) = StaticBool{Bool(x)}()
 StaticBool(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
 StaticBool(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+True(x::Real) = StaticBool{Bool(x)}()
+True(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+True(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+False(x::Real) = StaticBool{Bool(x)}()
+False(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+False(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
 
 StaticBool{X}(y::Real) where X = StaticBool{Bool(y)}()
 StaticBool{X}(y::Rational) where X = StaticBool{Bool(y)}() # Resolves ambiguities with Base
