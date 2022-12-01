@@ -116,9 +116,6 @@ end
 (::Type{T})(@nospecialize x::StaticNumber) where {T <: Union{Base.BitInteger,Float32,Float64}} = T(known(x))
 
 
-Base.:(:)(a::StaticNumber, b::StaticNumber) = (:)(known(a), known(b))
-
-
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
 Base.zero(@nospecialize(::StaticInt)) = StaticInt{0}()
