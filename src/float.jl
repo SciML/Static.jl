@@ -7,9 +7,9 @@ Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
 struct StaticFloat64{N} <: Real
     StaticFloat64{N}() where {N} = new{N::Float64}()
-    StaticFloat64(x::Float64) = new{x}()
+    #!!!StaticFloat64(x::Float64) = new{x}()
     StaticFloat64(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
-    StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
+    #!!!StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
     StaticFloat64(@nospecialize x::StaticFloat64) = x
     #!!!StaticFloat64(x::Real) = StaticFloat64(convert(Float64, x))
 end
