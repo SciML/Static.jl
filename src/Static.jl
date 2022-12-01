@@ -74,23 +74,20 @@ StaticInt(x::Real) = StaticInt{Int(x)}()
 StaticInt(x::Rational) = StaticInt{Int(x)}() # Resolves ambiguities with Base
 StaticInt(x::BigFloat) = StaticInt{Int(x)}() # Resolves ambiguities with Base
 
+StaticInt{X}(y::Real) where X = StaticInt{Int(y)}()
+StaticInt{X}(x::Rational) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
+StaticInt{X}(x::BigFloat) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
+
 StaticBool(x::Real) = StaticBool{Bool(x)}()
 StaticBool(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
 StaticBool(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
 
-StaticFloat64(x::Real) = StaticInt{Float64(x)}()
+StaticBool{X}(y::Real) where X = StaticBool{Bool(y)}()
+StaticBool{X}(x::Rational) where X = StaticBool{Bool(y)}() # Resolves ambiguities with Base
+StaticBool{X}(x::BigFloat) where X = StaticBool{Bool(y)}() # Resolves ambiguities with Base
 
-StaticInt(::StaticNumber{X}) where X = StaticInt{convert(Int, X)}()
-StaticBool(::StaticNumber{X}) where X = StaticBool{convert(Bool, X)}()
-StaticFloat64(::StaticNumber{X}) where {X} = StaticFloat64{convert(Float64, X)}()
-
-Base.convert(::Type{StaticInt}, x::StaticNumber) = StaticInt(x)
-Base.convert(::Type{StaticBool}, x::StaticNumber) = StaticBool(x)
-Base.convert(::Type{StaticFloat64}, x::StaticNumber) = StaticFloat64(x)
-
-Base.convert(::Type{StaticInt{X}}, y::StaticNumber) where X = StaticInt{X}(StaticInt(y))
-Base.convert(::Type{StaticBool{X}}, y::StaticNumber) where X = StaticBool{X}(StaticBool(y))
-Base.convert(::Type{StaticFloat64{X}}, y::StaticNumber) where X = StaticFloat64{X}(StaticFloat64(y))
+StaticFloat64(x::Real) = StaticFloat64{Float64(x)}()
+StaticFloat64{X}(y::Real) where X = StaticFloat64{Int(y)}()
 
 
 function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
