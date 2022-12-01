@@ -520,7 +520,8 @@ end
     @test repr(static(:x)) == "static(:x)"
     @test repr(static(true)) == "static(true)"
     @test repr(static(CartesianIndex(1, 1))) == "NDIndex(static(1), static(1))"
-    @test repr(static(true)) == "static(true)" == "$(static(true))"
+    @test string(static(true)) == "static(true)" == "$(static(true))"
+    @test string(static(false)) == "static(false)" == "$(static(false))"
     @test repr(static(1):static(10)) == "static(1):static(10)"
     @test repr(static(1):static(2):static(9)) == "static(1):static(2):static(9)"
 end

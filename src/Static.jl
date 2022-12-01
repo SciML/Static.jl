@@ -985,6 +985,9 @@ end
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 
+Base.string(::True) = "static(true)"
+Base.string(::False) = "static(false)"
+
 function Base.show(io::IO, @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
     show(io, MIME"text/plain"(), x)
 end
