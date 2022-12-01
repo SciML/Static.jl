@@ -487,8 +487,8 @@ y = 1:10
     @test @inferred(eltype(Static.StaticFloat64(static(1)))) <: Float64
     @test @inferred(promote_rule(typeof(fone), Int)) == Float64
     @test @inferred(promote_type(typeof(fone), Float64)) == Float64
-    @test @inferred(promote_type(typeof(fone), Float32)) == Float32
-    @test @inferred(promote_type(typeof(fone), Float16)) == Float16
+    @test @inferred(promote_type(typeof(fone), Float32)) == Float64
+    @test @inferred(promote_type(typeof(fone), Float16)) == Float64
 
     @test @inferred(inv(static(2.0))) === static(inv(2.0)) === inv(static(2))
 
