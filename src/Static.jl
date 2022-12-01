@@ -70,9 +70,18 @@ include("float.jl")
 
 const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
 
-StaticInt(::StaticNumber{X}) where X = StaticInt{convert(Int, x)}()
-StaticBool(::StaticNumber{X}) where X = StaticBool{convert(Bool, x)}()
+StaticInt(::StaticNumber{X}) where X = StaticInt{convert(Int, X)}()
+StaticBool(::StaticNumber{X}) where X = StaticBool{convert(Bool, X)}()
 StaticFloat64(::StaticNumber{X}) where {X} = StaticFloat64{convert(Float64, X)}()
+
+Base.convert(::Type{StaticInt}, x::StaticNumber) = StaticInt(x)
+Base.convert(::Type{StaticBool}, x::StaticNumber) = StaticBool(x)
+Base.convert(::Type{StaticFloat64}, x::StaticNumber) = StaticFloat64(x)
+
+Base.convert(::Type{StaticInt{X}}, y::StaticNumber) where X = StaticInt{X}(StaticInt(y))
+Base.convert(::Type{StaticBool{X}}, y::StaticNumber) where X = StaticBool{X}(StaticBool(y))
+Base.convert(::Type{StaticFloat64{X}}, y::StaticNumber) where X = StaticFloat64{X}(StaticFloat64(y))
+
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
@@ -366,14 +375,17 @@ function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
                            @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
 end
-function Base.promote_rule(::Type{<:Base.TwicePrecision{R}},
-                           @nospecialize(T::Type{<:StaticNumber})) where {R <: Number}
-    promote_rule(Base.TwicePrecision{R}, eltype(T))
-end
-function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
-                           T2::Type{<:Union{Rational, AbstractFloat, Signed}})
-    promote_rule(T2, eltype(T1))
-end
+Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), T2::Type{<:Real}) = promote_type(eltype(T1), T2)
+
+# Bool needs special handling, Base defines `promote_rule(::Type{Bool}, ::Type{T}) where {T<:Number} = T`
+Base.promote_rule(::Type{Bool}, @nospecialize(T::Type{<:StaticNumber})) = eltype(T)
+Base.promote_rule(@nospecialize(T::Type{<:StaticNumber}), ::Type{Bool}) = eltype(T)
+
+
+@inline Base.promote(@nospecialize(a::StaticInt), @nospecialize(b::StaticInt)) = (a, b)
+@inline Base.promote(@nospecialize(a::StaticBool), @nospecialize(b::StaticBool)) = (a, b)
+@inline Base.promote(@nospecialize(a::StaticFloat64), @nospecialize(b::StaticFloat64)) = (a, b)
+
 
 Base.:(~)(::StaticInteger{N}) where {N} = static(~N)
 
