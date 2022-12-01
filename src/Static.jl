@@ -70,6 +70,16 @@ include("float.jl")
 
 const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
 
+StaticInt(x::Real) = StaticInt{Int(x)}()
+StaticInt(x::Rational) = StaticInt{Int(x)}() # Resolves ambiguities with Base
+StaticInt(x::BigFloat) = StaticInt{Int(x)}() # Resolves ambiguities with Base
+
+StaticBool(x::Real) = StaticBool{Bool(x)}()
+StaticBool(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+StaticBool(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+StaticFloat64(x::Real) = StaticInt{Float64(x)}()
+
 StaticInt(::StaticNumber{X}) where X = StaticInt{convert(Int, X)}()
 StaticBool(::StaticNumber{X}) where X = StaticBool{convert(Bool, X)}()
 StaticFloat64(::StaticNumber{X}) where {X} = StaticFloat64{convert(Float64, X)}()
@@ -81,6 +91,15 @@ Base.convert(::Type{StaticFloat64}, x::StaticNumber) = StaticFloat64(x)
 Base.convert(::Type{StaticInt{X}}, y::StaticNumber) where X = StaticInt{X}(StaticInt(y))
 Base.convert(::Type{StaticBool{X}}, y::StaticNumber) where X = StaticBool{X}(StaticBool(y))
 Base.convert(::Type{StaticFloat64{X}}, y::StaticNumber) where X = StaticFloat64{X}(StaticFloat64(y))
+
+
+function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
+    convert(T, known(N))
+end
+
+#Base.Bool(::StaticInt{N}) where {N} = Bool(N)
+
+(::Type{T})(@nospecialize x::StaticNumber) where {T <: Union{Base.BitInteger,Float32,Float64}} = T(known(x))
 
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
@@ -414,19 +433,6 @@ Base.sign(::StaticNumber{N}) where {N} = static(sign(N))
 
 Base.widen(@nospecialize(x::StaticNumber)) = widen(known(x))
 
-function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
-    convert(T, known(N))
-end
-
-#Base.Bool(::StaticInt{N}) where {N} = Bool(N)
-
-Base.Integer(@nospecialize(x::StaticInt)) = x
-
-#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::AbstractFloat) = static(convert(eltype(T), x))
-#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::AbstractIrrational) = static(convert(eltype(T), x))
-#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::Integer) = static(convert(eltype(T), x))
-#!!!(@nospecialize(T::Type{<:StaticNumber}))(x::Rational) = static(convert(eltype(T), x))
-
 
 
 @inline Base.:(-)(::StaticNumber{N}) where {N} = static(-N)
@@ -447,6 +453,9 @@ Base.:(-)(x::Ptr, ::StaticInt{N}) where {N} = x - N
 Base.:(-)(::StaticInt{N}, y::Ptr) where {N} = y - N
 Base.:(+)(x::Ptr, ::StaticInt{N}) where {N} = x + N
 Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
+
+Base.leading_zeros(x::StaticInt) = leading_zeros(known(x))
+Base.trailing_zeros(x::StaticInt) = leading_zeros(known(x))
 
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
