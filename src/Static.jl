@@ -1005,4 +1005,6 @@ function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
     nothing
 end
 
+include("ranges.jl")
+
 end
