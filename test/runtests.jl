@@ -35,6 +35,7 @@ end
     x = StaticInt(1)
     y = static(3)
     @test isinteger(y)
+    @test isinteger(static(true))
     @test @inferred(minmax(x, y)) == @inferred(minmax(y, x)) == minmax(1, 3)
     @test @inferred(Bool(x)) isa Bool
     @test @inferred(BigInt(x)) isa BigInt
