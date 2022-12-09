@@ -71,7 +71,7 @@ const IntType = Union{StaticInt, Int}
 IntType(x::Integer) = Int(x)
 IntType(@nospecialize x::Union{Int, StaticInt}) = x
 
-Base.isinteger(@nospecialize x::StaticInt) = true
+Base.isinteger(@nospecialize x::StaticInteger) = true
 
 include("float.jl")
 
