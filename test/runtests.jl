@@ -117,6 +117,8 @@ end
     @test @inferred(StaticInt(t)) === StaticInt(1)
     @test @inferred(StaticInt(f)) === StaticInt(0)
 
+    @test isinteger(static(true))
+
     @test @inferred(~t) === f
     @test @inferred(~f) === t
     @test @inferred(!t) === f
