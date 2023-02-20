@@ -144,6 +144,7 @@ An alias for `OptionallyStaticUnitRange` usfeul for statically sized axes.
 """
 const SOneTo{L} = SUnitRange{1, L}
 SOneTo(n::Int) = SOneTo{n}()
+Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
 const OptionallyStaticRange{F, L} = Union{OptionallyStaticUnitRange{F, L},
                                           OptionallyStaticStepRange{F, <:Any, L}}
