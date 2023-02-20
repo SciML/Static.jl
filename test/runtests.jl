@@ -2,7 +2,7 @@ using Static, Aqua
 using Static: Zero
 using Test
 
-Aqua.test_all(Static)
+Aqua.test_all(Static, piracy = false)
 
 @testset "StaticSymbol" begin
     x = StaticSymbol(:x)
