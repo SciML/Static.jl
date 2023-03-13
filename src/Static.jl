@@ -85,6 +85,10 @@ Base.to_index(x::StaticInt) = known(x)
 function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, ::StaticNumber{N}) where {N}
     checkindex(Bool, inds, N)
 end
+function checkindex(::Type{Bool}, inds::Base.IdentityUnitRange,
+                    ::StaticFloat64{N}) where {N}
+    checkindex(Bool, inds.indices, N)
+end
 
 ifelse(::True, @nospecialize(x), @nospecialize(y)) = x
 ifelse(::False, @nospecialize(x), @nospecialize(y)) = y
