@@ -104,6 +104,13 @@ end
 
     @test real(static(3)) === static(3)
     @test imag(static(3)) === static(0)
+
+    @test mod(static(3), static(3)) === static(0)
+    @test mod(static(3), 3) == 0
+    @test mod(3, static(3)) == 0
+    @test mod(static(3), static(2)) === static(1)
+    @test mod(static(3), 2) == 1
+    @test mod(3, static(2)) == 1
 end
 
 @testset "StaticBool" begin

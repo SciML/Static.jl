@@ -450,6 +450,8 @@ Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
 Base.rem(x::Real, ::StaticInteger{Y}) where {Y} = rem(x, Y)
 Base.rem(::StaticInteger{X}, y::Real) where {X} = rem(X, y)
 Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
+Base.mod(x::Real, ::StaticNumber{Y}) where {Y} = mod(x, Y)
+Base.mod(::StaticNumber{X}, y::Real) where {X} = mod(X, y)
 
 Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 
