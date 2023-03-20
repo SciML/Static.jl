@@ -204,6 +204,9 @@ function Base.:(:)(start::Integer, ::StaticInt{1}, stop::Integer)
     OptionallyStaticUnitRange(start, stop)
 end
 
+Base.:(:)(a::StaticFloat64, b::StaticFloat64) = (:)(known(a), known(b))
+
+
 Base.isempty(r::OptionallyStaticUnitRange) = first(r) > last(r)
 @inline function Base.isempty(x::OptionallyStaticStepRange)
     start = first(x)

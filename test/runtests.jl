@@ -152,17 +152,17 @@ end
     @test @inferred(xor(t, t)) === f
 
     @test @inferred(|(true, f))
-    @test @inferred(|(true, t)) === t
+    @test @inferred(|(true, t)) === true
     @test @inferred(|(f, true))
-    @test @inferred(|(t, true)) === t
+    @test @inferred(|(t, true)) === true
     @test @inferred(|(f, f)) === f
     @test @inferred(|(f, t)) === t
     @test @inferred(|(t, f)) === t
     @test @inferred(|(t, t)) === t
 
-    @test @inferred(Base.:(&)(true, f)) === f
+    @test @inferred(Base.:(&)(true, f)) === false
     @test @inferred(Base.:(&)(true, t))
-    @test @inferred(Base.:(&)(f, true)) === f
+    @test @inferred(Base.:(&)(f, true)) === false
     @test @inferred(Base.:(&)(t, true))
     @test @inferred(Base.:(&)(f, f)) === f
     @test @inferred(Base.:(&)(f, t)) === f
@@ -495,10 +495,10 @@ y = 1:10
     @test typeof(fone)(1.0) isa Static.StaticFloat64
 
     @test @inferred(eltype(Static.StaticFloat64(static(1)))) <: Float64
-    @test @inferred(promote_rule(typeof(fone), Int)) <: promote_type(Float64, Int)
-    @test @inferred(promote_rule(typeof(fone), Float64)) <: Float64
-    @test @inferred(promote_rule(typeof(fone), Float32)) <: Float32
-    @test @inferred(promote_rule(typeof(fone), Float16)) <: Float16
+    @test @inferred(promote_rule(typeof(fone), Int)) == Float64
+    @test @inferred(promote_type(typeof(fone), Float64)) == Float64
+    @test @inferred(promote_type(typeof(fone), Float32)) == Float64
+    @test @inferred(promote_type(typeof(fone), Float16)) == Float64
 
     @test @inferred(inv(static(2.0))) === static(inv(2.0)) === inv(static(2))
 
@@ -531,6 +531,7 @@ end
     @test repr(static(true)) == "static(true)"
     @test repr(static(CartesianIndex(1, 1))) == "NDIndex(static(1), static(1))"
     @test string(static(true)) == "static(true)" == "$(static(true))"
+    @test string(static(false)) == "static(false)" == "$(static(false))"
     @test repr(static(1):static(10)) == "static(1):static(10)"
     @test repr(static(1):static(2):static(9)) == "static(1):static(2):static(9)"
 end

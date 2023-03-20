@@ -7,12 +7,13 @@ Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
 """
 struct StaticFloat64{N} <: Real
     StaticFloat64{N}() where {N} = new{N::Float64}()
-    StaticFloat64(x::Float64) = new{x}()
+    #!!!StaticFloat64(x::Float64) = new{x}()
     StaticFloat64(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
-    StaticFloat64(x::StaticInt{N}) where {N} = StaticFloat64(convert(Float64, N))
-    StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
+    #!!!StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
     StaticFloat64(@nospecialize x::StaticFloat64) = x
+    #!!!StaticFloat64(x::Real) = StaticFloat64(convert(Float64, x))
 end
+
 
 Base.zero(@nospecialize T::Type{<:StaticFloat64}) = Float64(0.0)
 Base.one(@nospecialize T::Type{<:StaticFloat64}) = Float64(1.0)
@@ -74,9 +75,9 @@ Base.asec(x::StaticFloat64{M}) where {M} = acos(inv(x))
 Base.acsc(x::StaticFloat64{M}) where {M} = asin(inv(x))
 Base.acot(x::StaticFloat64{M}) where {M} = atan(inv(x))
 
-Base.rem(x::Real, ::StaticFloat64{Y}) where {Y} = rem(x, Y)
-Base.rem(::StaticFloat64{X}, y::Real) where {X} = rem(X, y)
-Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = StaticFloat64(rem(X, Y))
+#!!!Base.rem(x::Real, ::StaticFloat64{Y}) where {Y} = rem(x, Y)
+#!!!Base.rem(::StaticFloat64{X}, y::Real) where {X} = rem(X, y)
+#!!!Base.rem(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = StaticFloat64(rem(X, Y))
 
 Base.min(x::StaticFloat64{X}, y::StaticFloat64{Y}) where {X, Y} = X > Y ? y : x
 Base.min(x::Real, ::StaticFloat64{Y}) where {Y} = min(x, Y)

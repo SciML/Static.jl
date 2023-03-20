@@ -24,7 +24,7 @@ end
 
 Base.Symbol(@nospecialize(s::StaticSymbol)) = known(s)
 
-abstract type StaticInteger{N} <: Number end
+abstract type StaticInteger{N} <: Integer end
 
 """
     StaticBool(x::Bool) -> True/False
@@ -47,6 +47,8 @@ function StaticBool(x::Bool)
         return False()
     end
 end
+#!!!StaticBool(x::Real) = StaticBool(convert(Bool, x))
+
 
 """
     StaticInt(N::Int) -> StaticInt{N}()
@@ -59,6 +61,8 @@ struct StaticInt{N} <: StaticInteger{N}
     StaticInt(N::Int) = new{N}()
     StaticInt(@nospecialize N::StaticInt) = N
     StaticInt(::Val{N}) where {N} = StaticInt(N)
+    StaticInt(N::UInt) = StaticInt(Int(N))
+    #!!!StaticInt(x::Real) = StaticInt(convert(Int, x))
 end
 
 """
@@ -76,6 +80,43 @@ Base.isinteger(@nospecialize x::StaticInteger) = true
 include("float.jl")
 
 const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
+
+StaticInt(x::Real) = StaticInt{Int(x)}()
+StaticInt(x::Rational) = StaticInt{Int(x)}() # Resolves ambiguities with Base
+StaticInt(x::BigFloat) = StaticInt{Int(x)}() # Resolves ambiguities with Base
+
+StaticInt{X}(y::Real) where X = StaticInt{Int(y)}()
+StaticInt{X}(y::Rational) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
+StaticInt{X}(yt::BigFloat) where X = StaticInt{Int(y)}() # Resolves ambiguities with Base
+
+StaticBool(x::Real) = StaticBool{Bool(x)}()
+StaticBool(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+StaticBool(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+True(x::Real) = StaticBool{Bool(x)}()
+True(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+True(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+False(x::Real) = StaticBool{Bool(x)}()
+False(x::Rational) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+False(x::BigFloat) = StaticBool{Bool(x)}() # Resolves ambiguities with Base
+
+StaticBool{X}(y::Real) where X = StaticBool{Bool(y)}()
+StaticBool{X}(y::Rational) where X = StaticBool{Bool(y)}() # Resolves ambiguities with Base
+StaticBool{X}(y::BigFloat) where X = StaticBool{Bool(y)}() # Resolves ambiguities with Base
+
+StaticFloat64(x::Real) = StaticFloat64{Float64(x)}()
+StaticFloat64{X}(y::Real) where X = StaticFloat64{Float64(y)}()
+
+
+function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
+    convert(T, known(N))
+end
+
+#Base.Bool(::StaticInt{N}) where {N} = Bool(N)
+
+(::Type{T})(@nospecialize x::StaticNumber) where {T <: Union{Base.BitInteger,Float32,Float64}} = T(known(x))
+
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
@@ -100,8 +141,8 @@ const FloatZero = StaticFloat64{zero(Float64)}
 
 const StaticType{T} = Union{StaticNumber{T}, StaticSymbol{T}}
 
-StaticInt(x::False) = Zero()
-StaticInt(x::True) = One()
+#!!!StaticInt(x::False) = Zero()
+#!!!StaticInt(x::True) = One()
 Base.Bool(::True) = true
 Base.Bool(::False) = false
 
@@ -228,7 +269,7 @@ static(:x)
 ```
 """
 static(@nospecialize(x::Union{StaticSymbol, StaticNumber})) = x
-static(x::Integer) = StaticInt(x)
+static(x::Integer) = StaticInt{convert(Int, x)}()
 function static(x::Union{AbstractFloat, Complex, Rational, AbstractIrrational})
     StaticFloat64(Float64(x))
 end
@@ -373,24 +414,27 @@ function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
                            @nospecialize(T2::Type{<:StaticNumber}))
     promote_rule(eltype(T1), eltype(T2))
 end
-function Base.promote_rule(::Type{<:Base.TwicePrecision{R}},
-                           @nospecialize(T::Type{<:StaticNumber})) where {R <: Number}
-    promote_rule(Base.TwicePrecision{R}, eltype(T))
-end
-function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
-                           T2::Type{<:Union{Rational, AbstractFloat, Signed}})
-    promote_rule(T2, eltype(T1))
-end
+Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}), T2::Type{<:Real}) = promote_type(eltype(T1), T2)
+
+# Bool needs special handling, Base defines `promote_rule(::Type{Bool}, ::Type{T}) where {T<:Number} = T`
+Base.promote_rule(::Type{Bool}, @nospecialize(T::Type{<:StaticNumber})) = eltype(T)
+Base.promote_rule(@nospecialize(T::Type{<:StaticNumber}), ::Type{Bool}) = eltype(T)
+
+
+@inline Base.promote(@nospecialize(a::StaticInt), @nospecialize(b::StaticInt)) = (a, b)
+@inline Base.promote(@nospecialize(a::StaticBool), @nospecialize(b::StaticBool)) = (a, b)
+@inline Base.promote(@nospecialize(a::StaticFloat64), @nospecialize(b::StaticFloat64)) = (a, b)
+
 
 Base.:(~)(::StaticInteger{N}) where {N} = static(~N)
 
 Base.inv(x::StaticInteger{N}) where {N} = one(x) / x
 
-Base.zero(@nospecialize T::Type{<:StaticInt}) = StaticInt(0)
+Base.zero(@nospecialize T::Type{<:StaticInt}) = static(0)
 Base.zero(@nospecialize T::Type{<:StaticBool}) = False()
 
 Base.one(@nospecialize T::Type{<:StaticBool}) = True()
-Base.one(@nospecialize T::Type{<:StaticInt}) = StaticInt(1)
+Base.one(@nospecialize T::Type{<:StaticInt}) = static(1)
 
 @inline Base.iszero(::Union{StaticInt{0}, StaticFloat64{0.0}, False}) = true
 @inline Base.iszero(@nospecialize x::Union{StaticInt, True, StaticFloat64}) = false
@@ -409,23 +453,18 @@ Base.sign(::StaticNumber{N}) where {N} = static(sign(N))
 
 Base.widen(@nospecialize(x::StaticNumber)) = widen(known(x))
 
-function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Number}
-    convert(T, known(N))
-end
 
-#Base.Bool(::StaticInt{N}) where {N} = Bool(N)
-
-Base.Integer(@nospecialize(x::StaticInt)) = x
-(::Type{T})(x::StaticInteger) where {T <: Real} = T(known(x))
-function (@nospecialize(T::Type{<:StaticNumber}))(x::Union{AbstractFloat,
-                                                           AbstractIrrational, Integer,
-                                                           Rational})
-    static(convert(eltype(T), x))
-end
 
 @inline Base.:(-)(::StaticNumber{N}) where {N} = static(-N)
-Base.:(*)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
-Base.:(*)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
+Base.:(*)(x::Zero, ::Zero) = x
+Base.:(*)(::Real, y::Zero) = y
+Base.:(*)(::Integer, y::Zero) = y
+Base.:(*)(::Rational, y::Zero) = y
+Base.:(*)(x::Zero, ::Real) = x
+Base.:(*)(x::Zero, ::Integer) = x
+Base.:(*)(x::Zero, ::Rational) = x
+Base.:(*)(x::Zero, ::StaticInteger{Y}) where {Y} = x
+Base.:(*)(::StaticInteger{X}, y::Zero) where {X} = y
 Base.:(*)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X * Y)
 Base.:(/)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X / Y)
 Base.:(-)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X - Y)
@@ -435,20 +474,35 @@ Base.:(-)(::StaticInt{N}, y::Ptr) where {N} = y - N
 Base.:(+)(x::Ptr, ::StaticInt{N}) where {N} = x + N
 Base.:(+)(::StaticInt{N}, y::Ptr) where {N} = y + N
 
+Base.leading_zeros(x::StaticInt) = leading_zeros(known(x))
+Base.trailing_zeros(x::StaticInt) = leading_zeros(known(x))
+
 @generated Base.sqrt(::StaticNumber{N}) where {N} = :($(static(sqrt(N))))
 
-function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
+#=function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::RoundingMode) where {X, Y}
     static(div(X, Y, m))
+end=#
+for mode in (:Up, :Down, :ToZero, :Nearest, :NearestTiesAway, :NearestTiesUp)
+    @eval function Base.div(::StaticBool{X}, ::StaticBool{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
+    @eval function Base.div(::StaticFloat64{X}, ::StaticFloat64{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
+    @eval function Base.div(::StaticInt{X}, ::StaticInt{Y}, m::RoundingMode{$(QuoteNode(mode))}) where {X, Y}
+        static(div(X, Y, m))
+    end
 end
-Base.div(x::Real, ::StaticInteger{Y}, m::RoundingMode) where {Y} = div(x, Y, m)
-Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
+#=function Base.div(::StaticNumber{X}, ::StaticNumber{Y}, m::Union{RoundingMode{:RoundUp},RoundingMode{:RoundDown},RoundingMode{:Nearest}, RoundingMode{:NearestTiesAway}, RoundingMode{:NearestTiesUp}}) where {X, Y}
+    static(div(X, Y, m))
+end=#
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
+Base.rem(@nospecialize(x::StaticNumber), T::Type{Bool}) = rem(known(x), T)
+Base.rem(@nospecialize(x::StaticNumber), T::Type{BigInt}) = rem(known(x), T)
 Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
-Base.rem(x::Real, ::StaticInteger{Y}) where {Y} = rem(x, Y)
-Base.rem(::StaticInteger{X}, y::Real) where {X} = rem(X, y)
 Base.mod(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(mod(X, Y))
 Base.mod(x::Real, ::StaticNumber{Y}) where {Y} = mod(x, Y)
 Base.mod(::StaticNumber{X}, y::Real) where {X} = mod(X, y)
@@ -456,52 +510,43 @@ Base.mod(::StaticNumber{X}, y::Real) where {X} = mod(X, y)
 Base.:(==)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = ==(X, Y)
 
 Base.:(<)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <(X, Y)
+Base.:(<=)(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = <=(X, Y)
 
 Base.isless(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = isless(X, Y)
-Base.isless(::StaticInteger{X}, y::Real) where {X} = isless(X, y)
-Base.isless(x::Real, ::StaticInteger{Y}) where {Y} = isless(x, Y)
 
 Base.min(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(min(X, Y))
-Base.min(::StaticInteger{X}, y::Number) where {X} = min(X, y)
-Base.min(x::Number, ::StaticInteger{Y}) where {Y} = min(x, Y)
 
 Base.max(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(max(X, Y))
-Base.max(::StaticInteger{X}, y::Number) where {X} = max(X, y)
-Base.max(x::Number, ::StaticInteger{Y}) where {Y} = max(x, Y)
 
 Base.minmax(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(minmax(X, Y))
 
 Base.:(<<)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(<<(X, Y))
-Base.:(<<)(::StaticInteger{X}, n::Integer) where {X} = <<(X, n)
-Base.:(<<)(x::Integer, ::StaticInteger{N}) where {N} = <<(x, N)
+Base.:(<<)(::StaticInteger{X}, n::UInt) where {X} = <<(X, n)
 
 Base.:(>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>(X, Y))
-Base.:(>>)(::StaticInteger{X}, n::Integer) where {X} = >>(X, n)
-Base.:(>>)(x::Integer, ::StaticInteger{N}) where {N} = >>(x, N)
+Base.:(>>)(::StaticInteger{X}, n::UInt) where {X} = >>(X, n)
 
 Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>>(X, Y))
-Base.:(>>>)(::StaticInteger{X}, n::Integer) where {X} = >>>(X, n)
-Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x, N)
+Base.:(>>>)(::StaticInteger{X}, n::UInt) where {X} = >>>(X, n)
+
 
 Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X & Y)
-Base.:(&)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X & y
-Base.:(&)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x & Y
-Base.:(&)(x::Bool, y::True) = x
-Base.:(&)(x::Bool, y::False) = y
-Base.:(&)(x::True, y::Bool) = y
-Base.:(&)(x::False, y::Bool) = x
+#!!Base.:(&)(x::Bool, y::True) = x
+#!!Base.:(&)(x::Bool, y::False) = y
+#!!Base.:(&)(x::True, y::Bool) = y
+#!!Base.:(&)(x::False, y::Bool) = x
 
 Base.:(|)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(|(X, Y))
-Base.:(|)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X | y
-Base.:(|)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x | Y
-Base.:(|)(x::Bool, y::True) = y
-Base.:(|)(x::Bool, y::False) = x
-Base.:(|)(x::True, y::Bool) = x
-Base.:(|)(x::False, y::Bool) = y
+#!!Base.:(|)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X | y
+#!!Base.:(|)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x | Y
+#!!Base.:(|)(x::Bool, y::True) = y
+#!!Base.:(|)(x::Bool, y::False) = x
+#!!Base.:(|)(x::True, y::Bool) = x
+#!!Base.:(|)(x::False, y::Bool) = y
 
 Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(xor(X, Y))
-Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
-Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
+#!!Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
+#!!Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
@@ -554,7 +599,7 @@ Base.:(^)(x::BigInt, y::True) = x
 end
 
 @inline function invariant_permutation(@nospecialize(x::Tuple), @nospecialize(y::Tuple))
-    if y === x === ntuple(static, StaticInt(nfields(x)))
+    if y === x === ntuple(static, static(nfields(x)))
         return True()
     else
         return False()
@@ -625,7 +670,7 @@ value is a `StaticInt`.
 end
 
 function Base.invperm(p::Tuple{StaticInt, Vararg{StaticInt, N}}) where {N}
-    map(Base.Fix2(find_first_eq, p), ntuple(static, StaticInt(N + 1)))
+    map(Base.Fix2(find_first_eq, p), ntuple(static, static(N + 1)))
 end
 
 """
@@ -956,6 +1001,9 @@ end
     _, indstail = Base.IteratorsMD.split(inds, Val(N))
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
+
+Base.string(::True) = "static(true)"
+Base.string(::False) = "static(false)"
 
 function Base.show(io::IO, @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
     show(io, MIME"text/plain"(), x)
