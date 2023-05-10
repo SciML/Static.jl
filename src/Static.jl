@@ -47,6 +47,10 @@ function StaticBool(x::Bool)
         return False()
     end
 end
+Base.:(==)(::True, b::Bool) = b
+Base.:(==)(::False, b::Bool) = !b
+Base.:(==)(b::Bool, ::True) = b
+Base.:(==)(b::Bool, ::False) = !b
 
 """
     StaticInt(N::Int) -> StaticInt{N}()
