@@ -211,6 +211,23 @@ end
     @test @inferred(any((t, t, t)))
     @test @inferred(any((t, f, t)))
     @test !@inferred(any((f, f, f)))
+
+    @test static(true) == true
+    @test static(false) != true
+    @test static(true) != false
+    @test static(false) == false
+    @test !(static(true) != true)
+    @test !(static(false) == true)
+    @test !(static(true) == false)
+    @test !(static(false) != false)
+    @test true == static(true)
+    @test false != static(true)
+    @test true != static(false)
+    @test false == static(false)
+    @test !(true != static(true))
+    @test !(false == static(true))
+    @test !(true == static(false))
+    @test !(false != static(false))
 end
 
 @testset "operators" begin
