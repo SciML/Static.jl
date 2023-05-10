@@ -48,6 +48,9 @@ function StaticBool(x::Bool)
     end
 end
 
+Base.promote_rule(::Type{Bool}, T::Type{<:StaticNumber}) = 
+    promote_rule(Bool, eltype(T))
+
 """
     StaticInt(N::Int) -> StaticInt{N}()
 
