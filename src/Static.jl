@@ -77,8 +77,7 @@ include("float.jl")
 
 const StaticNumber{N} = Union{StaticInt{N}, StaticBool{N}, StaticFloat64{N}}
 
-Base.promote_rule(::Type{Bool}, T::Type{<:StaticNumber}) = 
-    promote_rule(Bool, eltype(T))
+Base.promote_rule(::Type{Bool}, T::Type{<:StaticNumber}) = promote_rule(Bool, eltype(T))
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
