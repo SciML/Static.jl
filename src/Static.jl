@@ -489,8 +489,8 @@ Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>>(X,
 Base.:(>>>)(::StaticInteger{X}, n::Integer) where {X} = >>>(X, n)
 Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x, N)
 
-Base.:(&)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
-Base.:(&)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
+Base.:(&)(::Integer, y::Zero) = y
+Base.:(&)(x::Zero, ::Integer) = x
 Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X & Y)
 Base.:(&)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X & y
 Base.:(&)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x & Y
