@@ -82,6 +82,9 @@ end
     @test @inferred(promote_type(Base.TwicePrecision{Int}, StaticInt{1})) <:
           Base.TwicePrecision{Int}
 
+    # test UInt32 index on GPU
+    @test @inferred(promote_type(UInt32, SI)) == UInt32
+
     @test static(Int8(-18)) === static(-18)
     @test static(0xef) === static(239)
     @test static(Int16(-18)) === static(-18)

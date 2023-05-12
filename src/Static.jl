@@ -383,6 +383,10 @@ function Base.promote_rule(@nospecialize(T1::Type{<:StaticNumber}),
                            T2::Type{<:Union{Rational, AbstractFloat, Signed}})
     promote_rule(T2, eltype(T1))
 end
+function Base.promote_rule(@nospecialize(T1::Type{<:StaticInt}),
+                           T2::Type{UInt32})
+    return UInt32
+end
 
 Base.:(~)(::StaticInteger{N}) where {N} = static(~N)
 
