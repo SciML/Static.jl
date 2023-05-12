@@ -429,7 +429,6 @@ end
 Base.:(*)(::Union{AbstractFloat, AbstractIrrational, Integer, Rational}, y::Zero) = y
 Base.:(*)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
 Base.:(*)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X * Y)
-Base.:(/)(x::Zero, ::Union{AbstractFloat, AbstractIrrational, Integer, Rational}) = x
 Base.:(/)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X / Y)
 Base.:(-)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X - Y)
 Base.:(+)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X + Y)
