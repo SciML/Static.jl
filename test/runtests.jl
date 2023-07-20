@@ -537,6 +537,9 @@ y = 1:10
     @test @inferred(acoth(static(2.0))) === static(acoth(2.0))
     @info "Testing acosh(1.5)"
     @inferred acosh(static(1.5))
+
+    @test @inferred(isinteger(static(1.0)))
+    @test @inferred(!isinteger(static(1.5)))
 end
 
 @testset "string/print/show" begin
