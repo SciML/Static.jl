@@ -96,3 +96,5 @@ Base.:(*)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X * Y)
 Base.:(/)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X / Y)
 Base.:(-)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X - Y)
 Base.:(+)(::StaticFloat64{X}, ::StaticFloat64{Y}) where {X, Y} = static(X + Y)
+
+Base.isinteger(x::StaticFloat64{X}) where {X} = isinteger(X)
