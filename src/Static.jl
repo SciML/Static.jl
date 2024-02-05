@@ -81,6 +81,8 @@ Base.promote_rule(::Type{Bool}, T::Type{<:StaticNumber}) = promote_rule(Bool, el
 
 Base.getindex(x::Tuple, ::StaticInt{N}) where {N} = getfield(x, N)
 
+Base.getindex(x::NamedTuple, ::StaticSymbol{N}) where {N} = getfield(x, N)
+
 Base.zero(@nospecialize(::StaticInt)) = StaticInt{0}()
 
 Base.to_index(x::StaticInt) = known(x)

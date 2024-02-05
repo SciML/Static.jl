@@ -15,6 +15,8 @@ Aqua.test_all(Static, piracy = false)
     @test @inferred(StaticSymbol(x, y)) === StaticSymbol(:x, :y)
     @test @inferred(StaticSymbol(x, y, z)) === static(:xy1)
     @test @inferred(static(nothing)) === nothing
+    nt = (x = :x, y = "y", z = 1)
+    @test @inferred(getindex(nt, x)) == :x
     @test_throws ErrorException static([])
 end
 
