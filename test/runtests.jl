@@ -3,6 +3,7 @@ using Static: Zero
 using Test
 
 @testset "Aqua" begin
+    Aqua.find_persistent_tasks_deps(Static)
     Aqua.test_ambiguities(Static, recursive = false)
     Aqua.test_deps_compat(Static)
     Aqua.test_piracies(Static, broken = true)
