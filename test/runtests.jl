@@ -5,6 +5,7 @@ using Test
 @testset "Aqua" begin
     Aqua.test_ambiguities(Static, recursive = false)
     Aqua.test_deps_compat(Static)
+    Aqua.test_piracies(Static, broken = true)
     Aqua.test_project_extras(Static)
     Aqua.test_stale_deps(Static)
     Aqua.test_unbound_args(Static)
