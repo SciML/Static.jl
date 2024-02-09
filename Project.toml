@@ -1,7 +1,7 @@
 name = "Static"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
-version = "0.8.9"
+version = "0.8.10"
 
 [deps]
 IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
@@ -10,7 +10,7 @@ IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
 Aqua = "0.8.4"
 IfElse = "0.1"
 Test = "1"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"

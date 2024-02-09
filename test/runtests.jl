@@ -26,6 +26,7 @@ end
     @test @inferred(static(nothing)) === nothing
     nt = (x = :x, y = "y", z = 1)
     @test @inferred(getindex(nt, x)) == :x
+    @test @inferred(getindex(nt, (x, y))) == (x = :x, y = "y")
     @test_throws ErrorException static([])
 end
 
