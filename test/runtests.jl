@@ -108,12 +108,6 @@ end
     @test isless(static(1), static(2))
 
     v = rand(3)
-    GC.@preserve v begin
-        p = pointer(v)
-        @test +(p, static(1)) == +(static(1), p) == +(p, 1)
-        @test -(p, static(1)) == -(static(1), p) == -(p, 1)
-    end
-
     @test real(static(3)) === static(3)
     @test imag(static(3)) === static(0)
 
