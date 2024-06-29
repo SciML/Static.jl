@@ -5,6 +5,12 @@ import IfElse: ifelse
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static, static_promote
 
+import PrecompileTools: @recompile_invalidations
+
+@recompile_invalidations begin
+    import CommonWorldInvalidations
+end
+
 """
     StaticSymbol
 
