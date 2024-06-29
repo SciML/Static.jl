@@ -375,7 +375,8 @@ end
 Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {A}
     (static_promote(static(1), getfield(a, 1)),)
 end
-Base.@propagate_inbounds function Base.promote_shape(a::Tuple{
+Base.@propagate_inbounds function Base.promote_shape(
+        a::Tuple{
             Vararg{Union{Int, StaticInt}},
         },
         b::Tuple{Vararg{Union{Int, StaticInt}}
@@ -961,8 +962,8 @@ end
 @inline function Base.to_indices(A, inds,
         I::Tuple{AbstractArray{NDIndex{N, J}}, Vararg{Any}}) where {
         N,
-        J,
-    }
+        J
+}
     _, indstail = Base.IteratorsMD.split(inds, Val(N))
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end

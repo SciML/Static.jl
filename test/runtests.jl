@@ -365,11 +365,14 @@ end
     # inferred is Union{Int,Nothing}
     @test Static.find_first_eq(1, map(Int, y)) === 3
 
-    @testset "reduce_tup" begin for n in 2:16
-        x = ntuple(_ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)),
-                   n)
-        @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
-    end end
+    @testset "reduce_tup" begin
+        for n in 2:16
+            x = ntuple(
+                _ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)),
+                n)
+            @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
+        end
+    end
 end
 
 @testset "invperm" begin
@@ -527,14 +530,16 @@ y = 1:10
 
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
-    @testset "trig" begin for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh,
-        asinh, atanh, exp, exp2,
-        exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
-        secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
-        acsch, deg2rad, mod2pi, sinpi, cospi]
-        @info "Testing $f(0.5)"
-        @test @inferred(f(static(0.5))) === static(f(0.5))
-    end end
+    @testset "trig" begin
+        for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh,
+            asinh, atanh, exp, exp2,
+            exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
+            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
+            acsch, deg2rad, mod2pi, sinpi, cospi]
+            @info "Testing $f(0.5)"
+            @test @inferred(f(static(0.5))) === static(f(0.5))
+        end
+    end
     @test @inferred(asec(static(2.0))) === static(asec(2.0))
     @test @inferred(acsc(static(2.0))) === static(acsc(2.0))
     @test @inferred(acot(static(2.0))) === static(acot(2.0))
