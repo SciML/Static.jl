@@ -12,6 +12,7 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Aqua = "0.8.4"
 CommonWorldInvalidations = "1"
 IfElse = "0.1"
+PrecompileTools = "1"
 Test = "1"
 julia = "1.10"
 
