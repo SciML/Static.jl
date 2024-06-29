@@ -13,7 +13,7 @@ struct OptionallyStaticUnitRange{F <: IntType, L <: IntType} <:
     stop::L
 
     function OptionallyStaticUnitRange(start::IntType,
-                                       stop::IntType)
+            stop::IntType)
         new{typeof(start), typeof(stop)}(start, stop)
     end
     function OptionallyStaticUnitRange(start, stop)
@@ -57,39 +57,39 @@ static(2):static(2):10
 ```
 """
 struct OptionallyStaticStepRange{F <: IntType, S <: IntType,
-                                 L <: IntType} <: OrdinalRange{Int, Int}
+    L <: IntType} <: OrdinalRange{Int, Int}
     start::F
     step::S
     stop::L
 
     global function _OptionallyStaticStepRange(@nospecialize(start::IntType),
-                                               @nospecialize(step::IntType),
-                                               @nospecialize(stop::IntType))
+            @nospecialize(step::IntType),
+            @nospecialize(stop::IntType))
         new{typeof(start), typeof(step), typeof(stop)}(start, step, stop)
     end
 end
 @noinline function OptionallyStaticStepRange(@nospecialize(start::IntType),
-                                             ::StaticInt{0},
-                                             @nospecialize(stop::IntType))
+        ::StaticInt{0},
+        @nospecialize(stop::IntType))
     throw(ArgumentError("step cannot be zero"))
 end
 # we don't need to check the `stop` if we know it acts like a unit range
 function OptionallyStaticStepRange(@nospecialize(start::IntType),
-                                   step::StaticInt{1},
-                                   @nospecialize(stop::IntType))
+        step::StaticInt{1},
+        @nospecialize(stop::IntType))
     _OptionallyStaticStepRange(start, step, stop)
 end
 function OptionallyStaticStepRange(@nospecialize(start::IntType),
-                                   @nospecialize(step::StaticInt),
-                                   @nospecialize(stop::IntType))
+        @nospecialize(step::StaticInt),
+        @nospecialize(stop::IntType))
     _OptionallyStaticStepRange(start, step, _steprange_last(start, step, stop))
 end
 function OptionallyStaticStepRange(start, step, stop)
     OptionallyStaticStepRange(IntType(start), IntType(step), IntType(stop))
 end
 function OptionallyStaticStepRange(@nospecialize(start::IntType),
-                                   step::Int,
-                                   @nospecialize(stop::IntType))
+        step::Int,
+        @nospecialize(stop::IntType))
     if step === 0
         throw(ArgumentError("step cannot be zero"))
     else
@@ -99,7 +99,7 @@ end
 OptionallyStaticStepRange(@nospecialize x::OptionallyStaticStepRange) = x
 function OptionallyStaticStepRange(x::AbstractRange)
     _OptionallyStaticStepRange(IntType(static_first(x)), IntType(static_step(x)),
-                               IntType(static_last(x)))
+        IntType(static_last(x)))
 end
 
 # to make StepRange constructor inlineable, so optimizer can see `step` value
@@ -107,8 +107,8 @@ end
     StaticInt(_steprange_last(Int(start), Int(step), Int(stop)))
 end
 @inline function _steprange_last(start::Union{StaticInt, Int},
-                                 step::Union{StaticInt, Int},
-                                 stop::Union{StaticInt, Int})
+        step::Union{StaticInt, Int},
+        stop::Union{StaticInt, Int})
     _steprange_last(Int(start), Int(step), Int(stop))
 end
 @inline function _steprange_last(start::Int, step::Int, stop::Int)
@@ -147,7 +147,7 @@ SOneTo(n::Int) = SOneTo{n}()
 Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
 const OptionallyStaticRange{F, L} = Union{OptionallyStaticUnitRange{F, L},
-                                          OptionallyStaticStepRange{F, <:Any, L}}
+    OptionallyStaticStepRange{F, <:Any, L}}
 
 # these probide a generic method for extracting potentially static values.
 static_first(x::Base.OneTo) = StaticInt(1)
@@ -217,13 +217,13 @@ Base.isempty(r::OptionallyStaticUnitRange) = first(r) > last(r)
 end
 
 function Base.checkindex(::Type{Bool},
-                         ::SUnitRange{F1, L1},
-                         ::SUnitRange{F2, L2}) where {F1, L1, F2, L2}
+        ::SUnitRange{F1, L1},
+        ::SUnitRange{F2, L2}) where {F1, L1, F2, L2}
     (F1::Int <= F2::Int) && (L1::Int >= L2::Int)
 end
 
 function Base.getindex(r::OptionallyStaticUnitRange,
-                       s::AbstractUnitRange{<:Integer})
+        s::AbstractUnitRange{<:Integer})
     @boundscheck checkbounds(r, s)
     f = static_first(r)
     fnew = f - one(f)
@@ -299,11 +299,12 @@ end
 function Base.axes1(x::OptionallyStaticStepRange)
     OptionallyStaticUnitRange(StaticInt(1), length(x))
 end
-function Base.axes1(x::OptionallyStaticStepRange{StaticInt{F}, StaticInt{S}, StaticInt{L}}) where {
-                                                                                                   F,
-                                                                                                   S,
-                                                                                                   L
-                                                                                                   }
+function Base.axes1(x::OptionallyStaticStepRange{
+        StaticInt{F}, StaticInt{S}, StaticInt{L}}) where {
+        F,
+        S,
+        L
+}
     OptionallyStaticUnitRange(StaticInt(1), StaticInt(_range_length(F, S, L)))
 end
 Base.axes1(x::Base.Slice{<:OptionallyStaticUnitRange{One}}) = x.indices
@@ -347,25 +348,25 @@ function Base.Broadcast.axistype(_, r::OptionallyStaticUnitRange{StaticInt{1}})
     Base.OneTo(last(r))
 end
 function Base.Broadcast.axistype(r::OptionallyStaticUnitRange{StaticInt{1}},
-                                 ::OptionallyStaticUnitRange{StaticInt{1}})
+        ::OptionallyStaticUnitRange{StaticInt{1}})
     Base.OneTo(last(r))
 end
 function Base.similar(::Type{<:Array{T}},
-                      axes::Tuple{OptionallyStaticUnitRange{StaticInt{1}},
-                                  Vararg{
-                                         Union{Base.OneTo,
-                                               OptionallyStaticUnitRange{StaticInt{1}}}}}) where {
-                                                                                                  T
-                                                                                                  }
+        axes::Tuple{OptionallyStaticUnitRange{StaticInt{1}},
+            Vararg{
+                Union{Base.OneTo,
+                OptionallyStaticUnitRange{StaticInt{1}}}}}) where {
+        T
+}
     Array{T}(undef, map(last, axes))
 end
 function Base.similar(::Type{<:Array{T}},
-                      axes::Tuple{Base.OneTo, OptionallyStaticUnitRange{StaticInt{1}},
-                                  Vararg{
-                                         Union{Base.OneTo,
-                                               OptionallyStaticUnitRange{StaticInt{1}}}}}) where {
-                                                                                                  T
-                                                                                                  }
+        axes::Tuple{Base.OneTo, OptionallyStaticUnitRange{StaticInt{1}},
+            Vararg{
+                Union{Base.OneTo,
+                OptionallyStaticUnitRange{StaticInt{1}}}}}) where {
+        T
+}
     Array{T}(undef, map(last, axes))
 end
 

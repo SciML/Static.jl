@@ -42,11 +42,14 @@
     @test UnitRange{Int}(Static.OptionallyStaticUnitRange(static(1), static(10))) ===
           UnitRange(1, 10)
 
-    @test AbstractUnitRange{Int}(Static.OptionallyStaticUnitRange(static(1), static(10))) isa
+    @test AbstractUnitRange{Int}(Static.OptionallyStaticUnitRange(
+        static(1), static(10))) isa
           Static.OptionallyStaticUnitRange
-    @test AbstractUnitRange{UInt}(Static.OptionallyStaticUnitRange(static(1), static(10))) isa
+    @test AbstractUnitRange{UInt}(Static.OptionallyStaticUnitRange(
+        static(1), static(10))) isa
           Base.OneTo
-    @test AbstractUnitRange{UInt}(Static.OptionallyStaticUnitRange(static(2), static(10))) isa
+    @test AbstractUnitRange{UInt}(Static.OptionallyStaticUnitRange(
+        static(2), static(10))) isa
           UnitRange
 
     @test @inferred((static(1):static(10))[static(2):static(3)]) === static(2):static(3)
@@ -98,11 +101,11 @@ CI = CartesianIndices((static(1):static(2), static(1):static(2)))
 
     @test @inferred(length(Static.OptionallyStaticStepRange(static(1), 2, 10))) == 5
     @test @inferred(length(Static.OptionallyStaticStepRange(static(1), static(1),
-                                                            static(10)))) == 10
+        static(10)))) == 10
     @test @inferred(length(Static.OptionallyStaticStepRange(static(2), static(1),
-                                                            static(10)))) == 9
+        static(10)))) == 9
     @test @inferred(length(Static.OptionallyStaticStepRange(static(2), static(2),
-                                                            static(10)))) == 5
+        static(10)))) == 5
 end
 
 @test @inferred(getindex(static(1):10, Base.Slice(static(1):10))) === static(1):10
