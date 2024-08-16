@@ -3,7 +3,7 @@
     StaticFloat64{N}
 
 A statically sized `Float64`.
-Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
+Use `StaticFloat64(N)` instead of `Val(N)` when you want it to behave like a number.
 """
 struct StaticFloat64{N} <: Real
     StaticFloat64{N}() where {N} = new{N::Float64}()
