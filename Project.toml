@@ -1,7 +1,7 @@
 name = "Static"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
 authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
-version = "1.1.1"
+version = "1.2.0"
 
 [deps]
 CommonWorldInvalidations = "f70d9fcc-98c5-4d4a-abd7-e4cdeebd8ca8"
