@@ -518,7 +518,7 @@ Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
 Base.all(::Tuple{True, Vararg{True}}) = true
-Base.all(::Tuple{Union{True,False}, Vararg{Union{True, False}}}) = false
+Base.all(::Tuple{Union{True, False}, Vararg{Union{True, False}}}) = false
 
 Base.any(::Tuple{False, Vararg{False}}) = false
 Base.any(::Tuple{Union{True, False}, Vararg{Union{True, False}}}) = true
