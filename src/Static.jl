@@ -517,13 +517,11 @@ Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 Base.:(!)(::True) = False()
 Base.:(!)(::False) = True()
 
-Base.all(::Tuple{Vararg{True}}) = true
-Base.all(::Tuple{Vararg{Union{True, False}}}) = false
-Base.all(::Tuple{Vararg{False}}) = false
+Base.all(::Tuple{True, Vararg{True}}) = true
+Base.all(::Tuple{Union{True, False}, Vararg{Union{True, False}}}) = false
 
-Base.any(::Tuple{Vararg{True}}) = true
-Base.any(::Tuple{Vararg{Union{True, False}}}) = true
-Base.any(::Tuple{Vararg{False}}) = false
+Base.any(::Tuple{False, Vararg{False}}) = false
+Base.any(::Tuple{Union{True, False}, Vararg{Union{True, False}}}) = true
 
 Base.real(@nospecialize(x::StaticNumber)) = x
 Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
