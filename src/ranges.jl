@@ -146,7 +146,8 @@ const SOneTo{L} = SUnitRange{1, L}
 SOneTo(n::Int) = SOneTo{n}()
 Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
-const OptionallyStaticRange{F, L} = Union{OptionallyStaticUnitRange{F, L},
+const OptionallyStaticRange{
+    F, L} = Union{OptionallyStaticUnitRange{F, L},
     OptionallyStaticStepRange{F, <:Any, L}}
 
 # these probide a generic method for extracting potentially static values.
