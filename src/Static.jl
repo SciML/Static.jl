@@ -3,7 +3,7 @@ module Static
 import IfElse: ifelse
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
-export dynamic, is_static, known, static, static_promote
+export dynamic, is_static, known, static, static_promote, static_!
 
 import PrecompileTools: @recompile_invalidations
 
@@ -514,8 +514,13 @@ Base.xor(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(xor(X, Y)
 Base.xor(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = xor(X, y)
 Base.xor(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = xor(x, Y)
 
-Base.:(!)(::True) = False()
-Base.:(!)(::False) = True()
+# These are heavily invalidating, leading to major compile time increases downstream
+#Base.:(!)(::True) = False()
+#Base.:(!)(::False) = True()
+# Instead, use the not invalidating form
+static_!(x::Bool) = !x
+static_!(::True) = False()
+static_!(::False) = True()
 
 Base.all(::Tuple{True, Vararg{True}}) = true
 Base.all(::Tuple{Union{True, False}, Vararg{Union{True, False}}}) = false
@@ -783,7 +788,7 @@ end
 """
     eq(x, y)
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
 eq(x) = Base.Fix2(eq, x)
@@ -791,15 +796,15 @@ eq(x) = Base.Fix2(eq, x)
 """
     ne(x, y)
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool`.
 """
-ne(x::X, y::Y) where {X, Y} = !eq(x, y)
+ne(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x != y)
 ne(x) = Base.Fix2(ne, x)
 
 """
     gt(x, y)
 
-Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool`.
 """
 gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
 gt(x) = Base.Fix2(gt, x)
@@ -807,7 +812,7 @@ gt(x) = Base.Fix2(gt, x)
 """
     ge(x, y)
 
-Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
 ge(x) = Base.Fix2(ge, x)
@@ -815,7 +820,7 @@ ge(x) = Base.Fix2(ge, x)
 """
     le(x, y)
 
-Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool`.
 """
 le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
 le(x) = Base.Fix2(le, x)
@@ -823,7 +828,7 @@ le(x) = Base.Fix2(le, x)
 """
     lt(x, y)
 
-Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool`.
 """
 lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
 lt(x) = Base.Fix2(lt, x)
