@@ -6,7 +6,7 @@ export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static, static_promote
 
 if VERSION >= v"1.11.0-DEV.469"
-    eval(Meta.parse("public OptionallyStaticRange, OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo, static_promote, eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add"))
+    eval(Meta.parse("public OptionallyStaticRange, OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo, eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add"))
 end
 
 import PrecompileTools: @recompile_invalidations
