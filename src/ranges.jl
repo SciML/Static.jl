@@ -147,7 +147,7 @@ SOneTo(n::Int) = SOneTo{n}()
 Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
 const OptionallyStaticRange{
-    F, L} = Union{OptionallyStaticUnitRange{F, L},
+F, L} = Union{OptionallyStaticUnitRange{F, L},
     OptionallyStaticStepRange{F, <:Any, L}}
 
 """
@@ -202,7 +202,6 @@ static(1)
 static_step(@nospecialize x::AbstractUnitRange) = StaticInt(1)
 static_step(x::OptionallyStaticStepRange) = getfield(x, :step)
 static_step(x) = step(x)
-
 
 """
     static_last(x::AbstractRange)
