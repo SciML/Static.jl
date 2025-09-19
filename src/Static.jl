@@ -3,7 +3,8 @@ module Static
 import IfElse: ifelse
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
-export dynamic, is_static, known, static, static_promote
+export dynamic, is_static, known, static, static_promote, static_first, static_step,
+       static_last
 
 if VERSION >= v"1.11.0-DEV.469"
     eval(Meta.parse("public OptionallyStaticRange, OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo, eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add"))
@@ -970,11 +971,11 @@ end
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 
-function Base.show(@nospecialize(io::IO), @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
+function Base.show(io::IO, @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
     show(io, MIME"text/plain"(), x)
 end
-function Base.show(@nospecialize(io::IO), ::MIME"text/plain",
-        @nospecialize(x::Union{StaticNumber, StaticSymbol}))
+function Base.show(
+        io::IO, ::MIME"text/plain", @nospecialize(x::Union{StaticNumber, StaticSymbol}))
     print(io, "static(" * repr(known(typeof(x))) * ")")
     nothing
 end
