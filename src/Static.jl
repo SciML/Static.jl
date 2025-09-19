@@ -1,14 +1,15 @@
 module Static
 
 import IfElse: ifelse
+using SciMLPublic: @public
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
 export dynamic, is_static, known, static, static_promote, static_first, static_step,
        static_last
 
-if VERSION >= v"1.11.0-DEV.469"
-    eval(Meta.parse("public OptionallyStaticRange, OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo, eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add"))
-end
+@public OptionallyStaticRange,
+OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo
+@public eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add
 
 import PrecompileTools: @recompile_invalidations
 
