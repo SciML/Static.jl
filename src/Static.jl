@@ -18,7 +18,7 @@ import PrecompileTools: @recompile_invalidations
 end
 
 """
-    StaticSymbol
+    StaticSymbol(S::Symbol)::StaticSymbol{S}
 
 A statically typed `Symbol`.
 """
@@ -39,7 +39,7 @@ Base.Symbol(@nospecialize(s::StaticSymbol)) = known(s)
 abstract type StaticInteger{N} <: Number end
 
 """
-    StaticBool(x::Bool) -> True/False
+    StaticBool(x::Bool)::Union{True, False}
 
 A statically typed `Bool`.
 """
@@ -61,7 +61,7 @@ function StaticBool(x::Bool)
 end
 
 """
-    StaticInt(N::Int) -> StaticInt{N}()
+    StaticInt(N::Int)::StaticInt{N}
 
 A statically sized `Int`.
 Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
@@ -74,7 +74,7 @@ struct StaticInt{N} <: StaticInteger{N}
 end
 
 """
-    IntType(x::Integer) -> Union{Int,StaticInt}
+    IntType(x::Integer)::Union{Int, StaticInt}
 
 `IntType` is a union of `Int` and `StaticInt`. As a function, it ensures that `x` one of the
 two.
@@ -262,9 +262,10 @@ function static(x::X) where {X}
 end
 
 """
-    is_static(::Type{T}) -> StaticBool
+    is_static(::Type{T})::Union{True, False}
 
-Returns `True` if `T` is a static type.
+If `T` is a static type return `static(true)::True` and otherwise returns
+`static(false)::False`
 
 See also: [`static`](@ref), [`known`](@ref)
 """
@@ -588,7 +589,7 @@ permute(@nospecialize(x::Tuple), @nospecialize(perm::Val)) = permute(x, static(p
 end
 
 """
-    eachop(op, args...; iterator::Tuple{Vararg{StaticInt}}) -> Tuple
+    Static.eachop(op, args...; iterator::Tuple{Vararg{StaticInt}})::Tuple
 
 Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
 """
@@ -598,7 +599,7 @@ end
 eachop(::F, ::Tuple{}, args::Vararg{Any}) where {F} = ()
 
 """
-    eachop_tuple(op, arg, args...; iterator::Tuple{Vararg{StaticInt}}) -> Type{Tuple}
+    Static.eachop_tuple(op, arg, args...; iterator::Tuple{Vararg{StaticInt}})::Type{Tuple}
 
 Produces a tuple type of `Tuple{op(arg, args..., iterator[1]), op(arg, args..., iterator[2]),...}`.
 Note that if one of the arguments passed to `op` is a `Tuple` type then it should be the first argument
@@ -787,66 +788,109 @@ end
 end
 
 """
-    eq(x, y)
+    Static.eq(x, y)::Union{Bool, True, False}
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `==` but if `x` and `y` are static the return value is a `StaticBool.
 """
 eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
+
+"""
+    Static.eq(x)::Base.Fix2{typeof(Static.eq}}
+
+Create a function that compares `x` to other values using `Static.eq` (i.e. a
+function equivalent to `y -> Static.eq(y, x)`).
+"""
 eq(x) = Base.Fix2(eq, x)
 
 """
-    ne(x, y)
+    Static.ne(x, y)::Union{Bool, True, False}
 
-Equivalent to `!=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are static the return value is a `StaticBool.
 """
 ne(x::X, y::Y) where {X, Y} = !eq(x, y)
+
+"""
+    Static.ne(x)::Base.Fix2{typeof(Static.ne}}
+
+Create a function that compares `x` to other values using `Static.ne` (i.e. a
+function equivalent to `y -> Static.ne(y, x))`.
+"""
 ne(x) = Base.Fix2(ne, x)
 
 """
-    gt(x, y)
+    Static.ne(x, y)::Union{Bool, True, False}
 
-Equivalent to `>` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>` but if `x` and `y` are static the return value is a `StaticBool.
 """
 gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
+
+"""
+    Static.gt(x)::Base.Fix2{typeof(Static.gt}}
+
+Create a function that compares `x` to other values using `Static.gt` (i.e. a
+function equivalent to `y -> Static.gt(y, x))`.
+"""
 gt(x) = Base.Fix2(gt, x)
 
 """
-    ge(x, y)
+    Static.ge(x, y)::Union{Bool, True, False}
 
-Equivalent to `>=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `>=` but if `x` and `y` are static the return value is a `StaticBool.
 """
 ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
+
+"""
+    Static.ge(x)::Base.Fix2{typeof(Static.ge}}
+
+Create a function that compares `x` to other values using `Static.ge` (i.e. a
+function equivalent to `y -> Static.ge(y, x)`).
+"""
 ge(x) = Base.Fix2(ge, x)
 
 """
-    le(x, y)
+    Static.le(x, y)::Union{Bool, True, False}
 
-Equivalent to `<=` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<=` but if `x` and `y` are static the return value is a `StaticBool.
 """
 le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
+
+"""
+    Static.le(x)::Base.Fix2{typeof(Static.le}}
+
+Create a function that compares `x` to other values using `Static.le` (i.e. a
+function equivalent to `y -> Static.le(y, x)`).
+"""
 le(x) = Base.Fix2(le, x)
 
 """
-    lt(x, y)
+    Static.lt(x, y)::Union{Bool, True, False}
 
-Equivalent to `<` but if `x` and `y` are both static returns a `StaticBool.
+Equivalent to `<` but if `x` and `y` are static the return value is a `StaticBool.`
 """
 lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
+
+"""
+    Static.lt(x)::Base.Fix2{typeof(Static.lt}}
+
+Create a function that compares `x` to other values using `Static.lt` (i.e. a
+function equivalent to y -> Static.lt(y, x)).
+"""
 lt(x) = Base.Fix2(lt, x)
 
 """
-    mul(x) -> Base.Fix2(*, x)
-    mul(x, y) ->
+    Static.mul(x)::Base.Fix2{typeof(*)}
 
-Equivalent to `*` but allows for lazy multiplication when passing functions.
+Create a function that multiplies `x` with other values (i.e. a function
+equivalent to `y -> y * x`).
 """
 mul(x) = Base.Fix2(*, x)
 
 """
-    add(x) -> Base.Fix2(+, x)
-    add(x, y) ->
+    Static.add(x) -> Base.Fix2(+, x)
+    Static.add(x, y)
 
-Equivalent to `+` but allows for lazy addition when passing functions.
+Create a function that adds `x` to other values (i.e. a function equivalent to
+`y -> y + x`).
 """
 add(x) = Base.Fix2(+, x)
 
@@ -972,15 +1016,17 @@ end
     return (Base.to_index(A, I[1]), to_indices(A, indstail, Base.tail(I))...)
 end
 
-function Base.show(io::IO, @nospecialize(x::Union{StaticNumber, StaticSymbol, NDIndex}))
+function Base.show(@nospecialize(io::IO), @nospecialize(x::Union{
+        StaticNumber, StaticSymbol, NDIndex}))
     show(io, MIME"text/plain"(), x)
 end
 function Base.show(
-        io::IO, ::MIME"text/plain", @nospecialize(x::Union{StaticNumber, StaticSymbol}))
+        @nospecialize(io::IO), ::MIME"text/plain", @nospecialize(x::Union{
+            StaticNumber, StaticSymbol}))
     print(io, "static(" * repr(known(typeof(x))) * ")")
     nothing
 end
-function Base.show(io::IO, m::MIME"text/plain", @nospecialize(x::NDIndex))
+function Base.show(@nospecialize(io::IO), m::MIME"text/plain", @nospecialize(x::NDIndex))
     print(io, "NDIndex")
     show(io, m, Tuple(x))
     nothing
