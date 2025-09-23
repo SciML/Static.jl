@@ -150,16 +150,78 @@ const OptionallyStaticRange{
     F, L} = Union{OptionallyStaticUnitRange{F, L},
     OptionallyStaticStepRange{F, <:Any, L}}
 
-# these probide a generic method for extracting potentially static values.
+"""
+    static_first(x::AbstractRange)
+
+Attempt to return `static(first(x))`, if known at compile time. Otherwise, return
+`first(x)`.
+
+See also: [`static_step`](@ref), [`static_last`](@ref)
+
+# Examples
+
+```julia
+julia> static_first(static(2):10)
+static(2)
+
+julia> static_first(1:10)
+1
+
+julia> static_first(Base.OneTo(10))
+static(1)
+
+```
+"""
 static_first(x::Base.OneTo) = StaticInt(1)
 static_first(x::Union{Base.Slice, Base.IdentityUnitRange}) = static_first(x.indices)
 static_first(x::OptionallyStaticRange) = getfield(x, :start)
 static_first(x) = first(x)
 
+"""
+    static_step(x::AbstractRange)
+
+Attempt to return `static(step(x))`, if known at compile time. Otherwise, return
+`step(x)`.
+
+See also: [`static_first`](@ref), [`static_last`](@ref)
+
+# Examples
+
+```julia
+julia> static_step(static(1):static(3):9)
+static(3)
+
+julia> static_step(1:3:9)
+3
+
+julia> static_step(1:9)
+static(1)
+
+```
+"""
 static_step(@nospecialize x::AbstractUnitRange) = StaticInt(1)
 static_step(x::OptionallyStaticStepRange) = getfield(x, :step)
 static_step(x) = step(x)
 
+"""
+    static_last(x::AbstractRange)
+
+Attempt to return `static(last(x))`, if known at compile time. Otherwise, return
+`last(x)`.
+
+See also: [`static_first`](@ref), [`static_step`](@ref)
+
+# Examples
+
+```julia
+julia> static_last(static(1):static(10))
+static(10)
+
+julia> static_last(static(1):10)
+10
+
+```
+"""
 static_last(x::OptionallyStaticRange) = getfield(x, :stop)
 static_last(x) = last(x)
 static_last(x::Union{Base.Slice, Base.IdentityUnitRange}) = static_last(x.indices)

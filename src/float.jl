@@ -1,6 +1,6 @@
 
 """
-    StaticFloat64{N}
+    StaticFloat64(F::Float64)::StaticFloat64{F}
 
 A statically sized `Float64`.
 Use `StaticFloat64(N)` instead of `Val(N)` when you want it to behave like a number.
