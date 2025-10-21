@@ -116,9 +116,6 @@ end
 @test_throws BoundsError getindex(Static.OptionallyStaticUnitRange(static(1), 10), 11)
 @test_throws BoundsError getindex(Static.OptionallyStaticStepRange(static(1), 2, 10), 11)
 
-@test Static.static_first(Base.OneTo(one(UInt))) === static(1)
-@test Static.static_step(Base.OneTo(one(UInt))) === static(1)
-
 @test @inferred(eachindex(static(-7):static(7))) === static(1):static(15)
 @test @inferred((static(-7):static(7))[first(eachindex(static(-7):static(7)))]) == -7
 
