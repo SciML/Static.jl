@@ -464,6 +464,9 @@ Base.div(::StaticNumber{X}, y::Real, m::RoundingMode) where {X} = div(X, y, m)
 Base.div(x::StaticBool, y::False) = throw(DivideError())
 Base.div(x::StaticBool, y::True) = x
 
+Base.rem(::Integer, y::One) = Zero()
+Base.rem(::Integer, y::StaticInt{-1}) = Zero()
+Base.rem(x::Zero, ::Integer) = x
 Base.rem(@nospecialize(x::StaticNumber), T::Type{<:Integer}) = rem(known(x), T)
 Base.rem(::StaticNumber{X}, ::StaticNumber{Y}) where {X, Y} = static(rem(X, Y))
 Base.rem(x::Real, ::StaticInteger{Y}) where {Y} = rem(x, Y)
@@ -502,6 +505,8 @@ Base.:(>>>)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(>>>(X,
 Base.:(>>>)(::StaticInteger{X}, n::Integer) where {X} = >>>(X, n)
 Base.:(>>>)(x::Integer, ::StaticInteger{N}) where {N} = >>>(x, N)
 
+Base.:(&)(::Integer, y::Zero) = y
+Base.:(&)(x::Zero, ::Integer) = x
 Base.:(&)(::StaticInteger{X}, ::StaticInteger{Y}) where {X, Y} = static(X & Y)
 Base.:(&)(::StaticInteger{X}, y::Union{Integer, Missing}) where {X} = X & y
 Base.:(&)(x::Union{Integer, Missing}, ::StaticInteger{Y}) where {Y} = x & Y
