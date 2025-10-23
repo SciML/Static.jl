@@ -4,8 +4,7 @@ import IfElse: ifelse
 using SciMLPublic: @public
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
-export dynamic, is_static, known, static, static_promote, static_first, static_step,
-       static_last
+export dynamic, is_static, known, static, static_promote
 
 @public OptionallyStaticRange,
 OptionallyStaticUnitRange, OptionallyStaticStepRange, SUnitRange, SOneTo
@@ -353,18 +352,20 @@ julia> static_promote(1:2:9, static(1):static(2):static(9))
 static(1):static(2):static(9)
 ```
 """
-Base.@propagate_inbounds @inline function static_promote(x::AbstractUnitRange{<:Integer},
-        y::AbstractUnitRange{<:Integer})
-    fst = static_promote(static_first(x), static_first(y))
-    lst = static_promote(static_last(x), static_last(y))
-    return OptionallyStaticUnitRange(fst, lst)
-end
-Base.@propagate_inbounds @inline function static_promote(x::AbstractRange{<:Integer},
-        y::AbstractRange{<:Integer})
-    fst = static_promote(static_first(x), static_first(y))
-    stp = static_promote(static_step(x), static_step(y))
-    lst = static_promote(static_last(x), static_last(y))
-    return _OptionallyStaticStepRange(fst, stp, lst)
+@inline function static_promote(
+    x0::AbstractRange{<:Integer},
+    y0::AbstractRange{<:Integer},
+)
+    x = OptionallyStaticStepRange(x0)
+    y = OptionallyStaticStepRange(y0)
+    fst = static_promote(getfield(x, :start), getfield(y, :start))
+    stp = static_promote(getfield(x, :step), getfield(y, :step))
+    lst = static_promote(getfield(x, :stop), getfield(y, :stop))
+    if isa(stp, One)
+        return _OptionallyStaticUnitRange(fst, lst)
+    else
+        return _OptionallyStaticStepRange(fst, stp, lst)
+    end
 end
 function static_promote(x::Base.Slice, y::Base.Slice)
     Base.Slice(static_promote(x.indices, y.indices))
