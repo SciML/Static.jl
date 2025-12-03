@@ -117,6 +117,13 @@ end
     @test mod(static(3), static(2)) === static(1)
     @test mod(static(3), 2) == 1
     @test mod(3, static(2)) == 1
+
+    @test rem(3, static(1)) == static(0)
+    @test rem(3, static(-1)) == static(0)
+    @test rem(static(0), 3) == static(0)
+
+    @test static(0) & 3 == static(0)
+    @test 3 & static(0) == static(0)
 end
 
 @testset "StaticBool" begin
