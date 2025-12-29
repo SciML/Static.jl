@@ -436,6 +436,39 @@ function Base.convert(::Type{T}, @nospecialize(N::StaticNumber)) where {T <: Num
     convert(T, known(N))
 end
 
+# Convert a runtime value to a specific StaticInt{N} type
+# Only succeeds if x == N, otherwise throws an error
+function Base.convert(::Type{StaticInt{N}}, x::Number) where {N}
+    x == N || throw(ArgumentError("cannot convert $x to StaticInt{$N}"))
+    return StaticInt{N}()
+end
+
+# Disambiguation methods for StaticNumber -> StaticInt{N}
+function Base.convert(::Type{StaticInt{N}}, @nospecialize(x::StaticNumber)) where {N}
+    known(x) == N || throw(ArgumentError("cannot convert $(known(x)) to StaticInt{$N}"))
+    return StaticInt{N}()
+end
+
+# Convert a runtime value to a specific StaticBool type
+function Base.convert(::Type{True}, x::Number)
+    x == true || throw(ArgumentError("cannot convert $x to True"))
+    return True()
+end
+function Base.convert(::Type{False}, x::Number)
+    x == false || throw(ArgumentError("cannot convert $x to False"))
+    return False()
+end
+
+# Disambiguation methods for StaticNumber -> True/False
+function Base.convert(::Type{True}, @nospecialize(x::StaticNumber))
+    known(x) == true || throw(ArgumentError("cannot convert $(known(x)) to True"))
+    return True()
+end
+function Base.convert(::Type{False}, @nospecialize(x::StaticNumber))
+    known(x) == false || throw(ArgumentError("cannot convert $(known(x)) to False"))
+    return False()
+end
+
 #Base.Bool(::StaticInt{N}) where {N} = Bool(N)
 
 Base.Integer(@nospecialize(x::StaticInt)) = x

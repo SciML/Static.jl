@@ -117,6 +117,12 @@ end
     @test mod(static(3), static(2)) === static(1)
     @test mod(static(3), 2) == 1
     @test mod(3, static(2)) == 1
+
+    # Test convert to specific StaticInt{N} type (issue #96)
+    @test @inferred(convert(StaticInt{8}, 8)) === StaticInt{8}()
+    @test @inferred(convert(StaticInt{8}, StaticInt{8}())) === StaticInt{8}()
+    @test_throws ArgumentError convert(StaticInt{8}, 0)
+    @test_throws ArgumentError convert(StaticInt{8}, StaticInt{0}())
 end
 
 @testset "StaticBool" begin
@@ -234,6 +240,16 @@ end
     @test !(false == static(true))
     @test !(true == static(false))
     @test !(false != static(false))
+
+    # Test convert to specific True/False types (issue #96)
+    @test @inferred(convert(True, true)) === True()
+    @test @inferred(convert(True, True())) === True()
+    @test @inferred(convert(False, false)) === False()
+    @test @inferred(convert(False, False())) === False()
+    @test_throws ArgumentError convert(True, false)
+    @test_throws ArgumentError convert(True, False())
+    @test_throws ArgumentError convert(False, true)
+    @test_throws ArgumentError convert(False, True())
 end
 
 @testset "operators" begin
