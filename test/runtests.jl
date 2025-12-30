@@ -585,3 +585,10 @@ end
 include("ranges.jl")
 
 include("explicit_imports.jl")
+
+# Allocation tests - run in a separate group to avoid precompilation issues
+if get(ENV, "GROUP", "all") == "all" || get(ENV, "GROUP", "all") == "nopre"
+    @testset "Allocation Tests" begin
+        include("alloc_tests.jl")
+    end
+end
