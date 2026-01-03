@@ -7,7 +7,7 @@
 
 `Static` defines a set of types (`True`, `False`, `StaticInt{value::Int}`, `StaticFloat64{value::Float64}`, `StaticSymbol{value::Symbol}`) that may be dispatched on (similar to `Base.Val{value}`). Unlike `Base.Val`, instances of these types provide "static" values (meaning known at compile time) that in many cases work interchangeably with dynamic values (meaning the value is known at runtime but not compile time). This is particularly useful when designing types whose fields may be dynamically or statically known, such as a range whose size may be dynamic or statically known.
 
-Generic conversion to static values, dynamic values, and compile time known values is accomplished with the methods `static`, `dynamic`, and `known`, respectively.
+Generic conversions to static values, dynamic values, and compile-time-known values are accomplished with the methods `static`, `dynamic`, and `known`, respectively.
 
 ```julia
 julia> using Static
@@ -27,7 +27,7 @@ StaticInt{1}
 julia> known(typeof(static(1)))
 1
 
-julia> known(typeof(1)) === nothing  # `Int`  has no compile time known value
+julia> known(typeof(1)) === nothing  # `Int` has no compile-time-known value
 true
 
 ```
