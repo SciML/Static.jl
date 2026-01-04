@@ -59,7 +59,7 @@ end
             for f in [+, -, *, ÷, %, <<, >>, >>>, &, |, ⊻, ==, ≤, ≥, min, max]
                 (iszero(j) && ((f === ÷) || (f === %))) && continue # integer division error
                 @test convert(Int, @inferred(f(i, j))) ==
-                      f(convert(Int, i), convert(Int, j))
+                    f(convert(Int, i), convert(Int, j))
             end
         end
         i == 3 && break
@@ -92,7 +92,7 @@ end
     @test @inferred(promote_type(SI, IR)) <: promote_type(Int, IR)
     @test @inferred(promote_rule(SI, SI)) <: Int
     @test @inferred(promote_type(Base.TwicePrecision{Int}, StaticInt{1})) <:
-          Base.TwicePrecision{Int}
+    Base.TwicePrecision{Int}
 
     @test static(Int8(-18)) === static(-18)
     @test static(0xef) === static(239)
@@ -372,9 +372,9 @@ end
         Tuple{Static.field_type(T, dim), X}
     end
     @test @inferred(Static.eachop_tuple(Static.field_type, y, T)) ===
-          Tuple{String, Float64, Int}
+        Tuple{String, Float64, Int}
     @test @inferred(Static.eachop_tuple(get_tuple_add, y, T, String)) ===
-          Tuple{Tuple{String, String}, Tuple{Float64, String}, Tuple{Int, String}}
+        Tuple{Tuple{String, String}, Tuple{Float64, String}, Tuple{Int, String}}
     @test @inferred(Static.find_first_eq(static(1), y)) === static(3)
     @test @inferred(Static.find_first_eq(static(2), (1, static(2)))) === static(2)
     @test @inferred(Static.find_first_eq(static(2), (1, static(2), 3))) === static(2)
@@ -385,7 +385,8 @@ end
         for n in 2:16
             x = ntuple(
                 _ -> rand(Bool) ? rand() : (rand(Bool) ? rand(0x00:0x1f) : rand(0:31)),
-                n)
+                n
+            )
             @test @inferred(Static.reduce_tup(+, x)) ≈ reduce(+, x)
         end
     end
@@ -404,9 +405,9 @@ end
 
     @testset "constructors" begin
         @test static(CartesianIndex(3, 3, 3)) === z ==
-              Base.setindex(Base.setindex(x, 3, 1), 3, 2)
+            Base.setindex(Base.setindex(x, 3, 1), 3, 2)
         @test @inferred(CartesianIndex(z)) === @inferred(Static.dynamic(z)) ===
-              CartesianIndex(3, 3, 3)
+            CartesianIndex(3, 3, 3)
         @test @inferred(Static.known(z)) === (3, 3, 3)
         @test Tuple(@inferred(NDIndex{0}())) === ()
         @test @inferred(NDIndex{3}(1, static(2), 3)) === y
@@ -424,12 +425,12 @@ end
     @test @inferred(y[static(2)]) === static(2)
 
     @test @inferred(-y) === NDIndex((-1, -static(2), -3))
-    @test @inferred(y+y) === NDIndex((2, static(4), 6))
-    @test @inferred(y-y) === NDIndex((0, static(0), 0))
+    @test @inferred(y + y) === NDIndex((2, static(4), 6))
+    @test @inferred(y - y) === NDIndex((0, static(0), 0))
     @test @inferred(zero(x)) === NDIndex(static(0), static(0), static(0))
     @test @inferred(oneunit(x)) === NDIndex(static(1), static(1), static(1))
-    @test @inferred(x*3) === NDIndex((3, 6, 9))
-    @test @inferred(3*x) === NDIndex((3, 6, 9))
+    @test @inferred(x * 3) === NDIndex((3, 6, 9))
+    @test @inferred(3 * x) === NDIndex((3, 6, 9))
 
     @test @inferred(min(x, z)) === x
     @test @inferred(max(x, z)) === NDIndex(3, 3, 3)
@@ -460,50 +461,50 @@ y = 1:10
     @test @inferred(dynamic(f)) === @inferred(known(f)) === 1.0
     for i in -10:10
         for j in -10:10
-            @test i + j == @inferred(Static.StaticInt(i)+Static.StaticFloat64(j)) ==
-                  @inferred(i+Static.StaticFloat64(Static.StaticFloat64(j))) ==
-                  @inferred(Static.StaticFloat64(i)+j) ==
-                  @inferred(Static.StaticFloat64(i)+Static.StaticInt(j)) ==
-                  @inferred(Static.StaticFloat64(i)+Static.StaticFloat64(j))
-            @test i - j == @inferred(Static.StaticInt(i)-Static.StaticFloat64(j)) ==
-                  @inferred(i-Static.StaticFloat64(j)) ==
-                  @inferred(Static.StaticFloat64(i)-Static.StaticInt(j)) ==
-                  @inferred(Static.StaticFloat64(i)-j) ==
-                  @inferred(Static.StaticFloat64(i)-Static.StaticFloat64(j))
-            @test i * j == @inferred(Static.StaticInt(i)*Static.StaticFloat64(j)) ==
-                  @inferred(i*Static.StaticFloat64(j)) ==
-                  @inferred(Static.StaticFloat64(i)*Static.StaticInt(j)) ==
-                  @inferred(Static.StaticFloat64(i)*j) ==
-                  @inferred(Static.StaticFloat64(i)*Static.StaticFloat64(j))
+            @test i + j == @inferred(Static.StaticInt(i) + Static.StaticFloat64(j)) ==
+                @inferred(i + Static.StaticFloat64(Static.StaticFloat64(j))) ==
+                @inferred(Static.StaticFloat64(i) + j) ==
+                @inferred(Static.StaticFloat64(i) + Static.StaticInt(j)) ==
+                @inferred(Static.StaticFloat64(i) + Static.StaticFloat64(j))
+            @test i - j == @inferred(Static.StaticInt(i) - Static.StaticFloat64(j)) ==
+                @inferred(i - Static.StaticFloat64(j)) ==
+                @inferred(Static.StaticFloat64(i) - Static.StaticInt(j)) ==
+                @inferred(Static.StaticFloat64(i) - j) ==
+                @inferred(Static.StaticFloat64(i) - Static.StaticFloat64(j))
+            @test i * j == @inferred(Static.StaticInt(i) * Static.StaticFloat64(j)) ==
+                @inferred(i * Static.StaticFloat64(j)) ==
+                @inferred(Static.StaticFloat64(i) * Static.StaticInt(j)) ==
+                @inferred(Static.StaticFloat64(i) * j) ==
+                @inferred(Static.StaticFloat64(i) * Static.StaticFloat64(j))
             i == j == 0 && continue
-            @test i / j == @inferred(Static.StaticInt(i)/Static.StaticFloat64(j)) ==
-                  @inferred(i/Static.StaticFloat64(j)) ==
-                  @inferred(Static.StaticFloat64(i)/Static.StaticInt(j)) ==
-                  @inferred(Static.StaticFloat64(i)/j) ==
-                  @inferred(Static.StaticFloat64(i)/Static.StaticFloat64(j))
+            @test i / j == @inferred(Static.StaticInt(i) / Static.StaticFloat64(j)) ==
+                @inferred(i / Static.StaticFloat64(j)) ==
+                @inferred(Static.StaticFloat64(i) / Static.StaticInt(j)) ==
+                @inferred(Static.StaticFloat64(i) / j) ==
+                @inferred(Static.StaticFloat64(i) / Static.StaticFloat64(j))
         end
         if i ≥ 0
             @test sqrt(i) == @inferred(sqrt(Static.StaticInt(i))) ==
-                  @inferred(sqrt(Static.StaticFloat64(i))) ==
-                  @inferred(sqrt(Static.StaticFloat64(Float64(i))))
+                @inferred(sqrt(Static.StaticFloat64(i))) ==
+                @inferred(sqrt(Static.StaticFloat64(Float64(i))))
         end
     end
     @test Static.floortostaticint(1.0) === 1
     @test Static.floortostaticint(prevfloat(2.0)) === 1
     @test @inferred(Static.floortostaticint(Static.StaticFloat64(1.0))) ===
-          Static.StaticInt(1)
+        Static.StaticInt(1)
     @test @inferred(Static.floortostaticint(Static.StaticFloat64(prevfloat(2.0)))) ===
-          Static.StaticInt(1)
+        Static.StaticInt(1)
 
     @test Static.roundtostaticint(1.0) === 1
     @test Static.roundtostaticint(prevfloat(2.0)) === 2
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(1.0))) ===
-          Static.StaticInt(1)
+        Static.StaticInt(1)
     @test @inferred(Static.roundtostaticint(Static.StaticFloat64(prevfloat(2.0)))) ===
-          Static.StaticInt(2)
+        Static.StaticInt(2)
     @test @inferred(round(Static.StaticFloat64{1.0}())) === Static.StaticFloat64(1)
     @test @inferred(round(Static.StaticFloat64(prevfloat(2.0)))) ===
-          Static.StaticFloat64(ComplexF64(2))
+        Static.StaticFloat64(ComplexF64(2))
 
     x = static(5.0)
     y = static(10.0)
@@ -547,11 +548,13 @@ y = 1:10
     @test @inferred(static(2.0)^2.0) === 2.0^2.0
 
     @testset "trig" begin
-        for f in [sin, cos, tan, asin, atan, acos, sinh, cosh, tanh,
-            asinh, atanh, exp, exp2,
-            exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
-            secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
-            acsch, deg2rad, mod2pi, sinpi, cospi]
+        for f in [
+                sin, cos, tan, asin, atan, acos, sinh, cosh, tanh,
+                asinh, atanh, exp, exp2,
+                exp10, expm1, log, log2, log10, log1p, exponent, sqrt, cbrt, sec, csc, cot, sech,
+                secd, csch, cscd, cotd, cosd, tand, asind, acosd, atand, acotd, sech, coth, asech,
+                acsch, deg2rad, mod2pi, sinpi, cospi,
+            ]
             @info "Testing $f(0.5)"
             @test @inferred(f(static(0.5))) === static(f(0.5))
         end

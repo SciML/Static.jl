@@ -1,4 +1,3 @@
-
 """
     StaticFloat64(F::Float64)::StaticFloat64{F}
 

@@ -9,10 +9,13 @@ makedocs(;
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://SciML.github.io/Static.jl",
-        assets = String[]),
+        assets = String[]
+    ),
     pages = [
-        "Home" => "index.md"
-    ])
+        "Home" => "index.md",
+    ]
+)
 
 deploydocs(;
-    repo = "github.com/SciML/Static.jl")
+    repo = "github.com/SciML/Static.jl"
+)
