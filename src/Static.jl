@@ -1098,5 +1098,6 @@ function Base.show(@nospecialize(io::IO), m::MIME"text/plain", @nospecialize(x::
 end
 
 include("ranges.jl")
+include("precompilation.jl")
 
 end
