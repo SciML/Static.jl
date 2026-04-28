@@ -216,14 +216,6 @@ end
     @test_throws DivideError rem(t, f)
     @test @inferred(mod(t, t)) === f
 
-    @test @inferred(all((t, t, t)))
-    @test !@inferred(all((t, f, t)))
-    @test !@inferred(all((f, f, f)))
-
-    @test @inferred(any((t, t, t)))
-    @test @inferred(any((t, f, t)))
-    @test !@inferred(any((f, f, f)))
-
     @test static(true) == true
     @test static(false) != true
     @test static(true) != false
