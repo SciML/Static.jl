@@ -12,7 +12,6 @@ on:
       - 'docs/**'
 jobs:
   test:
-    if: false
     strategy:
       matrix:
         julia-version: ['1.10']
