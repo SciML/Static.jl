@@ -19,5 +19,4 @@ jobs:
     with:
       julia-version: "${{ matrix.julia-version }}"
       skip: "Pkg,TOML"
-      allow-reresolve: false
     secrets: "inherit"
