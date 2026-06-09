@@ -3,23 +3,10 @@ on:
   - push
   - pull_request
 jobs:
-  test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - '1'
-          - 'lts'
-          - 'pre'
-        os:
-          - ubuntu-latest
-          - windows-latest
-    uses: "SciML/.github/.github/workflows/tests.yml@v1"
+  tests:
+    uses: "SciML/.github/.github/workflows/grouped-tests.yml@v1"
     with:
-      julia-version: "${{ matrix.version }}"
-      julia-arch: "x64"
-      os: "${{ matrix.os }}"
+      coverage-directories: "src"
     secrets: "inherit"
   docs:
     name: Documentation
