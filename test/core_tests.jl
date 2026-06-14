@@ -1,8 +1,8 @@
-using Static
-using Static: Zero
-using Test
+using SafeTestsets
 
-@testset "StaticSymbol" begin
+@safetestset "StaticSymbol" begin
+    using Static
+    using Test
     x = StaticSymbol(:x)
     y = StaticSymbol("y")
     z = StaticSymbol(1)
@@ -19,7 +19,10 @@ using Test
     @test_throws ErrorException static([])
 end
 
-@testset "StaticInt" begin
+@safetestset "StaticInt" begin
+    using Static
+    using Static: Zero
+    using Test
     @test static(UInt(8)) === StaticInt(UInt(8)) === StaticInt{8}()
     @test iszero(StaticInt(0))
     @test !iszero(StaticInt(1))
@@ -114,7 +117,9 @@ end
     @test_throws ArgumentError convert(StaticInt{8}, StaticInt{0}())
 end
 
-@testset "StaticBool" begin
+@safetestset "StaticBool" begin
+    using Static
+    using Test
     t = static(static(true))
     f = StaticBool(static(false))
 
@@ -233,7 +238,9 @@ end
     @test_throws ArgumentError convert(False, True())
 end
 
-@testset "operators" begin
+@safetestset "operators" begin
+    using Static
+    using Test
     f = static(false)
     t = static(true)
     x = StaticInt(1)
@@ -286,7 +293,9 @@ end
     @test (dm ∘ sm1) === dm
 end
 
-@testset "static interface" begin
+@safetestset "static interface" begin
+    using Static
+    using Test
     v = Val((:a, 1, true))
 
     @test static(1) === StaticInt(1)
@@ -320,7 +329,9 @@ end
     @test @inferred(Static.dynamic((static(:a), static(1), true))) === (:a, 1, true)
 end
 
-@testset "promote_shape" begin
+@safetestset "promote_shape" begin
+    using Static
+    using Test
     x = (static(1), 1)
     y = (1, static(1), 1)
     @test @inferred(Base.promote_shape(x, x)) === (static(1), 1)
@@ -332,7 +343,9 @@ end
     @test_throws ErrorException Base.promote_shape((static(1),), (static(2),))
 end
 
-@testset "tuple utilities" begin
+@safetestset "tuple utilities" begin
+    using Static
+    using Test
     x = (static(1), static(2), static(3))
     y = (static(3), static(2), static(1))
     z = (static(1), static(2), static(3), static(4))
@@ -373,13 +386,17 @@ end
     end
 end
 
-@testset "invperm" begin
+@safetestset "invperm" begin
+    using Static
+    using Test
     perm = static((10, 3, 4, 5, 6, 2, 9, 7, 8, 1))
     invp = static((10, 6, 2, 3, 4, 5, 8, 9, 7, 1))
     @test @inferred(invperm(perm)) === invp
 end
 
-@testset "NDIndex" begin
+@safetestset "NDIndex" begin
+    using Static
+    using Test
     x = NDIndex((1, 2, 3))
     y = NDIndex((1, static(2), 3))
     z = NDIndex(static(3), static(3), static(3))
@@ -427,17 +444,27 @@ end
     @test deleteat!(Union{}[], Union{}[]) == Union{}[]
 end
 
-# for some reason this can't be inferred when in the "Static.jl" test set
+module MaybeStaticLengthTests
+using Static
+using Test
+# These helpers must be defined at module top level (not inside a `@testset`)
+# so that `@inferred` sees a concretely-typed method; defining them inside a
+# testset's function scope degrades the inferred return type to `Any`.
 known_length(x) = known_length(typeof(x))
 known_length(::Type{T}) where {N, T <: Tuple{Vararg{Any, N}}} = N
 known_length(::Type{T}) where {T} = nothing
 maybe_static_length(x) = Static.maybe_static(known_length, length, x)
-x = ntuple(+, 10)
-y = 1:10
-@test @inferred(maybe_static_length(x)) === StaticInt(10)
-@test @inferred(maybe_static_length(y)) === 10
+@testset "maybe_static_length" begin
+    x = ntuple(+, 10)
+    y = 1:10
+    @test @inferred(maybe_static_length(x)) === StaticInt(10)
+    @test @inferred(maybe_static_length(y)) === 10
+end
+end
 
-@testset "StaticFloat64" begin
+@safetestset "StaticFloat64" begin
+    using Static
+    using Test
     f = static(1.0)
     @test @inferred(dynamic(f)) === @inferred(known(f)) === 1.0
     for i in -10:10
@@ -553,7 +580,9 @@ y = 1:10
     @test @inferred(!isinteger(static(1.5)))
 end
 
-@testset "string/print/show" begin
+@safetestset "string/print/show" begin
+    using Static
+    using Test
     f = static(float(2))
     repr(f)
     @test repr(static(float(1))) == "static($(float(1)))"
@@ -566,8 +595,10 @@ end
     @test repr(static(1):static(2):static(9)) == "static(1):static(2):static(9)"
 end
 
-include("ranges.jl")
+@safetestset "ranges" begin
+    include("ranges.jl")
+end
 
-@testset "Allocation Tests" begin
+@safetestset "Allocation Tests" begin
     include("alloc_tests.jl")
 end

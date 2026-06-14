@@ -1,3 +1,6 @@
+using Static
+using Test
+
 @testset "Range Constructors" begin
     @test @inferred(static(1):static(10)) == 1:10
     @test @inferred(Static.SUnitRange{1, 10}()) == 1:10
