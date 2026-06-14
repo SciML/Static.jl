@@ -566,8 +566,8 @@ end
     @test repr(static(1):static(2):static(9)) == "static(1):static(2):static(9)"
 end
 
-include("ranges.jl")
+include("shared/ranges.jl")
 
 @testset "Allocation Tests" begin
-    include("alloc_tests.jl")
+    include("shared/alloc_tests.jl")
 end
