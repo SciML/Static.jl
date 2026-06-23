@@ -379,10 +379,18 @@ end
     end
 end
 
-function Base.Broadcast.axistype(r::OptionallyStaticUnitRange{StaticInt{1}}, _)
+# The open argument is restricted to `AbstractUnitRange{<:Integer}` (the only thing a
+# broadcast axis ever is) rather than `Any`. A bare `::Any` slot here forms an
+# unresolvable diagonal ambiguity with despecialization methods such as
+# CommonWorldInvalidations' `axistype(::Any, ::AbstractUnitRange{Float64})`.
+function Base.Broadcast.axistype(
+        r::OptionallyStaticUnitRange{StaticInt{1}}, ::AbstractUnitRange{<:Integer}
+    )
     return Base.OneTo(last(r))
 end
-function Base.Broadcast.axistype(_, r::OptionallyStaticUnitRange{StaticInt{1}})
+function Base.Broadcast.axistype(
+        ::AbstractUnitRange{<:Integer}, r::OptionallyStaticUnitRange{StaticInt{1}}
+    )
     return Base.OneTo(last(r))
 end
 function Base.Broadcast.axistype(
