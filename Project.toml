@@ -1,6 +1,6 @@
 name = "Static"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
-version = "1.4.1"
+version = "1.4.2"
 authors = ["chriselrod", "ChrisRackauckas", "Tokazama"]
 
 [deps]
