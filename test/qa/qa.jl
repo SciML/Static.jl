@@ -1,18 +1,26 @@
-using Static, Aqua, ExplicitImports
-using Test
+using SciMLTesting, Static, Test
 
-@testset "Aqua" begin
-    Aqua.find_persistent_tasks_deps(Static)
-    Aqua.test_ambiguities(Static, recursive = false)
-    Aqua.test_deps_compat(Static)
-    Aqua.test_piracies(Static, broken = true)
-    Aqua.test_project_extras(Static)
-    Aqua.test_stale_deps(Static)
-    Aqua.test_unbound_args(Static)
-    Aqua.test_undefined_exports(Static)
-end
-
-@testset "ExplicitImports" begin
-    @test check_no_implicit_imports(Static) === nothing
-    @test check_no_stale_explicit_imports(Static) === nothing
-end
+run_qa(
+    Static;
+    explicit_imports = true,
+    aqua_kwargs = (; ambiguities = (; recursive = false)),
+    # Aqua piracies: `Base.promote_shape` overload on `Tuple{Vararg{Union{Int,StaticInt}}}`
+    # subsumes plain `Tuple{Vararg{Int}}` — genuine Base piracy.
+    # Tracked in https://github.com/SciML/Static.jl/issues/181
+    aqua_broken = (:piracies,),
+    ei_kwargs = (;
+        # Base / Base.Broadcast / Base.IteratorsMD internals Static accesses but that
+        # are not (yet) declared public upstream; ignore until Base marks them public.
+        all_qualified_accesses_are_public = (;
+            ignore = (
+                Symbol("@propagate_inbounds"), :AbstractCartesianIndex, :Cartesian,
+                :Fix2, :IdentityUnitRange, :IteratorsMD, :OneTo, :Slice,
+                :TwicePrecision, :axes1, :axistype, :fptosi, :front, :isdone,
+                :issingletontype, :oneto, :setindex, :sitofp, :split, :tail,
+                :to_index, :to_shape,
+            ),
+        ),
+        # `ifelse` is exported-but-not-declared-public by IfElse.jl (its sole purpose).
+        all_explicit_imports_are_public = (; ignore = (:ifelse,)),
+    ),
+)
