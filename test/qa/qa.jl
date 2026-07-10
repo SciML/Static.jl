@@ -2,6 +2,7 @@ using SciMLTesting, Static, Test
 
 run_qa(
     Static;
+    api_docs_kwargs = (; rendered = true),
     explicit_imports = true,
     aqua_kwargs = (; ambiguities = (; recursive = false)),
     # Aqua piracies: `Base.promote_shape` overload on `Tuple{Vararg{Union{Int,StaticInt}}}`
@@ -24,20 +25,3 @@ run_qa(
         all_explicit_imports_are_public = (; ignore = (:ifelse,)),
     ),
 )
-
-@testset "public API documentation coverage" begin
-    public_names = setdiff(names(Static; all = false), (:Static,))
-    documented_bindings = Docs.meta(Static)
-    missing_docstrings = sort!(
-        String[
-            String(name) for name in public_names
-                if !haskey(documented_bindings, Docs.Binding(Static, name))
-        ]
-    )
-
-    @test isempty(missing_docstrings)
-
-    docs_index = read(joinpath(pkgdir(Static), "docs", "src", "index.md"), String)
-    @test occursin("```@autodocs", docs_index)
-    @test occursin("Modules = [Static]", docs_index)
-end
