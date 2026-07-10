@@ -178,12 +178,30 @@ SUnitRange(start::Int, stop::Int) = SUnitRange{start, stop}()
 """
     SOneTo(n::Int)
 
-An alias for `OptionallyStaticUnitRange` usfeul for statically sized axes.
+An alias for `OptionallyStaticUnitRange` useful for statically sized axes.
 """
 const SOneTo{L} = SUnitRange{1, L}
 SOneTo(n::Int) = SOneTo{n}()
 Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
+"""
+    Static.OptionallyStaticRange{F, L}
+
+A union of optionally static unit and step ranges whose start has type `F` and whose stop
+has type `L`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> r = static(1):static(2):static(5)
+static(1):static(2):static(5)
+
+julia> r isa Static.OptionallyStaticRange{StaticInt{1}, StaticInt{5}}
+true
+```
+"""
 const OptionallyStaticRange{
     F, L,
 } = Union{

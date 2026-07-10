@@ -44,8 +44,42 @@ A statically typed `Bool`.
 """
 abstract type StaticBool{bool} <: StaticInteger{bool} end
 
+"""
+    True()
+
+The static representation of `true`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> True() === static(true)
+true
+
+julia> dynamic(True())
+true
+```
+"""
 struct True <: StaticBool{true} end
 
+"""
+    False()
+
+The static representation of `false`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> False() === static(false)
+true
+
+julia> dynamic(False())
+false
+```
+"""
 struct False <: StaticBool{false} end
 
 StaticBool{true}() = True()
@@ -819,7 +853,7 @@ Base.Slice(static(1):100)
     return q
 end
 
-# This method assumes that `f` uetrieves compile time information and `g` is the fall back
+# This method assumes that `f` retrieves compile time information and `g` is the fall back
 # for the corresponding dynamic method. If the `f(x)` doesn't return `nothing` that means
 # the value is known and compile time and returns `static(f(x))`.
 @inline function maybe_static(f::F, g::G, x) where {F, G}
@@ -834,12 +868,12 @@ end
 """
     Static.eq(x, y)::Union{Bool, True, False}
 
-Equivalent to `==` but if `x` and `y` are static the return value is a `StaticBool.
+Equivalent to `==` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
 
 """
-    Static.eq(x)::Base.Fix2{typeof(Static.eq}}
+    Static.eq(x)::Base.Fix2{typeof(Static.eq)}
 
 Create a function that compares `x` to other values using `Static.eq` (i.e. a
 function equivalent to `y -> Static.eq(y, x)`).
@@ -849,42 +883,42 @@ eq(x) = Base.Fix2(eq, x)
 """
     Static.ne(x, y)::Union{Bool, True, False}
 
-Equivalent to `!=` but if `x` and `y` are static the return value is a `StaticBool.
+Equivalent to `!=` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 ne(x::X, y::Y) where {X, Y} = !eq(x, y)
 
 """
-    Static.ne(x)::Base.Fix2{typeof(Static.ne}}
+    Static.ne(x)::Base.Fix2{typeof(Static.ne)}
 
 Create a function that compares `x` to other values using `Static.ne` (i.e. a
-function equivalent to `y -> Static.ne(y, x))`.
+function equivalent to `y -> Static.ne(y, x)`).
 """
 ne(x) = Base.Fix2(ne, x)
 
 """
-    Static.ne(x, y)::Union{Bool, True, False}
+    Static.gt(x, y)::Union{Bool, True, False}
 
-Equivalent to `>` but if `x` and `y` are static the return value is a `StaticBool.
+Equivalent to `>` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
 
 """
-    Static.gt(x)::Base.Fix2{typeof(Static.gt}}
+    Static.gt(x)::Base.Fix2{typeof(Static.gt)}
 
 Create a function that compares `x` to other values using `Static.gt` (i.e. a
-function equivalent to `y -> Static.gt(y, x))`.
+function equivalent to `y -> Static.gt(y, x)`).
 """
 gt(x) = Base.Fix2(gt, x)
 
 """
     Static.ge(x, y)::Union{Bool, True, False}
 
-Equivalent to `>=` but if `x` and `y` are static the return value is a `StaticBool.
+Equivalent to `>=` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
 
 """
-    Static.ge(x)::Base.Fix2{typeof(Static.ge}}
+    Static.ge(x)::Base.Fix2{typeof(Static.ge)}
 
 Create a function that compares `x` to other values using `Static.ge` (i.e. a
 function equivalent to `y -> Static.ge(y, x)`).
@@ -894,12 +928,12 @@ ge(x) = Base.Fix2(ge, x)
 """
     Static.le(x, y)::Union{Bool, True, False}
 
-Equivalent to `<=` but if `x` and `y` are static the return value is a `StaticBool.
+Equivalent to `<=` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
 
 """
-    Static.le(x)::Base.Fix2{typeof(Static.le}}
+    Static.le(x)::Base.Fix2{typeof(Static.le)}
 
 Create a function that compares `x` to other values using `Static.le` (i.e. a
 function equivalent to `y -> Static.le(y, x)`).
@@ -909,15 +943,15 @@ le(x) = Base.Fix2(le, x)
 """
     Static.lt(x, y)::Union{Bool, True, False}
 
-Equivalent to `<` but if `x` and `y` are static the return value is a `StaticBool.`
+Equivalent to `<` but if `x` and `y` are static the return value is a `StaticBool`.
 """
 lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
 
 """
-    Static.lt(x)::Base.Fix2{typeof(Static.lt}}
+    Static.lt(x)::Base.Fix2{typeof(Static.lt)}
 
 Create a function that compares `x` to other values using `Static.lt` (i.e. a
-function equivalent to y -> Static.lt(y, x)).
+function equivalent to `y -> Static.lt(y, x)`).
 """
 lt(x) = Base.Fix2(lt, x)
 
