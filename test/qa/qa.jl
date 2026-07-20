@@ -2,7 +2,6 @@ using SciMLTesting, Static, Test
 
 run_qa(
     Static;
-    api_docs_kwargs = (; rendered = true),
     explicit_imports = true,
     aqua_kwargs = (; ambiguities = (; recursive = false)),
     # Aqua piracies: `Base.promote_shape` overload on `Tuple{Vararg{Union{Int,StaticInt}}}`
