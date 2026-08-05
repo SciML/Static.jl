@@ -1,5 +1,6 @@
 module Static
 
+import IfElse: ifelse
 using SciMLPublic: @public
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
@@ -10,8 +11,6 @@ export dynamic, is_static, known, static, static_promote
 @public eachop, eachop_tuple, reduce_tup, eq, ne, gt, ge, le, lt, mul, add
 
 import PrecompileTools: @recompile_invalidations
-
-@inline ifelse(condition::Bool, x, y) = condition ? x : y
 
 @recompile_invalidations begin
     import CommonWorldInvalidations
