@@ -1,13 +1,39 @@
 """
-    StaticFloat64(F::Float64)::StaticFloat64{F}
+    StaticFloat64(value)::StaticFloat64
 
-A statically sized `Float64`.
-Use `StaticFloat64(N)` instead of `Val(N)` when you want it to behave like a number.
+Represent a `Float64` in the type parameter while retaining ordinary real-number behavior.
+Use `StaticFloat64(value)` instead of `Val(value)` when the value must participate in
+numeric operations.
+
+# Arguments
+
+- `value`: A `Float64`, `Int`, [`StaticInt`](@ref), exactly real `Complex` value, or
+  `StaticFloat64` to convert.
+
+# Returns
+
+- `StaticFloat64{F}`: A zero-field real value whose type parameter `F` is the converted
+  `Float64`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> x = StaticFloat64(1.5)
+static(1.5)
+
+julia> sin(x)
+static(0.9974949866040544)
+
+julia> dynamic(x)
+1.5
+```
 """
 struct StaticFloat64{N} <: Real
     StaticFloat64{N}() where {N} = new{N::Float64}()
     StaticFloat64(x::Float64) = new{x}()
-    StaticFloat64(x::Int) = new{Base.sitofp(Float64, x)::Float64}()
+    StaticFloat64(x::Int) = new{Float64(x)}()
     StaticFloat64(x::StaticInt{N}) where {N} = StaticFloat64(convert(Float64, N))
     StaticFloat64(x::Complex) = StaticFloat64(convert(Float64, x))
     StaticFloat64(@nospecialize x::StaticFloat64) = x
@@ -19,8 +45,8 @@ Base.one(@nospecialize T::Type{<:StaticFloat64}) = Float64(1.0)
 Base.round(::StaticFloat64{M}) where {M} = StaticFloat64(round(M))
 roundtostaticint(::StaticFloat64{M}) where {M} = StaticInt(round(Int, M))
 roundtostaticint(x::AbstractFloat) = round(Int, x)
-floortostaticint(::StaticFloat64{M}) where {M} = StaticInt(Base.fptosi(Int, M))
-floortostaticint(x::AbstractFloat) = Base.fptosi(Int, x)
+floortostaticint(::StaticFloat64{M}) where {M} = StaticInt(unsafe_trunc(Int, M))
+floortostaticint(x::AbstractFloat) = unsafe_trunc(Int, x)
 
 Base.rad2deg(::StaticFloat64{M}) where {M} = StaticFloat64(rad2deg(M))
 Base.deg2rad(::StaticFloat64{M}) where {M} = StaticFloat64(deg2rad(M))

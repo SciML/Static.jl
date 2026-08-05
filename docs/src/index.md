@@ -43,9 +43,6 @@ The package provides three core conversion functions:
 
 ## API Reference
 
-```@index
-```
-
-```@autodocs
-Modules = [Static]
-```
+The [Public API](public_api.md) documents the exported interface intended for package
+users. The [Developer API](developer_api.md) documents supported extension tools for
+package developers and calls out their narrower compatibility role.

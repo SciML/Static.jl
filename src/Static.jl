@@ -1,6 +1,5 @@
 module Static
 
-import IfElse: ifelse
 using SciMLPublic: @public
 
 export StaticInt, StaticFloat64, StaticSymbol, True, False, StaticBool, NDIndex
@@ -12,14 +11,38 @@ export dynamic, is_static, known, static, static_promote
 
 import PrecompileTools: @recompile_invalidations
 
+@inline ifelse(condition::Bool, x, y) = condition ? x : y
+
 @recompile_invalidations begin
     import CommonWorldInvalidations
 end
 
 """
-    StaticSymbol(S::Symbol)::StaticSymbol{S}
+    StaticSymbol(value) -> StaticSymbol
 
-A statically typed `Symbol`.
+Represent a symbol in the type parameter so that `value` is available to dispatch and
+constant propagation.
+
+# Arguments
+
+- `value`: A `Symbol`, or a value accepted by `Symbol`. Passing a `StaticSymbol` returns it
+  unchanged.
+
+# Returns
+
+- `StaticSymbol{S}`: A zero-field value whose type parameter `S` is the converted symbol.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> name = StaticSymbol(:state)
+static(:state)
+
+julia> known(name)
+:state
+```
 """
 struct StaticSymbol{s}
     StaticSymbol{s}() where {s} = new{s::Symbol}()
@@ -38,9 +61,29 @@ Base.Symbol(@nospecialize(s::StaticSymbol)) = known(s)
 abstract type StaticInteger{N} <: Number end
 
 """
-    StaticBool(x::Bool)::Union{True, False}
+    StaticBool(value::Bool) -> Union{True, False}
 
-A statically typed `Bool`.
+Convert a runtime boolean to its static representation.
+
+# Arguments
+
+- `value::Bool`: The boolean value to encode in the result type.
+
+# Returns
+
+- [`True`](@ref) when `value` is `true`, otherwise [`False`](@ref).
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> StaticBool(true)
+True()
+
+julia> StaticBool(false)
+False()
+```
 """
 abstract type StaticBool{bool} <: StaticInteger{bool} end
 
@@ -96,8 +139,32 @@ end
 """
     StaticInt(N::Int)::StaticInt{N}
 
-A statically sized `Int`.
-Use `StaticInt(N)` instead of `Val(N)` when you want it to behave like a number.
+Represent an integer in the type parameter while retaining the arithmetic and indexing
+behavior of a number. Use `StaticInt(N)` instead of `Val(N)` when the value must participate
+in numeric operations.
+
+# Arguments
+
+- `N::Int`: The integer value to encode in the result type.
+
+# Returns
+
+- `StaticInt{N}`: A zero-field numeric value with `N` available at compile time.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> n = StaticInt(3)
+static(3)
+
+julia> n + static(2)
+static(5)
+
+julia> dynamic(n)
+3
+```
 """
 struct StaticInt{N} <: StaticInteger{N}
     StaticInt{N}() where {N} = new{N::Int}()
@@ -106,12 +173,6 @@ struct StaticInt{N} <: StaticInteger{N}
     StaticInt(::Val{N}) where {N} = StaticInt(N)
 end
 
-"""
-    IntType(x::Integer)::Union{Int, StaticInt}
-
-`IntType` is a union of `Int` and `StaticInt`. As a function, it ensures that `x` one of the
-two.
-"""
 const IntType = Union{StaticInt, Int}
 IntType(x::Integer) = Int(x)
 IntType(@nospecialize x::Union{Int, StaticInt}) = x
@@ -167,8 +228,20 @@ Base.eltype(@nospecialize(T::Type{<:StaticBool})) = Bool
     NDIndex(i, j, k...)   -> I
     NDIndex((i, j, k...)) -> I
 
-A multidimensional index that refers to a single element. Each dimension is represented by
-a single `Int` or `StaticInt`.
+A multidimensional scalar index whose coordinates may independently be runtime `Int`
+values or compile-time [`StaticInt`](@ref) values. `NDIndex` interoperates with Julia's
+Cartesian indexing operations while preserving static coordinates.
+
+# Arguments
+
+- `i, j, k...`: Integer coordinates. Nested tuples and Cartesian indices are flattened.
+- `(i, j, k...)`: A tuple containing the coordinates.
+
+# Returns
+
+- `NDIndex`: An index containing one coordinate per dimension.
+
+# Examples
 
 ```julia
 julia> using Static
@@ -181,7 +254,6 @@ static(1)
 
 julia> i[1]
 1
-
 ```
 """
 struct NDIndex{N, I <: Tuple{Vararg{Union{StaticInt, Int}, N}}} <:
@@ -223,24 +295,39 @@ end
 Base.Tuple(@nospecialize(x::NDIndex)) = getfield(x, :index)
 
 """
-    known(T::Type)
+    known(value_or_type)
 
-Returns the known value corresponding to a static type `T`. If `T` is not a static type then
-`nothing` is returned.
+Return the value encoded by a static value or type. Return `nothing` when no value is known
+from the type alone.
 
 `known` ensures that the type of the returned value is always inferred, even if the
 compiler fails to infer the exact value.
 
-See also: [`static`](@ref), [`is_static`](@ref), [`dynamic`](@ref)
+# Arguments
+
+- `value_or_type`: A value or type to inspect. Tuples are inspected element by element.
+
+# Returns
+
+- The encoded `Int`, `Bool`, `Float64`, `Symbol`, or tuple for supported static inputs.
+- `nothing` for a dynamic type whose value cannot be determined from its type.
 
 # Examples
+
 ```julia
+julia> using Static
+
 julia> known(StaticInt{1})
 1
 
-julia> known(Int)
+julia> known(Int) === nothing
+true
 
+julia> known(typeof((static(1), static(:x))))
+(1, :x)
 ```
+
+See also: [`static`](@ref), [`is_static`](@ref), [`dynamic`](@ref).
 """
 known(@nospecialize(x)) = known(typeof(x))
 _get_known(::Type{T}, dim::StaticInt{D}) where {T, D} = known(field_type(T, dim))
@@ -260,10 +347,22 @@ _return_float(x::Float64) = x
 """
     static(x)
 
-Returns a static form of `x`. If `x` is already in a static form then `x` is returned. If
-there is no static alternative for `x` then an error is thrown.
+Convert `x` to a static representation whose value is encoded in its type. Return `x`
+unchanged when it is already static.
 
-See also: [`is_static`](@ref), [`known`](@ref)
+# Arguments
+
+- `x`: A boolean, integer, real number convertible to `Float64`, symbol-like value, tuple,
+  `Val`, or `CartesianIndex` to convert.
+
+# Returns
+
+- A [`StaticBool`](@ref), [`StaticInt`](@ref), [`StaticFloat64`](@ref),
+  [`StaticSymbol`](@ref), [`NDIndex`](@ref), or tuple of static values.
+
+# Throws
+
+- `ErrorException`: If no static representation is defined for the input type.
 
 # Examples
 
@@ -279,7 +378,11 @@ True()
 julia> static(:x)
 static(:x)
 
+julia> static((1, true))
+(static(1), True())
 ```
+
+See also: [`is_static`](@ref), [`known`](@ref).
 """
 static(@nospecialize(x::Union{StaticSymbol, StaticNumber})) = x
 static(x::Integer) = StaticInt(x)
@@ -297,12 +400,32 @@ function static(x::X) where {X}
 end
 
 """
-    is_static(::Type{T})::Union{True, False}
+    is_static(value_or_type) -> Union{True, False}
 
-If `T` is a static type return `static(true)::True` and otherwise returns
-`static(false)::False`
+Return a static boolean indicating whether the input's value is fully encoded by its type.
+For tuples, every element type must be static.
 
-See also: [`static`](@ref), [`known`](@ref)
+# Arguments
+
+- `value_or_type`: A value or type to inspect.
+
+# Returns
+
+- [`True`](@ref) when the type is static, otherwise [`False`](@ref).
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> is_static(StaticInt{2})
+True()
+
+julia> is_static(Int)
+False()
+```
+
+See also: [`static`](@ref), [`known`](@ref).
 """
 is_static(@nospecialize(x)) = is_static(typeof(x))
 is_static(@nospecialize(x::Type{<:StaticType})) = True()
@@ -318,13 +441,20 @@ is_static(T::DataType) = False()
 """
     dynamic(x)
 
-Returns the "dynamic" or non-static form of `x`. If `x` is not a static type, then it is
-returned unchanged.
+Return the ordinary runtime representation of a static value. Return `x` unchanged when it
+is not static.
 
 `dynamic` ensures that the type of the returned value is always inferred, even if the
 compiler fails to infer the exact value.
 
-See also: [`known`](@ref)
+# Arguments
+
+- `x`: A static scalar, tuple, [`NDIndex`](@ref), or arbitrary dynamic value.
+
+# Returns
+
+- The encoded runtime value, a tuple converted elementwise, a `CartesianIndex` for an
+  `NDIndex`, or the unchanged dynamic input.
 
 # Examples
 
@@ -335,7 +465,11 @@ julia> dynamic(static(1))
 julia> dynamic(1)
 1
 
+julia> dynamic((static(1), static(:x)))
+(1, :x)
 ```
+
+See also: [`known`](@ref), [`static`](@ref).
 """
 @inline dynamic(@nospecialize x::StaticInt) = known(x)
 @inline dynamic(@nospecialize x::StaticFloat64) = known(x)
@@ -347,9 +481,39 @@ dynamic(@nospecialize x) = x
 
 """
     static_promote(x, y)
+    static_promote(x::AbstractRange{<:Integer}, y::AbstractRange{<:Integer})
 
-Throws an error if `x` and `y` are not equal, preferentially returning the one that is known
-at compile time.
+Combine equal values while preferring the representation that carries more static
+information. Integer ranges are combined field by field so static starts, steps, and stops
+are preserved independently. `nothing` acts as missing information and promotes to the
+other input.
+
+# Arguments
+
+- `x`, `y`: Values that must be equal, equal integer ranges, or `nothing`.
+
+# Returns
+
+- The equal value with the most static information available from either input.
+
+# Throws
+
+- `ErrorException`: If both inputs provide unequal values.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> static_promote(static(1), 1)
+static(1)
+
+julia> static_promote(static(1):10, 1:static(10))
+static(1):static(10)
+
+julia> static_promote(nothing, 3)
+3
+```
 """
 @inline static_promote(x::StaticType{X}, ::StaticType{X}) where {X} = x
 @noinline function static_promote(::StaticType{X}, ::StaticType{Y}) where {X, Y}
@@ -370,22 +534,6 @@ _static_promote(::Nothing, ::Nothing) = nothing
 _static_promote(x, ::Nothing) = x
 _static_promote(::Nothing, y) = y
 
-"""
-    static_promote(x::AbstractRange{<:Integer}, y::AbstractRange{<:Integer})
-
-A type stable method for combining two equal ranges into a new range that preserves static
-parameters. Throws an error if `x != y`.
-
-# Examples
-
-```julia
-julia> static_promote(static(1):10, 1:static(10))
-static(1):static(10)
-
-julia> static_promote(1:2:9, static(1):static(2):static(9))
-static(1):static(2):static(9)
-```
-"""
 @inline function static_promote(
         x0::AbstractRange{<:Integer},
         y0::AbstractRange{<:Integer},
@@ -422,12 +570,20 @@ Base.@propagate_inbounds function _promote_shape(a::Tuple{A}, ::Tuple{}) where {
     return (static_promote(static(1), getfield(a, 1)),)
 end
 Base.@propagate_inbounds function Base.promote_shape(
-        a::Tuple{
-            Vararg{Union{Int, StaticInt}},
-        },
-        b::Tuple{
-            Vararg{Union{Int, StaticInt}},
-        }
+        a::Tuple{StaticInt, Vararg{Union{Int, StaticInt}}},
+        b::Tuple{Vararg{Union{Int, StaticInt}}}
+    )
+    return _promote_shape(a, b)
+end
+Base.@propagate_inbounds function Base.promote_shape(
+        a::Tuple{Int, Vararg{Union{Int, StaticInt}}},
+        b::Tuple{StaticInt, Vararg{Union{Int, StaticInt}}}
+    )
+    return _promote_shape(a, b)
+end
+Base.@propagate_inbounds function Base.promote_shape(
+        a::Tuple{},
+        b::Tuple{StaticInt, Vararg{Union{Int, StaticInt}}}
     )
     return _promote_shape(a, b)
 end
@@ -612,11 +768,6 @@ Base.real(@nospecialize(x::StaticNumber)) = x
 Base.real(@nospecialize(T::Type{<:StaticNumber})) = eltype(T)
 Base.imag(@nospecialize(x::StaticNumber)) = zero(x)
 
-"""
-    field_type(::Type{T}, f)
-
-Functionally equivalent to `fieldtype(T, f)` except `f` may be a static type.
-"""
 @inline field_type(T::Type, f::Union{Int, Symbol}) = fieldtype(T, f)
 @inline field_type(::Type{T}, ::StaticInt{N}) where {T, N} = fieldtype(T, N)
 @inline field_type(::Type{T}, ::StaticSymbol{S}) where {T, S} = fieldtype(T, S)
@@ -638,13 +789,7 @@ Base.:(^)(x::BigInt, y::True) = x
 
 @inline function Base.ntuple(f::F, ::StaticInt{N}) where {F, N}
     (N >= 0) || throw(ArgumentError(string("tuple length should be ≥ 0, got ", N)))
-    return if @generated
-        quote
-            Base.Cartesian.@ntuple $N i -> f(i)
-        end
-    else
-        Tuple(f(i) for i in 1:N)
-    end
+    return ntuple(f, Val(N))
 end
 
 @inline function invariant_permutation(@nospecialize(x::Tuple), @nospecialize(y::Tuple))
@@ -667,9 +812,30 @@ permute(@nospecialize(x::Tuple), @nospecialize(perm::Val)) = permute(x, static(p
 end
 
 """
-    Static.eachop(op, args...; iterator::Tuple{Vararg{StaticInt}})::Tuple
+    eachop(op, iterator::Tuple, args...) -> Tuple
 
-Produces a tuple of `(op(args..., iterator[1]), op(args..., iterator[2]),...)`.
+Apply `op(args..., index)` to each `index` in `iterator`, preserving one inferred tuple
+element per call. This is a developer API for implementing operations over statically known
+dimensions.
+
+# Arguments
+
+- `op`: The function to invoke for each index.
+- `iterator::Tuple`: The indices to pass as the final argument to `op`.
+- `args...`: Leading arguments forwarded unchanged to each invocation.
+
+# Returns
+
+- `Tuple`: The ordered results of applying `op` to every index.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.eachop(getindex, (static(3), static(1)), (:a, :b, :c))
+(:c, :a)
+```
 """
 @inline function eachop(op::F, itr::Tuple{T, Vararg{Any}}, args::Vararg{Any}) where {F, T}
     return (op(args..., first(itr)), eachop(op, Base.tail(itr), args...)...)
@@ -677,11 +843,34 @@ end
 eachop(::F, ::Tuple{}, args::Vararg{Any}) where {F} = ()
 
 """
-    Static.eachop_tuple(op, arg, args...; iterator::Tuple{Vararg{StaticInt}})::Type{Tuple}
+    eachop_tuple(op, iterator::Tuple, arg, args...) -> Type{<:Tuple}
 
-Produces a tuple type of `Tuple{op(arg, args..., iterator[1]), op(arg, args..., iterator[2]),...}`.
-Note that if one of the arguments passed to `op` is a `Tuple` type then it should be the first argument
-instead of one of the trailing arguments, ensuring type inference of each element of the tuple.
+Construct the tuple type whose element at each position is
+`op(arg, args..., iterator[position])`. This is a developer API for generating inferred
+tuple types from static indices.
+
+# Arguments
+
+- `op`: A function that returns a type for each static index.
+- `iterator::Tuple`: Static indices controlling the generated tuple elements.
+- `arg`: The first argument passed to `op`. Put a tuple type here rather than in `args` to
+  preserve inference.
+- `args...`: Additional arguments forwarded to `op` before the index.
+
+# Returns
+
+- `Type{<:Tuple}`: A concrete tuple type containing each computed type.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> field_at(T, i) = fieldtype(T, dynamic(i));
+
+julia> Static.eachop_tuple(field_at, (static(1), static(2)), Tuple{String, Float64})
+Tuple{String, Float64}
+```
 """
 eachop_tuple(op, itr, arg, args...) = _eachop_tuple(op, itr, arg, args)
 @generated function _eachop_tuple(op, ::I, arg, args::A) where {A, I}
@@ -711,11 +900,14 @@ value is a `StaticInt`.
     # we avoid incidental code gen when evaluated a tuple of known values by iterating
     #  through `I.parameters` instead of `known(I)`.
     index = known(X) === nothing ? nothing : findfirst(==(X), I.parameters)
-    return if index === nothing
-        :(Base.Cartesian.@nif $(N + 1) d -> (dynamic(x) == dynamic(getfield(itr, d))) d -> (d) d -> (nothing))
-    else
-        :($(static(index)))
+    if index !== nothing
+        return :($(static(index)))
     end
+    result = :(nothing)
+    for d in N:-1:1
+        result = :(dynamic(x) == dynamic(getfield(itr, $d)) ? $d : $result)
+    end
+    return result
 end
 
 function Base.invperm(p::Tuple{StaticInt, Vararg{StaticInt, N}}) where {N}
@@ -723,106 +915,31 @@ function Base.invperm(p::Tuple{StaticInt, Vararg{StaticInt, N}}) where {N}
 end
 
 """
-  reduce_tup(f::F, inds::Tuple{Vararg{Any,N}}) where {F,N}
+    reduce_tup(f, values::Tuple)
 
-An optimized `reduce` for tuples. `Base.reduce`'s `afoldl` will often not inline.
-Additionally, `reduce_tup` attempts to order the reduction in an optimal manner.
+Reduce a nonempty tuple using a compile-time balanced evaluation tree. This developer API
+can provide better inference and inlining than a generic reduction when tuple length is
+known.
+
+# Arguments
+
+- `f`: A binary function used to combine tuple elements.
+- `values::Tuple`: The nonempty tuple to reduce.
+
+# Returns
+
+- The result of reducing `values` with `f` while preserving the tuple's inferred types.
+
+# Examples
 
 ```julia
-julia> using StaticArrays, Static, BenchmarkTools
+julia> using Static
 
-julia> rsum(v::SVector) = Static.reduce_tup(+, v.data)
-rsum (generic function with 2 methods)
+julia> Static.reduce_tup(+, (static(1), static(2), static(3)))
+static(6)
 
-julia> for n ∈ 2:16
-           @show n
-           v = @SVector rand(n)
-           s1 = @btime  sum(\$(Ref(v))[])
-           s2 = @btime rsum(\$(Ref(v))[])
-       end
-n = 2
-  0.863 ns (0 allocations: 0 bytes)
-  0.863 ns (0 allocations: 0 bytes)
-n = 3
-  0.862 ns (0 allocations: 0 bytes)
-  0.863 ns (0 allocations: 0 bytes)
-n = 4
-  0.862 ns (0 allocations: 0 bytes)
-  0.862 ns (0 allocations: 0 bytes)
-n = 5
-  1.074 ns (0 allocations: 0 bytes)
-  0.864 ns (0 allocations: 0 bytes)
-n = 6
-  0.864 ns (0 allocations: 0 bytes)
-  0.862 ns (0 allocations: 0 bytes)
-n = 7
-  1.075 ns (0 allocations: 0 bytes)
-  0.864 ns (0 allocations: 0 bytes)
-n = 8
-  1.077 ns (0 allocations: 0 bytes)
-  0.865 ns (0 allocations: 0 bytes)
-n = 9
-  1.081 ns (0 allocations: 0 bytes)
-  0.865 ns (0 allocations: 0 bytes)
-n = 10
-  1.195 ns (0 allocations: 0 bytes)
-  0.867 ns (0 allocations: 0 bytes)
-n = 11
-  1.357 ns (0 allocations: 0 bytes)
-  1.400 ns (0 allocations: 0 bytes)
-n = 12
-  1.543 ns (0 allocations: 0 bytes)
-  1.074 ns (0 allocations: 0 bytes)
-n = 13
-  1.702 ns (0 allocations: 0 bytes)
-  1.077 ns (0 allocations: 0 bytes)
-n = 14
-  1.913 ns (0 allocations: 0 bytes)
-  0.867 ns (0 allocations: 0 bytes)
-n = 15
-  2.076 ns (0 allocations: 0 bytes)
-  1.077 ns (0 allocations: 0 bytes)
-n = 16
-  2.273 ns (0 allocations: 0 bytes)
-  1.078 ns (0 allocations: 0 bytes)
-```
-
-More importantly, `reduce_tup(_pick_range, inds)` often performs better than `reduce(_pick_range, inds)`.
-```julia
-julia> using ArrayInterface, BenchmarkTools, Static
-
-julia> inds = (Base.OneTo(100), 1:100, 1:static(100))
-(Base.OneTo(100), 1:100, 1:static(100))
-
-julia> @btime reduce(ArrayInterface._pick_range, \$(Ref(inds))[])
-  6.405 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):static(100))
-
-julia> @btime Static.reduce_tup(ArrayInterface._pick_range, \$(Ref(inds))[])
-  2.570 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):static(100))
-
-julia> inds = (Base.OneTo(100), 1:100, 1:UInt(100))
-(Base.OneTo(100), 1:100, 0x0000000000000001:0x0000000000000064)
-
-julia> @btime reduce(ArrayInterface._pick_range, \$(Ref(inds))[])
-  6.411 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):100)
-
-julia> @btime Static.reduce_tup(ArrayInterface._pick_range, \$(Ref(inds))[])
-  2.592 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):100)
-
-julia> inds = (Base.OneTo(100), 1:100, 1:UInt(100), Int32(1):Int32(100))
-(Base.OneTo(100), 1:100, 0x0000000000000001:0x0000000000000064, 1:100)
-
-julia> @btime reduce(ArrayInterface._pick_range, \$(Ref(inds))[])
-  9.048 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):100)
-
-julia> @btime Static.reduce_tup(ArrayInterface._pick_range, \$(Ref(inds))[])
-  2.569 ns (0 allocations: 0 bytes)
-Base.Slice(static(1):100)
+julia> Static.reduce_tup(max, (2, 5, 3))
+5
 ```
 """
 @generated function reduce_tup(f::F, inds::Tuple{Vararg{Any, N}}) where {F, N}
@@ -866,109 +983,238 @@ end
 end
 
 """
-    Static.eq(x, y)::Union{Bool, True, False}
+    eq(x, y) -> Union{Bool, True, False}
+    eq(x) -> Function
 
-Equivalent to `==` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `==`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> eq(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.eq(static(2), static(2))
+True()
+
+julia> Static.eq(2)(2)
+true
+```
 """
 eq(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x == y)
-
-"""
-    Static.eq(x)::Base.Fix2{typeof(Static.eq)}
-
-Create a function that compares `x` to other values using `Static.eq` (i.e. a
-function equivalent to `y -> Static.eq(y, x)`).
-"""
 eq(x) = Base.Fix2(eq, x)
 
 """
-    Static.ne(x, y)::Union{Bool, True, False}
+    ne(x, y) -> Union{Bool, True, False}
+    ne(x) -> Function
 
-Equivalent to `!=` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `!=`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> ne(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.ne(static(2), static(3))
+True()
+
+julia> Static.ne(2)(2)
+false
+```
 """
 ne(x::X, y::Y) where {X, Y} = !eq(x, y)
-
-"""
-    Static.ne(x)::Base.Fix2{typeof(Static.ne)}
-
-Create a function that compares `x` to other values using `Static.ne` (i.e. a
-function equivalent to `y -> Static.ne(y, x)`).
-"""
 ne(x) = Base.Fix2(ne, x)
 
 """
-    Static.gt(x, y)::Union{Bool, True, False}
+    gt(x, y) -> Union{Bool, True, False}
+    gt(x) -> Function
 
-Equivalent to `>` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `>`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> gt(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.gt(static(3), static(2))
+True()
+
+julia> Static.gt(2)(3)
+true
+```
 """
 gt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x > y)
-
-"""
-    Static.gt(x)::Base.Fix2{typeof(Static.gt)}
-
-Create a function that compares `x` to other values using `Static.gt` (i.e. a
-function equivalent to `y -> Static.gt(y, x)`).
-"""
 gt(x) = Base.Fix2(gt, x)
 
 """
-    Static.ge(x, y)::Union{Bool, True, False}
+    ge(x, y) -> Union{Bool, True, False}
+    ge(x) -> Function
 
-Equivalent to `>=` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `>=`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> ge(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.ge(static(2), static(2))
+True()
+
+julia> Static.ge(2)(1)
+false
+```
 """
 ge(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x >= y)
-
-"""
-    Static.ge(x)::Base.Fix2{typeof(Static.ge)}
-
-Create a function that compares `x` to other values using `Static.ge` (i.e. a
-function equivalent to `y -> Static.ge(y, x)`).
-"""
 ge(x) = Base.Fix2(ge, x)
 
 """
-    Static.le(x, y)::Union{Bool, True, False}
+    le(x, y) -> Union{Bool, True, False}
+    le(x) -> Function
 
-Equivalent to `<=` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `<=`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> le(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.le(static(2), static(3))
+True()
+
+julia> Static.le(2)(1)
+true
+```
 """
 le(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x <= y)
-
-"""
-    Static.le(x)::Base.Fix2{typeof(Static.le)}
-
-Create a function that compares `x` to other values using `Static.le` (i.e. a
-function equivalent to `y -> Static.le(y, x)`).
-"""
 le(x) = Base.Fix2(le, x)
 
 """
-    Static.lt(x, y)::Union{Bool, True, False}
+    lt(x, y) -> Union{Bool, True, False}
+    lt(x) -> Function
 
-Equivalent to `<` but if `x` and `y` are static the return value is a `StaticBool`.
+Compare values with `<`, returning a [`StaticBool`](@ref) when both inputs are static. The
+one-argument form creates a function equivalent to `y -> lt(y, x)`.
+
+# Arguments
+
+- `x`, `y`: Values to compare.
+
+# Returns
+
+- `True` or `False` for two static inputs, `Bool` otherwise, or a comparison function from
+  the one-argument form.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.lt(static(2), static(3))
+True()
+
+julia> Static.lt(2)(3)
+false
+```
 """
 lt(x::X, y::Y) where {X, Y} = ifelse(is_static(X) & is_static(Y), static, identity)(x < y)
-
-"""
-    Static.lt(x)::Base.Fix2{typeof(Static.lt)}
-
-Create a function that compares `x` to other values using `Static.lt` (i.e. a
-function equivalent to `y -> Static.lt(y, x)`).
-"""
 lt(x) = Base.Fix2(lt, x)
 
 """
-    Static.mul(x)::Base.Fix2{typeof(*)}
+    mul(x) -> Function
 
-Create a function that multiplies `x` with other values (i.e. a function
-equivalent to `y -> y * x`).
+Create a function equivalent to `y -> y * x`. This developer API is useful when composing
+inferred arithmetic transformations.
+
+# Arguments
+
+- `x`: The fixed right-hand factor.
+
+# Returns
+
+- A callable `Base.Fix2` that multiplies its argument by `x`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.mul(static(3))(static(2))
+static(6)
+```
 """
 mul(x) = Base.Fix2(*, x)
 
 """
-    Static.add(x) -> Base.Fix2(+, x)
-    Static.add(x, y)
+    add(x) -> Function
 
-Create a function that adds `x` to other values (i.e. a function equivalent to
-`y -> y + x`).
+Create a function equivalent to `y -> y + x`. This developer API is useful when composing
+inferred arithmetic transformations.
+
+# Arguments
+
+- `x`: The fixed right-hand addend.
+
+# Returns
+
+- A callable `Base.Fix2` that adds `x` to its argument.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.add(static(3))(static(2))
+static(5)
+```
 """
 add(x) = Base.Fix2(+, x)
 
