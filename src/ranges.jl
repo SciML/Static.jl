@@ -1,10 +1,32 @@
 """
     OptionallyStaticUnitRange(start, stop) <: AbstractUnitRange{Int}
 
-Similar to `UnitRange` except each field may be an `Int` or `StaticInt`. An
-`OptionallyStaticUnitRange` is intended to be constructed internally from other valid
-indices. Therefore, users should not expect the same checks are used to ensure construction
-of a valid `OptionallyStaticUnitRange` as a `UnitRange`.
+Represent a unit range whose first and last values may independently be runtime `Int`
+values or compile-time [`StaticInt`](@ref) values. Range syntax constructs this type when
+either endpoint is static.
+
+# Arguments
+
+- `start`: The first integer in the range.
+- `stop`: The inclusive upper endpoint. It may be less than `start` for an empty range.
+
+# Returns
+
+- `OptionallyStaticUnitRange`: An `AbstractUnitRange{Int}` preserving any static endpoint.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> range = static(1):10
+static(1):10
+
+julia> (first(range), last(range), length(range))
+(1, 10, 10)
+```
+
+Use the standard range accessors instead of relying on the concrete field layout.
 """
 struct OptionallyStaticUnitRange{F <: IntType, L <: IntType} <:
     AbstractUnitRange{Int}
@@ -19,23 +41,34 @@ end
 """
     OptionallyStaticStepRange(start, step, stop) <: OrdinalRange{Int,Int}
 
-Similarly to [`OptionallyStaticUnitRange`](@ref), `OptionallyStaticStepRange` permits
-a combination of static and standard primitive `Int`s to construct a range. It
-specifically enables the use of ranges without a step size of 1. It may be constructed
-through the use of `OptionallyStaticStepRange` directly or using static integers with
-the range operator (i.e., `:`).
+Represent an integer range whose start, step, and stop may independently carry static
+information. The constructor normalizes `stop` to the final reachable value, matching
+Julia's ordinary stepped-range behavior.
+
+# Arguments
+
+- `start`: The first integer in the range.
+- `step`: The nonzero increment between values.
+- `stop`: An inclusive bound used to determine the final reachable value.
+
+# Returns
+
+- `OptionallyStaticStepRange`: An `OrdinalRange{Int, Int}` preserving static inputs.
+
+# Throws
+
+- `ArgumentError`: If `step` is zero.
+
+# Examples
 
 ```julia
 julia> using Static
 
-julia> x = static(2);
-
-julia> x:x:10
+julia> static(2):static(2):10
 static(2):static(2):10
 
-julia> Static.OptionallyStaticStepRange(x, x, 10)
-static(2):static(2):10
-
+julia> Tuple(static(2):static(2):10)
+(2, 4, 6, 8, 10)
 ```
 """
 struct OptionallyStaticStepRange{
@@ -169,26 +202,70 @@ end
 
 """
     SUnitRange(start::Int, stop::Int)
+    SUnitRange{F, L}()
 
-An alias for `OptionallyStaticUnitRange` where both the start and stop are known statically.
+Construct a [`OptionallyStaticUnitRange`](@ref) whose endpoints are both known statically.
+
+# Arguments
+
+- `start::Int`: The statically encoded first value.
+- `stop::Int`: The statically encoded inclusive endpoint.
+
+# Returns
+
+- `SUnitRange{start, stop}`: A fully static unit range.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.SUnitRange(2, 4)
+static(2):static(4)
+```
 """
 const SUnitRange{F, L} = OptionallyStaticUnitRange{StaticInt{F}, StaticInt{L}}
 SUnitRange(start::Int, stop::Int) = SUnitRange{start, stop}()
 
 """
     SOneTo(n::Int)
+    SOneTo{N}()
 
-An alias for `OptionallyStaticUnitRange` useful for statically sized axes.
+Construct a one-based unit range whose upper endpoint is known statically. This is the
+static analogue of `Base.OneTo` and is useful for statically sized axes.
+
+# Arguments
+
+- `n::Int`: The statically encoded inclusive endpoint.
+
+# Returns
+
+- `SOneTo{n}`: The range `static(1):static(n)`.
+
+# Examples
+
+```julia
+julia> using Static
+
+julia> Static.SOneTo(3)
+static(1):static(3)
+```
 """
 const SOneTo{L} = SUnitRange{1, L}
 SOneTo(n::Int) = SOneTo{n}()
 Base.oneto(::StaticInt{N}) where {N} = SOneTo{N}()
 
 """
-    Static.OptionallyStaticRange{F, L}
+    OptionallyStaticRange{F, L}
 
-A union of optionally static unit and step ranges whose start has type `F` and whose stop
-has type `L`.
+A union of [`OptionallyStaticUnitRange`](@ref) and [`OptionallyStaticStepRange`](@ref)
+whose start has type `F` and whose stop has type `L`. Use this alias in dispatch that accepts
+either unit or stepped optionally static ranges.
+
+# Type Parameters
+
+- `F`: The type of the first value, either `Int` or `StaticInt`.
+- `L`: The type of the final value, either `Int` or `StaticInt`.
 
 # Examples
 

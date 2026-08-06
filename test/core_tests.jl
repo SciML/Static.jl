@@ -326,6 +326,8 @@ end
     @test @inferred(Base.promote_shape(x, x)) === (static(1), 1)
     @test @inferred(Base.promote_shape(x, y)) === (static(1), static(1), static(1))
     @test @inferred(Base.promote_shape(y, x)) === (static(1), static(1), static(1))
+    @test @inferred(Base.promote_shape((), (static(1),))) === (static(1),)
+    @test parentmodule(which(Base.promote_shape, (Tuple{Int}, Tuple{Int}))) === Base
     @test static_promote(1, nothing) === 1
     @test static_promote(nothing, 1) === 1
     @test static_promote(nothing, nothing) === nothing
