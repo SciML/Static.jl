@@ -93,7 +93,7 @@ end
     end
     @test @inferred(getindex([1], static(1))) == 1
     @test @inferred(Base.checkindex(Bool, 1:10, static(1)))
-    @test widen(static(1)) isa Int128
+    @test widen(static(1)) isa typeof(widen(1))
     @test isless(static(1), static(2))
 
     v = rand(3)
