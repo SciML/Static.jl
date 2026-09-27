@@ -4,7 +4,7 @@ using Documenter
 makedocs(;
     modules = [Static],
     authors = "chriselrod, ChrisRackauckas, Tokazama",
-    repo = "https://github.com/SciML/Static.jl/blob/{commit}{path}#L{line}",
+    repo = Documenter.Remotes.GitHub("SciML", "Static.jl"),
     sitename = "Static.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
