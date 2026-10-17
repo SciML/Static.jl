@@ -2,6 +2,9 @@ name: CI
 on:
   - push
   - pull_request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   tests:
     uses: "SciML/.github/.github/workflows/grouped-tests.yml@v1"
